@@ -14,14 +14,15 @@ class ConfigurationTest(unittest.TestCase):
     def test_enumerate_deployments(self):
         import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump([{'name': 'testy'}], f)
+            json.dump({'deployments': [{'name': 'testy'}]}, f)
 
         s = sarge.Sarge(self.tmp)
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
         import sarge
-        (self.tmp/sarge.DEPLOYMENT_CFG).write_bytes(json.dumps([]))
+        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
+            json.dump({'deployments': []}, f)
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
         config = ConfigParser.RawConfigParser()
@@ -45,7 +46,8 @@ class ConfigurationTest(unittest.TestCase):
     def test_generate_supervisord_cfg_with_deployment_command(self):
         import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump([{'name': 'testy', 'command': "echo starting up"}], f)
+            depl_config = {'name': 'testy', 'command': "echo starting up"}
+            json.dump({'deployments': [depl_config]}, f)
 
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()

@@ -41,7 +41,7 @@ class Sarge(object):
 
     def _configure(self):
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-            for deployment_config in json.load(f):
+            for deployment_config in json.load(f)['deployments']:
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
