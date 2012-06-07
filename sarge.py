@@ -42,6 +42,8 @@ server.run()
 
 class Deployment(object):
 
+    active_version_folder = None
+
     @property
     def folder(self):
         return self.sarge.home_path/self.name
@@ -108,10 +110,13 @@ class Sarge(object):
                 'extra_server_stuff': extra_server_stuff,
             })
             for depl in self.deployments:
+                version_folder = depl.active_version_folder
+                if version_folder is None:
+                    continue
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
                     'command': depl.config['command'],
-                    'directory': depl.active_version_folder,
+                    'directory': version_folder,
                 })
 
     def get_deployment(self, name):

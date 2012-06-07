@@ -11,9 +11,15 @@ def setUpModule(self):
     import sarge
 
 
-def config_file_checker(cfg_path):
+def read_config(cfg_path):
+    import ConfigParser
     config = ConfigParser.RawConfigParser()
     config.read([cfg_path])
+    return config
+
+
+def config_file_checker(cfg_path):
+    config = read_config(cfg_path)
 
     def eq_config(section, field, ok_value):
         cfg_value = config.get(section, field)
@@ -70,6 +76,19 @@ class ConfigurationTest(unittest.TestCase):
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('unix_http_server', 'chown', 'theone')
+
+    def test_generated_cfg_ignores_deployments_with_no_versions(self):
+        self.configure({'deployments': [
+            {'name': 'testy', 'command': "echo starting up"},
+        ]})
+
+        s = sarge.Sarge(self.tmp)
+        s.generate_supervisord_configuration()
+
+        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        self.assertEqual(config.sections(),
+                         ['unix_http_server', 'rpcinterface:supervisor',
+                          'supervisord', 'supervisorctl'])
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
         self.configure({'deployments': [
