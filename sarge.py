@@ -24,7 +24,7 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 """
 
-SUPERVISORD_PROGRAM_TEMPLATE = """\
+SUPERVISORD_PROGRAM_TEMPLATE = """
 [program:%(name)s]
 directory = %(directory)s
 command = %(command)s
