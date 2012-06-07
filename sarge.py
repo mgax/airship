@@ -123,3 +123,26 @@ class Sarge(object):
 
     def supervisorctl(self, cmd_args):
         raise NotImplementedError
+
+
+def new_version_cmd(sarge, args):
+    sarge.get_deployment(args.name).new_version()
+
+
+def build_args_parser():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('sarge_home')
+    subparsers = parser.add_subparsers()
+    new_version = subparsers.add_parser('new_version')
+    new_version.set_defaults(func=new_version_cmd)
+    new_version.add_argument('name')
+    return parser
+
+
+def main(raw_arguments):
+    from path import path
+    parser = build_args_parser()
+    args = parser.parse_args(raw_arguments)
+    sarge = Sarge(path(args.sarge_home))
+    args.func(sarge, args)
