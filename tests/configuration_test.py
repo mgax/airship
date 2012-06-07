@@ -10,6 +10,19 @@ def setUpModule(self):
     import sarge
 
 
+def config_file_checker(cfg_path):
+    config = ConfigParser.RawConfigParser()
+    config.read([cfg_path])
+
+    def eq_config(section, field, ok_value):
+        cfg_value = config.get(section, field)
+        msg = 'Configuration field [%s] %s\n%r != %r' % (
+            section, field, cfg_value, ok_value)
+        assert cfg_value == ok_value, msg
+
+    return eq_config
+
+
 class ConfigurationTest(unittest.TestCase):
 
     def setUp(self):
@@ -30,14 +43,8 @@ class ConfigurationTest(unittest.TestCase):
         self.configure({'deployments': []})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
-        config = ConfigParser.RawConfigParser()
-        config.read([self.tmp/sarge.SUPERVISORD_CFG])
 
-        def eq_config(section, field, ok_value):
-            cfg_value = config.get(section, field)
-            msg = 'Configuration field [%s] %s\n%r != %r' % (
-                section, field, cfg_value, ok_value)
-            self.assertEqual(cfg_value, ok_value, msg)
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('unix_http_server', 'file', self.tmp/'supervisord.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
@@ -55,14 +62,8 @@ class ConfigurationTest(unittest.TestCase):
         })
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
-        config = ConfigParser.RawConfigParser()
-        config.read([self.tmp/sarge.SUPERVISORD_CFG])
 
-        def eq_config(section, field, ok_value):
-            cfg_value = config.get(section, field)
-            msg = 'Configuration field [%s] %s\n%r != %r' % (
-                section, field, cfg_value, ok_value)
-            self.assertEqual(cfg_value, ok_value, msg)
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('unix_http_server', 'chown', 'theone')
 
@@ -73,14 +74,8 @@ class ConfigurationTest(unittest.TestCase):
 
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
-        config = ConfigParser.RawConfigParser()
-        config.read([self.tmp/sarge.SUPERVISORD_CFG])
 
-        def eq_config(section, field, ok_value):
-            cfg_value = config.get(section, field)
-            msg = 'Configuration field [%s] %s\n%r != %r' % (
-                section, field, cfg_value, ok_value)
-            self.assertEqual(cfg_value, ok_value, msg)
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
