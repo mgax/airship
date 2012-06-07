@@ -135,6 +135,9 @@ class Sarge(object):
         base_args = ['supervisorctl', '-c', self.home_path/SUPERVISORD_CFG]
         return subprocess.check_call(base_args + cmd_args)
 
+    def status(self):
+        self.supervisorctl(['status'])
+
 
 def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()

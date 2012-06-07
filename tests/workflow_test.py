@@ -77,6 +77,12 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(call(['stop', 'testy']),
                       self.mock_supervisorctl.mock_calls)
 
+    def test_status_invokes_supervisorctl_status(self):
+        s = sarge.Sarge(self.tmp)
+        self.mock_supervisorctl.reset_mock()
+        s.status()
+        self.assertIn(call(['status']), self.mock_supervisorctl.mock_calls)
+
 
 class SupervisorInvocationTest(unittest.TestCase):
 
