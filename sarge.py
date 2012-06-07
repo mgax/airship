@@ -32,9 +32,14 @@ startsecs = 2
 class Deployment(object):
 
     def new_version(self):
-        version_folder = self.folder/'1'
-        version_folder.makedirs()
-        return version_folder
+        # TODO make sure we don't reuse version IDs. we probably need to
+        # save the counter to a file in `self.folder`.
+        import itertools
+        for c in itertools.count(1):
+            version_folder = self.folder/str(c)
+            if not version_folder.exists():
+                version_folder.makedirs()
+                return version_folder
 
 
 class Sarge(object):
