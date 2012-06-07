@@ -143,6 +143,10 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
+def status_cmd(sarge, args):
+    sarge.status()
+
+
 def activate_version_cmd(sarge, args):
     sarge.get_deployment(args.name).activate_version(path(args.version_folder))
 
@@ -166,6 +170,8 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
+    status_parser = subparsers.add_parser('status')
+    status_parser.set_defaults(func=status_cmd)
     new_version_parser = subparsers.add_parser('new_version')
     new_version_parser.set_defaults(func=new_version_cmd)
     new_version_parser.add_argument('name')

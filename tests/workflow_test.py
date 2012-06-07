@@ -149,6 +149,12 @@ class ShellTest(unittest.TestCase):
         sarge.main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
+    @patch('sarge.Sarge.status')
+    def test_stop_calls_api_method(self, mock_status):
+        self.configure({'deployments': []})
+        sarge.main([str(self.tmp), 'status'])
+        self.assertEqual(mock_status.mock_calls, [call()])
+
     def test_init_creates_configuration(self):
         self.configure({'deployments': []})
         self.assertItemsEqual([f.name for f in self.tmp.listdir()],
