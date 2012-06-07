@@ -1,5 +1,7 @@
 import sys
 import json
+import subprocess
+from path import path
 
 
 DEPLOYMENT_CFG = 'deployments.yaml'
@@ -22,11 +24,12 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 """
 
-SUPERVISORD_PROGRAM_TEMPLATE = """\
+SUPERVISORD_PROGRAM_TEMPLATE = """
 [program:%(name)s]
 directory = %(directory)s
 command = %(command)s
 redirect_stderr = true
+stdout_logfile = %(directory)s/stdout.log
 startsecs = 2
 """
 
@@ -41,6 +44,8 @@ server.run()
 
 
 class Deployment(object):
+
+    active_version_folder = None
 
     @property
     def folder(self):
@@ -70,6 +75,7 @@ class Deployment(object):
             self.config['command'] = "%s quickapp.py" % sys.executable
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
+        self.sarge.supervisorctl(['restart', self.name])
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])
@@ -108,10 +114,13 @@ class Sarge(object):
                 'extra_server_stuff': extra_server_stuff,
             })
             for depl in self.deployments:
+                version_folder = depl.active_version_folder
+                if version_folder is None:
+                    continue
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
                     'command': depl.config['command'],
-                    'directory': depl.active_version_folder,
+                    'directory': version_folder,
                 })
 
     def get_deployment(self, name):
@@ -122,7 +131,17 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
-        raise NotImplementedError
+        subprocess.check_call
+        base_args = ['supervisorctl', '-c', self.home_path/SUPERVISORD_CFG]
+        return subprocess.check_call(base_args + cmd_args)
+
+
+def init_cmd(sarge, args):
+    sarge.generate_supervisord_configuration()
+
+
+def activate_version_cmd(sarge, args):
+    sarge.get_deployment(args.name).activate_version(path(args.version_folder))
 
 
 def new_version_cmd(sarge, args):
@@ -142,20 +161,25 @@ def build_args_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('sarge_home')
     subparsers = parser.add_subparsers()
-    new_version = subparsers.add_parser('new_version')
-    new_version.set_defaults(func=new_version_cmd)
-    new_version.add_argument('name')
-    start = subparsers.add_parser('start')
-    start.set_defaults(func=start_cmd)
-    start.add_argument('name')
-    stop = subparsers.add_parser('stop')
-    stop.set_defaults(func=stop_cmd)
-    stop.add_argument('name')
+    init_parser = subparsers.add_parser('init')
+    init_parser.set_defaults(func=init_cmd)
+    new_version_parser = subparsers.add_parser('new_version')
+    new_version_parser.set_defaults(func=new_version_cmd)
+    new_version_parser.add_argument('name')
+    activate_version_parser = subparsers.add_parser('activate_version')
+    activate_version_parser.set_defaults(func=activate_version_cmd)
+    activate_version_parser.add_argument('name')
+    activate_version_parser.add_argument('version_folder')
+    start_parser = subparsers.add_parser('start')
+    start_parser.set_defaults(func=start_cmd)
+    start_parser.add_argument('name')
+    stop_parser = subparsers.add_parser('stop')
+    stop_parser.set_defaults(func=stop_cmd)
+    stop_parser.add_argument('name')
     return parser
 
 
 def main(raw_arguments):
-    from path import path
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments)
     sarge = Sarge(path(args.sarge_home))

@@ -11,9 +11,15 @@ def setUpModule(self):
     import sarge
 
 
-def config_file_checker(cfg_path):
+def read_config(cfg_path):
+    import ConfigParser
     config = ConfigParser.RawConfigParser()
     config.read([cfg_path])
+    return config
+
+
+def config_file_checker(cfg_path):
+    config = read_config(cfg_path)
 
     def eq_config(section, field, ok_value):
         cfg_value = config.get(section, field)
@@ -71,6 +77,19 @@ class ConfigurationTest(unittest.TestCase):
 
         eq_config('unix_http_server', 'chown', 'theone')
 
+    def test_generated_cfg_ignores_deployments_with_no_versions(self):
+        self.configure({'deployments': [
+            {'name': 'testy', 'command': "echo starting up"},
+        ]})
+
+        s = sarge.Sarge(self.tmp)
+        s.generate_supervisord_configuration()
+
+        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        self.assertEqual(config.sections(),
+                         ['unix_http_server', 'rpcinterface:supervisor',
+                          'supervisord', 'supervisorctl'])
+
     def test_generate_supervisord_cfg_with_deployment_command(self):
         self.configure({'deployments': [
             {'name': 'testy', 'command': "echo starting up"},
@@ -78,12 +97,15 @@ class ConfigurationTest(unittest.TestCase):
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        testy.activate_version(testy.new_version())
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
 
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
+        eq_config('program:testy', 'stdout_logfile',
+                  version_folder/'stdout.log')
         eq_config('program:testy', 'startsecs', '2')
 
     def test_get_deployment(self):
