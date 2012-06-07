@@ -54,3 +54,14 @@ class WorkflowTest(unittest.TestCase):
         testy.start()
         self.assertIn(call(['start', 'testy']),
                       self.mock_supervisorctl.mock_calls)
+
+    def test_stop_deployment_invokes_supervisorctl_stop(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_path = path(testy.new_version())
+        testy.activate_version(version_path)
+
+        self.mock_supervisorctl.reset_mock()
+        testy.stop()
+        self.assertIn(call(['stop', 'testy']),
+                      self.mock_supervisorctl.mock_calls)

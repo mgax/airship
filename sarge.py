@@ -54,6 +54,9 @@ class Deployment(object):
     def start(self):
         self.sarge.supervisorctl(['start', self.name])
 
+    def stop(self):
+        self.sarge.supervisorctl(['stop', self.name])
+
 
 class Sarge(object):
 
