@@ -16,16 +16,18 @@ class ConfigurationTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def test_enumerate_deployments(self):
+    def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': [{'name': 'testy'}]}, f)
+            json.dump(config, f)
+
+    def test_enumerate_deployments(self):
+        self.configure({'deployments': [{'name': 'testy'}]})
 
         s = sarge.Sarge(self.tmp)
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': []}, f)
+        self.configure({'deployments': []})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
         config = ConfigParser.RawConfigParser()
@@ -47,11 +49,10 @@ class ConfigurationTest(unittest.TestCase):
                   'unix://' + self.tmp/'supervisord.sock')
 
     def test_generate_supervisord_cfg_with_socket_owner(self):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({
-                'supervisord_socket_owner': 'theone',
-                'deployments': [],
-            }, f)
+        self.configure({
+            'supervisord_socket_owner': 'theone',
+            'deployments': [],
+        })
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
         config = ConfigParser.RawConfigParser()
@@ -66,9 +67,9 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('unix_http_server', 'chown', 'theone')
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            depl_config = {'name': 'testy', 'command': "echo starting up"}
-            json.dump({'deployments': [depl_config]}, f)
+        self.configure({'deployments': [
+            {'name': 'testy', 'command': "echo starting up"},
+        ]})
 
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
