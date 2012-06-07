@@ -121,3 +121,9 @@ class ShellTest(unittest.TestCase):
         self.configure({'deployments': [{'name': 'testy'}]})
         sarge.main([self.tmp, 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
+
+    @patch('sarge.Deployment.stop')
+    def test_stop_calls_api_method(self, mock_stop):
+        self.configure({'deployments': [{'name': 'testy'}]})
+        sarge.main([self.tmp, 'stop', 'testy'])
+        self.assertEqual(mock_stop.mock_calls, [call()])

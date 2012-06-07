@@ -129,6 +129,10 @@ def new_version_cmd(sarge, args):
     print sarge.get_deployment(args.name).new_version()
 
 
+def stop_cmd(sarge, args):
+    sarge.get_deployment(args.name).stop()
+
+
 def start_cmd(sarge, args):
     sarge.get_deployment(args.name).start()
 
@@ -144,6 +148,9 @@ def build_args_parser():
     start = subparsers.add_parser('start')
     start.set_defaults(func=start_cmd)
     start.add_argument('name')
+    stop = subparsers.add_parser('stop')
+    stop.set_defaults(func=stop_cmd)
+    stop.add_argument('name')
     return parser
 
 
