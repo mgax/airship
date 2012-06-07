@@ -30,6 +30,15 @@ startsecs = 2
 """
 
 
+QUICK_WSGI_APP_TEMPLATE = """\
+from flup.server.fcgi import WSGIServer
+from importlib import import_module
+app = getattr(import_module(%(module_name)r), %(attribute_name)r)
+server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
+server.run()
+"""
+
+
 class Deployment(object):
 
     @property
@@ -48,6 +57,16 @@ class Deployment(object):
 
     def activate_version(self, version_folder):
         self.active_version_folder = version_folder # TODO persist on disk
+        if 'tmp-wsgi-app' in self.config:
+            app_import_name = self.config['tmp-wsgi-app']
+            with open(version_folder/'quickapp.py', 'wb') as f:
+                module_name, attribute_name = app_import_name.split(':')
+                f.write(QUICK_WSGI_APP_TEMPLATE % {
+                    'module_name': module_name,
+                    'attribute_name': attribute_name,
+                    'socket_path': str(version_folder/'sock.fcgi'),
+                })
+            self.config['command'] = "python quickapp.py"
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
 
