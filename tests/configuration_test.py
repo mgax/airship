@@ -5,6 +5,11 @@ import ConfigParser
 from path import path
 
 
+def setUpModule(self):
+    global sarge
+    import sarge
+
+
 class ConfigurationTest(unittest.TestCase):
 
     def setUp(self):
@@ -12,7 +17,6 @@ class ConfigurationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
 
     def test_enumerate_deployments(self):
-        import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump({'deployments': [{'name': 'testy'}]}, f)
 
@@ -20,7 +24,6 @@ class ConfigurationTest(unittest.TestCase):
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump({'deployments': []}, f)
         s = sarge.Sarge(self.tmp)
@@ -44,7 +47,6 @@ class ConfigurationTest(unittest.TestCase):
                   'unix://' + self.tmp/'supervisord.sock')
 
     def test_generate_supervisord_cfg_with_socket_owner(self):
-        import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump({
                 'supervisord_socket_owner': 'theone',
@@ -64,7 +66,6 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('unix_http_server', 'chown', 'theone')
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
-        import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             depl_config = {'name': 'testy', 'command': "echo starting up"}
             json.dump({'deployments': [depl_config]}, f)
