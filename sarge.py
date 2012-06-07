@@ -23,6 +23,7 @@ serverurl = unix://%(home_path)s/supervisord.sock
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
+directory = %(directory)s
 command = %(command)s
 redirect_stderr = true
 startsecs = 2
@@ -30,6 +31,10 @@ startsecs = 2
 
 
 class Deployment(object):
+
+    @property
+    def folder(self):
+        return self.sarge.home_path/self.name
 
     def new_version(self):
         # TODO make sure we don't reuse version IDs. we probably need to
@@ -40,6 +45,10 @@ class Deployment(object):
             if not version_folder.exists():
                 version_folder.makedirs()
                 return version_folder
+
+    def activate_version(self, version_folder):
+        self.active_version_folder = version_folder # TODO persist on disk
+        self.sarge.generate_supervisord_configuration()
 
 
 class Sarge(object):
@@ -56,7 +65,7 @@ class Sarge(object):
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
-                depl.folder = self.home_path/depl.name
+                depl.sarge = self
                 self.deployments.append(depl)
             self.config = config
 
@@ -75,6 +84,7 @@ class Sarge(object):
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
                     'command': depl.config['command'],
+                    'directory': depl.active_version_folder,
                 })
 
     def get_deployment(self, name):

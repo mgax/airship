@@ -73,7 +73,8 @@ class ConfigurationTest(unittest.TestCase):
         ]})
 
         s = sarge.Sarge(self.tmp)
-        s.generate_supervisord_configuration()
+        testy = s.get_deployment('testy')
+        testy.activate_version(testy.new_version())
 
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
@@ -94,3 +95,12 @@ class ConfigurationTest(unittest.TestCase):
         s = sarge.Sarge(self.tmp)
         with self.assertRaises(KeyError):
             testy = s.get_deployment('testy')
+
+    def test_directory_updated_after_activation(self):
+        self.configure({'deployments': [{'name': 'testy', 'command': 'echo'}]})
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_path = path(testy.new_version())
+        testy.activate_version(version_path)
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        eq_config('program:testy', 'directory', version_path)
