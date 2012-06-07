@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import json
+from StringIO import StringIO
 from path import path
 from mock import patch, call
 
@@ -109,5 +110,8 @@ class ShellTest(unittest.TestCase):
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
         self.configure({'deployments': [{'name': 'testy'}]})
-        sarge.main([self.tmp, 'new_version', 'testy'])
+        mock_stdout = StringIO()
+        with patch('sys.stdout', mock_stdout):
+            sarge.main([self.tmp, 'new_version', 'testy'])
         self.assertEqual(mock_new_version.mock_calls, [call()])
+        self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")

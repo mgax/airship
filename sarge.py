@@ -126,7 +126,7 @@ class Sarge(object):
 
 
 def new_version_cmd(sarge, args):
-    sarge.get_deployment(args.name).new_version()
+    print sarge.get_deployment(args.name).new_version()
 
 
 def build_args_parser():
