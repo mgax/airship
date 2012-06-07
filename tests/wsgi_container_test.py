@@ -116,6 +116,19 @@ class ShellTest(unittest.TestCase):
         self.assertEqual(mock_new_version.mock_calls, [call()])
         self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")
 
+    @patch('sarge.Deployment.activate_version')
+    def test_activate_version_calls_api_method(self, mock_activate_version):
+        self.configure({'deployments': [{'name': 'testy', 'command': 'echo'}]})
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        sarge.main([str(self.tmp), 'activate_version',
+                    'testy', str(version_folder)])
+        self.assertEqual(mock_activate_version.mock_calls,
+                         [call(version_folder)])
+        path_arg = mock_activate_version.mock_calls[0][1][0]
+        self.assertIsInstance(path_arg, path)
+
     @patch('sarge.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
         self.configure({'deployments': [{'name': 'testy'}]})

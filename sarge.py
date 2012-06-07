@@ -1,5 +1,6 @@
 import sys
 import json
+from path import path
 
 
 DEPLOYMENT_CFG = 'deployments.yaml'
@@ -134,6 +135,10 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
+def activate_version_cmd(sarge, args):
+    sarge.get_deployment(args.name).activate_version(path(args.version_folder))
+
+
 def new_version_cmd(sarge, args):
     print sarge.get_deployment(args.name).new_version()
 
@@ -156,6 +161,10 @@ def build_args_parser():
     new_version = subparsers.add_parser('new_version')
     new_version.set_defaults(func=new_version_cmd)
     new_version.add_argument('name')
+    activate_version = subparsers.add_parser('activate_version')
+    activate_version.set_defaults(func=activate_version_cmd)
+    activate_version.add_argument('name')
+    activate_version.add_argument('version_folder')
     start = subparsers.add_parser('start')
     start.set_defaults(func=start_cmd)
     start.add_argument('name')
@@ -166,7 +175,6 @@ def build_args_parser():
 
 
 def main(raw_arguments):
-    from path import path
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments)
     sarge = Sarge(path(args.sarge_home))
