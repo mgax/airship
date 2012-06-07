@@ -1,5 +1,6 @@
 import sys
 import json
+import subprocess
 from path import path
 
 
@@ -128,7 +129,9 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
-        raise NotImplementedError
+        subprocess.check_call
+        base_args = ['supervisorctl', '-c', self.home_path/SUPERVISORD_CFG]
+        return subprocess.check_call(base_args + cmd_args)
 
 
 def init_cmd(sarge, args):

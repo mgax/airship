@@ -93,6 +93,23 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(msg, response['data'])
 
 
+class SupervisorInvocationTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = path(tempfile.mkdtemp())
+        self.addCleanup(self.tmp.rmtree)
+        (self.tmp/sarge.DEPLOYMENT_CFG).write_bytes('{"deployments": []}')
+
+    @patch('sarge.subprocess')
+    def test_invoke_supervisorctl(self, mock_subprocess):
+        s = sarge.Sarge(self.tmp)
+        s.supervisorctl(['hello', 'world!'])
+        self.assertEqual(mock_subprocess.check_call.mock_calls,
+                         [call(['supervisorctl',
+                                '-c', self.tmp/sarge.SUPERVISORD_CFG,
+                                'hello', 'world!'])])
+
+
 class ShellTest(unittest.TestCase):
 
     def setUp(self):
