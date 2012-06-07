@@ -51,6 +51,9 @@ class Deployment(object):
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
 
+    def start(self):
+        self.sarge.supervisorctl(['start', self.name])
+
 
 class Sarge(object):
 
