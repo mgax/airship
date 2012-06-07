@@ -49,6 +49,7 @@ class Deployment(object):
     def activate_version(self, version_folder):
         self.active_version_folder = version_folder # TODO persist on disk
         self.sarge.generate_supervisord_configuration()
+        self.sarge.supervisorctl(['reread'])
 
 
 class Sarge(object):
@@ -93,3 +94,6 @@ class Sarge(object):
                 return depl
         else:
             raise KeyError
+
+    def supervisorctl(self, cmd_args):
+        raise NotImplementedError

@@ -3,6 +3,7 @@ import tempfile
 import json
 import ConfigParser
 from path import path
+from mock import patch
 
 
 def setUpModule(self):
@@ -28,6 +29,9 @@ class ConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
+        self.mock_supervisorctl = supervisorctl_patch.start()
+        self.addCleanup(supervisorctl_patch.stop)
 
     def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
