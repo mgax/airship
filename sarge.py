@@ -30,7 +30,11 @@ startsecs = 2
 
 
 class Deployment(object):
-    pass
+
+    def new_version(self):
+        version_folder = self.folder/'1'
+        version_folder.makedirs()
+        return version_folder
 
 
 class Sarge(object):
@@ -47,6 +51,7 @@ class Sarge(object):
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
+                depl.folder = self.home_path/depl.name
                 self.deployments.append(depl)
             self.config = config
 
