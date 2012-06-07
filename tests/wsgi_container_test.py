@@ -127,3 +127,11 @@ class ShellTest(unittest.TestCase):
         self.configure({'deployments': [{'name': 'testy'}]})
         sarge.main([self.tmp, 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
+
+    def test_init_creates_configuration(self):
+        self.configure({'deployments': []})
+        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
+                              [sarge.DEPLOYMENT_CFG])
+        sarge.main([self.tmp, 'init'])
+        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
+                              [sarge.DEPLOYMENT_CFG, sarge.SUPERVISORD_CFG])

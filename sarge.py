@@ -125,6 +125,10 @@ class Sarge(object):
         raise NotImplementedError
 
 
+def init_cmd(sarge, args):
+    sarge.generate_supervisord_configuration()
+
+
 def new_version_cmd(sarge, args):
     print sarge.get_deployment(args.name).new_version()
 
@@ -142,6 +146,8 @@ def build_args_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('sarge_home')
     subparsers = parser.add_subparsers()
+    init = subparsers.add_parser('init')
+    init.set_defaults(func=init_cmd)
     new_version = subparsers.add_parser('new_version')
     new_version.set_defaults(func=new_version_cmd)
     new_version.add_argument('name')
