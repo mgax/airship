@@ -115,3 +115,9 @@ class ShellTest(unittest.TestCase):
             sarge.main([self.tmp, 'new_version', 'testy'])
         self.assertEqual(mock_new_version.mock_calls, [call()])
         self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")
+
+    @patch('sarge.Deployment.start')
+    def test_start_calls_api_method(self, mock_start):
+        self.configure({'deployments': [{'name': 'testy'}]})
+        sarge.main([self.tmp, 'start', 'testy'])
+        self.assertEqual(mock_start.mock_calls, [call()])
