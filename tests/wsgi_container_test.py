@@ -112,26 +112,26 @@ class ShellTest(unittest.TestCase):
         self.configure({'deployments': [{'name': 'testy'}]})
         mock_stdout = StringIO()
         with patch('sys.stdout', mock_stdout):
-            sarge.main([self.tmp, 'new_version', 'testy'])
+            sarge.main([str(self.tmp), 'new_version', 'testy'])
         self.assertEqual(mock_new_version.mock_calls, [call()])
         self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")
 
     @patch('sarge.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
         self.configure({'deployments': [{'name': 'testy'}]})
-        sarge.main([self.tmp, 'start', 'testy'])
+        sarge.main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
     @patch('sarge.Deployment.stop')
     def test_stop_calls_api_method(self, mock_stop):
         self.configure({'deployments': [{'name': 'testy'}]})
-        sarge.main([self.tmp, 'stop', 'testy'])
+        sarge.main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
         self.configure({'deployments': []})
         self.assertItemsEqual([f.name for f in self.tmp.listdir()],
                               [sarge.DEPLOYMENT_CFG])
-        sarge.main([self.tmp, 'init'])
+        sarge.main([str(self.tmp), 'init'])
         self.assertItemsEqual([f.name for f in self.tmp.listdir()],
                               [sarge.DEPLOYMENT_CFG, sarge.SUPERVISORD_CFG])
