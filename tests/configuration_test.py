@@ -80,3 +80,17 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
         eq_config('program:testy', 'startsecs', '2')
+
+    def test_get_deployment(self):
+        self.configure({'deployments': [{'name': 'testy'}]})
+
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        self.assertEqual(testy.name, 'testy')
+
+    def test_get_deployment_invalid_name(self):
+        self.configure({'deployments': []})
+
+        s = sarge.Sarge(self.tmp)
+        with self.assertRaises(KeyError):
+            testy = s.get_deployment('testy')

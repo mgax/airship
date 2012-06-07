@@ -66,3 +66,10 @@ class Sarge(object):
                     'name': depl.name,
                     'command': depl.config['command'],
                 })
+
+    def get_deployment(self, name):
+        for depl in self.deployments:
+            if depl.name == name:
+                return depl
+        else:
+            raise KeyError
