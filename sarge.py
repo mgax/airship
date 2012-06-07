@@ -148,7 +148,8 @@ def status_cmd(sarge, args):
 
 
 def activate_version_cmd(sarge, args):
-    sarge.get_deployment(args.name).activate_version(path(args.version_folder))
+    version_folder = path(args.version_folder).abspath()
+    sarge.get_deployment(args.name).activate_version(version_folder)
 
 
 def new_version_cmd(sarge, args):
@@ -191,7 +192,7 @@ def build_args_parser():
 def main(raw_arguments):
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments)
-    sarge = Sarge(path(args.sarge_home))
+    sarge = Sarge(path(args.sarge_home).abspath())
     args.func(sarge, args)
 
 
