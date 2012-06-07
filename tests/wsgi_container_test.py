@@ -28,6 +28,23 @@ def get_fcgi_response(socket_path, environ):
     return invoke_wsgi_app(app, environ)
 
 
+def wait_for(callback, sleep_time, ticks):
+    import time
+    for c in xrange(ticks):
+        if callback():
+            return True
+        time.sleep(sleep_time)
+    else:
+        return False
+
+
+def read_config(cfg_path):
+    import ConfigParser
+    config = ConfigParser.RawConfigParser()
+    config.read([cfg_path])
+    return config
+
+
 class WorkflowTest(unittest.TestCase):
 
     def setUp(self):
@@ -41,37 +58,33 @@ class WorkflowTest(unittest.TestCase):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump(config, f)
 
+    def popen_with_cleanup(self, *args, **kwargs):
+        import subprocess
+        p = subprocess.Popen(*args, **kwargs)
+        # cleanups are called in reverse order; first kill, then wait
+        self.addCleanup(p.wait)
+        self.addCleanup(p.kill)
+
     def test_wsgi_app_works_via_fcgi(self):
         depl_config = {
             'name': 'testy',
             'tmp-wsgi-app': 'wsgiref.simple_server:demo_app',
         }
         self.configure({'deployments': [depl_config]})
+
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_path = path(testy.new_version())
         testy.activate_version(version_path)
-        socket_path = version_path/'sock.fcgi'
 
-        import ConfigParser
-        import subprocess
-        config = ConfigParser.RawConfigParser()
-        config.read([self.tmp/sarge.SUPERVISORD_CFG])
+        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
         command = config.get('program:testy', 'command')
 
-        # TODO no subprocess
-        p = subprocess.Popen(command, cwd=version_path, shell=True)
-        # cleanups are called in reverse order; first kill, then wait
-        self.addCleanup(p.wait)
-        self.addCleanup(p.kill)
+        self.popen_with_cleanup(command, cwd=version_path, shell=True)
 
-        import time
-        for c in xrange(500):
-            if socket_path.exists():
-                break
-            time.sleep(0.01)
-        else:
-            self.fail('no socket found')
+        socket_path = version_path/'sock.fcgi'
+        if not wait_for(socket_path.exists, 0.01, 500):
+            self.fail('No socket found after 5 seconds')
 
         msg = "the-matrix-has-you"
         response = get_fcgi_response(socket_path, {'PATH_INFO': msg})
