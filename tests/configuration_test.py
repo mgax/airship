@@ -97,12 +97,15 @@ class ConfigurationTest(unittest.TestCase):
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        testy.activate_version(testy.new_version())
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
 
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
+        eq_config('program:testy', 'stdout_logfile',
+                  version_folder/'stdout.log')
         eq_config('program:testy', 'startsecs', '2')
 
     def test_get_deployment(self):

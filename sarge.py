@@ -29,6 +29,7 @@ SUPERVISORD_PROGRAM_TEMPLATE = """\
 directory = %(directory)s
 command = %(command)s
 redirect_stderr = true
+stdout_logfile = %(directory)s/stdout.log
 startsecs = 2
 """
 
