@@ -45,6 +45,16 @@ class WorkflowTest(unittest.TestCase):
         testy.activate_version(version_path)
         self.assertIn(call(['reread']), self.mock_supervisorctl.mock_calls)
 
+    def test_activation_triggers_supervisord_restart_deployment(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_path = path(testy.new_version())
+
+        self.mock_supervisorctl.reset_mock()
+        testy.activate_version(version_path)
+        self.assertIn(call(['restart', 'testy']),
+                      self.mock_supervisorctl.mock_calls)
+
     def test_start_deployment_invokes_supervisorctl_start(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
