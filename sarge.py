@@ -66,7 +66,8 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(version_folder/'sock.fcgi'),
                 })
-            self.config['command'] = "python quickapp.py"
+            import sys
+            self.config['command'] = "%s quickapp.py" % sys.executable
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
 
