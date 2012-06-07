@@ -18,11 +18,17 @@ def read_config(cfg_path):
     return config
 
 
+MISSING = object()
+
+
 def config_file_checker(cfg_path):
     config = read_config(cfg_path)
 
     def eq_config(section, field, ok_value):
-        cfg_value = config.get(section, field)
+        try:
+            cfg_value = config.get(section, field)
+        except ConfigParser.NoOptionError:
+            cfg_value = MISSING
         msg = 'Configuration field [%s] %s\n%r != %r' % (
             section, field, cfg_value, ok_value)
         assert cfg_value == ok_value, msg
@@ -107,6 +113,21 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('program:testy', 'stdout_logfile',
                   version_folder/'stdout.log')
         eq_config('program:testy', 'startsecs', '2')
+        eq_config('program:testy', 'autorestart', MISSING)
+
+    def test_autorestart_option(self):
+        self.configure({'deployments': [
+            {'name': 'testy', 'command': "echo", 'autorestart': 'always'},
+        ]})
+
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+
+        eq_config('program:testy', 'autorestart', 'true')
 
     def test_get_deployment(self):
         self.configure({'deployments': [{'name': 'testy'}]})

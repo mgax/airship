@@ -31,6 +31,7 @@ command = %(command)s
 redirect_stderr = true
 stdout_logfile = %(directory)s/stdout.log
 startsecs = 2
+%(extra_program_stuff)s
 """
 
 
@@ -117,10 +118,14 @@ class Sarge(object):
                 version_folder = depl.active_version_folder
                 if version_folder is None:
                     continue
+                extra_program_stuff = ""
+                if depl.config.get('autorestart', None) == 'always':
+                    extra_program_stuff = "autorestart = true\n"
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
                     'command': depl.config['command'],
                     'directory': version_folder,
+                    'extra_program_stuff': extra_program_stuff,
                 })
 
     def get_deployment(self, name):
