@@ -7,6 +7,7 @@ SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
 file = %(home_path)s/supervisord.sock
+%(extra_server_stuff)s
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
@@ -41,15 +42,25 @@ class Sarge(object):
 
     def _configure(self):
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-            for deployment_config in json.load(f)['deployments']:
+            config = json.load(f)
+            for deployment_config in config.pop('deployments'):
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
                 self.deployments.append(depl)
+            self.config = config
 
     def generate_supervisord_configuration(self):
         with open(self.home_path/SUPERVISORD_CFG, 'wb') as f:
-            f.write(SUPERVISORD_CFG_TEMPLATE % {'home_path': self.home_path})
+            extra_server_stuff = ""
+            sock_owner = self.config.get('supervisord_socket_owner')
+            if sock_owner is not None:
+                extra_server_stuff += "chown = %s\n" % sock_owner
+
+            f.write(SUPERVISORD_CFG_TEMPLATE % {
+                'home_path': self.home_path,
+                'extra_server_stuff': extra_server_stuff,
+            })
             for depl in self.deployments:
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,

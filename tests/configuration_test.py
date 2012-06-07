@@ -43,6 +43,26 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('supervisorctl', 'serverurl',
                   'unix://' + self.tmp/'supervisord.sock')
 
+    def test_generate_supervisord_cfg_with_socket_owner(self):
+        import sarge
+        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
+            json.dump({
+                'supervisord_socket_owner': 'theone',
+                'deployments': [],
+            }, f)
+        s = sarge.Sarge(self.tmp)
+        s.generate_supervisord_configuration()
+        config = ConfigParser.RawConfigParser()
+        config.read([self.tmp/sarge.SUPERVISORD_CFG])
+
+        def eq_config(section, field, ok_value):
+            cfg_value = config.get(section, field)
+            msg = 'Configuration field [%s] %s\n%r != %r' % (
+                section, field, cfg_value, ok_value)
+            self.assertEqual(cfg_value, ok_value, msg)
+
+        eq_config('unix_http_server', 'chown', 'theone')
+
     def test_generate_supervisord_cfg_with_deployment_command(self):
         import sarge
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
