@@ -1,3 +1,4 @@
+import sys
 import json
 
 
@@ -66,7 +67,6 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(version_folder/'sock.fcgi'),
                 })
-            import sys
             self.config['command'] = "%s quickapp.py" % sys.executable
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
@@ -146,3 +146,7 @@ def main(raw_arguments):
     args = parser.parse_args(raw_arguments)
     sarge = Sarge(path(args.sarge_home))
     args.func(sarge, args)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
