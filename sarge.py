@@ -23,14 +23,59 @@ serverurl = unix://%(home_path)s/supervisord.sock
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
+directory = %(directory)s
 command = %(command)s
 redirect_stderr = true
 startsecs = 2
 """
 
 
+QUICK_WSGI_APP_TEMPLATE = """\
+from flup.server.fcgi import WSGIServer
+from importlib import import_module
+app = getattr(import_module(%(module_name)r), %(attribute_name)r)
+server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
+server.run()
+"""
+
+
 class Deployment(object):
-    pass
+
+    @property
+    def folder(self):
+        return self.sarge.home_path/self.name
+
+    def new_version(self):
+        # TODO make sure we don't reuse version IDs. we probably need to
+        # save the counter to a file in `self.folder`.
+        import itertools
+        for c in itertools.count(1):
+            version_folder = self.folder/str(c)
+            if not version_folder.exists():
+                version_folder.makedirs()
+                return version_folder
+
+    def activate_version(self, version_folder):
+        self.active_version_folder = version_folder # TODO persist on disk
+        if 'tmp-wsgi-app' in self.config:
+            app_import_name = self.config['tmp-wsgi-app']
+            with open(version_folder/'quickapp.py', 'wb') as f:
+                module_name, attribute_name = app_import_name.split(':')
+                f.write(QUICK_WSGI_APP_TEMPLATE % {
+                    'module_name': module_name,
+                    'attribute_name': attribute_name,
+                    'socket_path': str(version_folder/'sock.fcgi'),
+                })
+            import sys
+            self.config['command'] = "%s quickapp.py" % sys.executable
+        self.sarge.generate_supervisord_configuration()
+        self.sarge.supervisorctl(['reread'])
+
+    def start(self):
+        self.sarge.supervisorctl(['start', self.name])
+
+    def stop(self):
+        self.sarge.supervisorctl(['stop', self.name])
 
 
 class Sarge(object):
@@ -47,6 +92,7 @@ class Sarge(object):
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
+                depl.sarge = self
                 self.deployments.append(depl)
             self.config = config
 
@@ -65,4 +111,15 @@ class Sarge(object):
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
                     'command': depl.config['command'],
+                    'directory': depl.active_version_folder,
                 })
+
+    def get_deployment(self, name):
+        for depl in self.deployments:
+            if depl.name == name:
+                return depl
+        else:
+            raise KeyError
+
+    def supervisorctl(self, cmd_args):
+        raise NotImplementedError

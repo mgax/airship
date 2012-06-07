@@ -3,6 +3,7 @@ import tempfile
 import json
 import ConfigParser
 from path import path
+from mock import patch
 
 
 def setUpModule(self):
@@ -28,6 +29,9 @@ class ConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
+        self.mock_supervisorctl = supervisorctl_patch.start()
+        self.addCleanup(supervisorctl_patch.stop)
 
     def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
@@ -73,10 +77,34 @@ class ConfigurationTest(unittest.TestCase):
         ]})
 
         s = sarge.Sarge(self.tmp)
-        s.generate_supervisord_configuration()
+        testy = s.get_deployment('testy')
+        testy.activate_version(testy.new_version())
 
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
         eq_config('program:testy', 'startsecs', '2')
+
+    def test_get_deployment(self):
+        self.configure({'deployments': [{'name': 'testy'}]})
+
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        self.assertEqual(testy.name, 'testy')
+
+    def test_get_deployment_invalid_name(self):
+        self.configure({'deployments': []})
+
+        s = sarge.Sarge(self.tmp)
+        with self.assertRaises(KeyError):
+            testy = s.get_deployment('testy')
+
+    def test_directory_updated_after_activation(self):
+        self.configure({'deployments': [{'name': 'testy', 'command': 'echo'}]})
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_path = path(testy.new_version())
+        testy.activate_version(version_path)
+        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        eq_config('program:testy', 'directory', version_path)
