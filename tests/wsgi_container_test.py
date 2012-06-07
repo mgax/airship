@@ -1,8 +1,9 @@
 import unittest
 import tempfile
 import json
+from StringIO import StringIO
 from path import path
-from mock import patch
+from mock import patch, call
 
 
 def setUpModule(self):
@@ -90,3 +91,39 @@ class WorkflowTest(unittest.TestCase):
         response = get_fcgi_response(socket_path, {'PATH_INFO': msg})
 
         self.assertIn(msg, response['data'])
+
+
+class ShellTest(unittest.TestCase):
+
+    def setUp(self):
+        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
+        self.mock_supervisorctl = supervisorctl_patch.start()
+        self.addCleanup(supervisorctl_patch.stop)
+        self.tmp = path(tempfile.mkdtemp())
+        self.addCleanup(self.tmp.rmtree)
+
+    def configure(self, config):
+        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
+            json.dump(config, f)
+
+    @patch('sarge.Deployment.new_version')
+    def test_new_version_calls_api_method(self, mock_new_version):
+        mock_new_version.return_value = "path-to-new-version"
+        self.configure({'deployments': [{'name': 'testy'}]})
+        mock_stdout = StringIO()
+        with patch('sys.stdout', mock_stdout):
+            sarge.main([self.tmp, 'new_version', 'testy'])
+        self.assertEqual(mock_new_version.mock_calls, [call()])
+        self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")
+
+    @patch('sarge.Deployment.start')
+    def test_start_calls_api_method(self, mock_start):
+        self.configure({'deployments': [{'name': 'testy'}]})
+        sarge.main([self.tmp, 'start', 'testy'])
+        self.assertEqual(mock_start.mock_calls, [call()])
+
+    @patch('sarge.Deployment.stop')
+    def test_stop_calls_api_method(self, mock_stop):
+        self.configure({'deployments': [{'name': 'testy'}]})
+        sarge.main([self.tmp, 'stop', 'testy'])
+        self.assertEqual(mock_stop.mock_calls, [call()])

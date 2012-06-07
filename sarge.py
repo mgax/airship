@@ -1,3 +1,4 @@
+import sys
 import json
 
 
@@ -66,7 +67,6 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(version_folder/'sock.fcgi'),
                 })
-            import sys
             self.config['command'] = "%s quickapp.py" % sys.executable
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
@@ -123,3 +123,44 @@ class Sarge(object):
 
     def supervisorctl(self, cmd_args):
         raise NotImplementedError
+
+
+def new_version_cmd(sarge, args):
+    print sarge.get_deployment(args.name).new_version()
+
+
+def stop_cmd(sarge, args):
+    sarge.get_deployment(args.name).stop()
+
+
+def start_cmd(sarge, args):
+    sarge.get_deployment(args.name).start()
+
+
+def build_args_parser():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('sarge_home')
+    subparsers = parser.add_subparsers()
+    new_version = subparsers.add_parser('new_version')
+    new_version.set_defaults(func=new_version_cmd)
+    new_version.add_argument('name')
+    start = subparsers.add_parser('start')
+    start.set_defaults(func=start_cmd)
+    start.add_argument('name')
+    stop = subparsers.add_parser('stop')
+    stop.set_defaults(func=stop_cmd)
+    stop.add_argument('name')
+    return parser
+
+
+def main(raw_arguments):
+    from path import path
+    parser = build_args_parser()
+    args = parser.parse_args(raw_arguments)
+    sarge = Sarge(path(args.sarge_home))
+    args.func(sarge, args)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
