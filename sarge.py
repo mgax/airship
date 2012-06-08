@@ -82,9 +82,21 @@ class Deployment(object):
         version_folder = self.active_version_folder
         with open(version_folder/'nginx-site.conf', 'wb') as f:
             for entry in self.config.get('urlmap', []):
-                f.write("location %(url)s {\n"
-                        "    alias %(version_folder)s/%(path)s;\n"
-                        "}\n" % dict(entry, version_folder=version_folder))
+                if entry['type'] == 'static':
+                    f.write("location %(url)s {\n"
+                            "    alias %(version_folder)s/%(path)s;\n"
+                            "}\n" % dict(entry, version_folder=version_folder))
+                elif entry['type'] == 'wsgi':
+                    socket_path = version_folder/'wsgi-app.sock'
+                    f.write("location %(url)s {\n"
+                            "    include /etc/nginx/fastcgi_params;\n"
+                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
+                            "    fastcgi_param SCRIPT_NAME "";\n"
+                            "    fastcgi_pass unix:%(socket_path)s;\n"
+                            "}\n" % dict(entry, socket_path=socket_path))
+
+                else:
+                    raise NotImplementedError
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])

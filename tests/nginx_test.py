@@ -55,3 +55,22 @@ class NginxConfigurationTest(unittest.TestCase):
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             "location /media { alias %s/mymedia; }" % version_path)
+
+    def test_wsgi_app_is_configured_in_nginx(self):
+        version_path = self.configure_and_activate({
+            'name': 'testy',
+            'urlmap': [
+                {'url': '/',
+                 'type': 'wsgi',
+                 'wsgi_app': 'wsgiref.simple_server:demo_app'},
+            ],
+        })
+        with open(version_path/'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        self.assert_equivalent(nginx_conf,
+            "location / { "
+            "    include /etc/nginx/fastcgi_params; "
+            "    fastcgi_param PATH_INFO $fastcgi_script_name; "
+            "    fastcgi_param SCRIPT_NAME ""; "
+            "    fastcgi_pass unix:%(socket_path)s; "
+            " }" % {'socket_path': version_path/'wsgi-app.sock'})
