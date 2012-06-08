@@ -27,7 +27,6 @@ serverurl = unix://%(home_path)s/supervisord.sock
 SUPERVISORD_PROGRAM_TEMPLATE = """
 [program:%(name)s]
 directory = %(directory)s
-command = %(command)s
 redirect_stderr = true
 stdout_logfile = %(directory)s/stdout.log
 startsecs = 2
@@ -121,9 +120,11 @@ class Sarge(object):
                 extra_program_stuff = ""
                 if depl.config.get('autorestart', None) == 'always':
                     extra_program_stuff = "autorestart = true\n"
+                command = depl.config.get('command')
+                if command is not None:
+                    extra_program_stuff = "command = %s\n" % command
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': depl.name,
-                    'command': depl.config['command'],
                     'directory': version_folder,
                     'extra_program_stuff': extra_program_stuff,
                 })

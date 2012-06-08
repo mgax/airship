@@ -20,7 +20,7 @@ class WorkflowTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': [{'name': 'testy', 'command': 'K'}]}, f)
+            json.dump({'deployments': [{'name': 'testy'}]}, f)
 
     def test_new_version(self):
         s = sarge.Sarge(self.tmp)
@@ -126,7 +126,7 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
-        self.configure({'deployments': [{'name': 'testy', 'command': 'echo'}]})
+        self.configure({'deployments': [{'name': 'testy'}]})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
