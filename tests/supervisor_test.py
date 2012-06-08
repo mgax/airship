@@ -36,7 +36,7 @@ def config_file_checker(cfg_path):
     return eq_config
 
 
-class ConfigurationTest(unittest.TestCase):
+class SupervisorConfigurationTest(unittest.TestCase):
 
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
