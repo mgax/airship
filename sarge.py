@@ -63,6 +63,7 @@ class Deployment(object):
 
     def activate_version(self, version_folder):
         self.active_version_folder = version_folder # TODO persist on disk
+        self.generate_nginx_configuration()
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             with open(version_folder/'quickapp.py', 'wb') as f:
@@ -73,7 +74,6 @@ class Deployment(object):
                     'socket_path': str(version_folder/'sock.fcgi'),
                 })
             self.config['command'] = "%s quickapp.py" % sys.executable
-        self.generate_nginx_configuration()
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
@@ -94,6 +94,7 @@ class Deployment(object):
                             "    fastcgi_param SCRIPT_NAME "";\n"
                             "    fastcgi_pass unix:%(socket_path)s;\n"
                             "}\n" % dict(entry, socket_path=socket_path))
+                    self.config['tmp-wsgi-app'] = entry['wsgi_app']
 
                 else:
                     raise NotImplementedError

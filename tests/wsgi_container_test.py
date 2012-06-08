@@ -68,7 +68,11 @@ class WsgiContainerTest(unittest.TestCase):
     def test_wsgi_app_works_via_fcgi(self):
         depl_config = {
             'name': 'testy',
-            'tmp-wsgi-app': 'wsgiref.simple_server:demo_app',
+            'urlmap': [
+                {'url': '/',
+                 'type': 'wsgi',
+                 'wsgi_app': 'wsgiref.simple_server:demo_app'},
+            ],
         }
         self.configure({'deployments': [depl_config]})
 
