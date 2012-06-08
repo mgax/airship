@@ -79,8 +79,12 @@ class Deployment(object):
         self.sarge.supervisorctl(['restart', self.name])
 
     def generate_nginx_configuration(self):
-        with open(self.active_version_folder/'nginx-site.conf', 'wb') as f:
-            pass
+        version_folder = self.active_version_folder
+        with open(version_folder/'nginx-site.conf', 'wb') as f:
+            for entry in self.config.get('urlmap', []):
+                f.write("location %(url)s {\n"
+                        "    alias %(version_folder)s/%(path)s;\n"
+                        "}\n" % dict(entry, version_folder=version_folder))
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])

@@ -41,3 +41,17 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_path/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "")
+
+    def test_static_folder_is_configured_in_nginx(self):
+        version_path = self.configure_and_activate({
+            'name': 'testy',
+            'urlmap': [
+                {'url': '/media',
+                 'type': 'static',
+                 'path': 'mymedia'},
+            ],
+        })
+        with open(version_path/'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        self.assert_equivalent(nginx_conf,
+            "location /media { alias %s/mymedia; }" % version_path)
