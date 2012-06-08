@@ -73,9 +73,14 @@ class Deployment(object):
                     'socket_path': str(version_folder/'sock.fcgi'),
                 })
             self.config['command'] = "%s quickapp.py" % sys.executable
+        self.generate_nginx_configuration()
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
+
+    def generate_nginx_configuration(self):
+        with open(self.active_version_folder/'nginx-site.conf', 'wb') as f:
+            pass
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])
