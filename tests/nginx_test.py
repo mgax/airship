@@ -29,16 +29,16 @@ class NginxConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
-        self.mock_supervisorctl = supervisorctl_patch.start()
-        self.addCleanup(supervisorctl_patch.stop)
 
     def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump(config, f)
 
     def configure_and_activate(self, app_config):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        self.configure({
+            'plugins': ['sarge:NginxPlugin'],
+            'deployments': [{'name': 'testy'}],
+        })
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')
         version_folder = path(deployment.new_version())
@@ -81,14 +81,14 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "server { "
-            "  location / { "
-            "    include /etc/nginx/fastcgi_params; "
-            "    fastcgi_param PATH_INFO $fastcgi_script_name; "
-            "    fastcgi_param SCRIPT_NAME ""; "
-            "    fastcgi_pass unix:%(socket_path)s; "
-            "  } "
-            "}" % {'socket_path': version_folder/'wsgi-app.sock'})
+            'server { '
+            '  location / { '
+            '    include /etc/nginx/fastcgi_params; '
+            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '    fastcgi_param SCRIPT_NAME ""; '
+            '    fastcgi_pass unix:%(socket_path)s; '
+            '  } '
+            '}' % {'socket_path': version_folder/'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -101,16 +101,16 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "server { "
-            "  location / { "
-            "    include /etc/nginx/fastcgi_params; "
-            "    fastcgi_param SCRIPT_FILENAME "
-                            "%(version_folder)s$fastcgi_script_name; "
-            "    fastcgi_param PATH_INFO $fastcgi_script_name; "
-            "    fastcgi_param SCRIPT_NAME ""; "
-            "    fastcgi_pass unix:%(version_folder)s/php.sock; "
-            "  } "
-            "}" % {'version_folder': version_folder})
+            'server { '
+            '  location / { '
+            '    include /etc/nginx/fastcgi_params; '
+            '    fastcgi_param SCRIPT_FILENAME '
+                            '%(version_folder)s$fastcgi_script_name; '
+            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '    fastcgi_param SCRIPT_NAME ""; '
+            '    fastcgi_pass unix:%(version_folder)s/php.sock; '
+            '  } '
+            '}' % {'version_folder': version_folder})
 
     def test_php_fcgi_startup_command_is_generated(self):
         version_folder = self.configure_and_activate({
@@ -124,9 +124,9 @@ class NginxConfigurationTest(unittest.TestCase):
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
         command = config.get('program:testy', 'command')
 
-        self.assertEqual(command, "/usr/bin/spawn-fcgi "
-                                  "-s %(version_folder)s/php.sock "
-                                  "-f /usr/bin/php5-cgi -n" % {
+        self.assertEqual(command, '/usr/bin/spawn-fcgi '
+                                  '-s %(version_folder)s/php.sock '
+                                  '-f /usr/bin/php5-cgi -n' % {
                                       'version_folder': version_folder,
                                   })
 
@@ -140,13 +140,13 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "server { "
-            "    listen: 8013; "
-            "    server_name: something.example.com; "
-            "}")
+            'server { '
+            '    listen 8013; '
+            '    server_name something.example.com; '
+            '}')
 
     def test_activate_triggers_nginx_service_reload(self):
         mock_subprocess.reset_mock()
         version_folder = self.configure_and_activate({})
-        self.assertEqual(mock_subprocess.check_call.mock_calls,
-                         [call(['service', 'nginx', 'reload'])])
+        self.assertIn(call(['service', 'nginx', 'reload']),
+                      mock_subprocess.check_call.mock_calls)

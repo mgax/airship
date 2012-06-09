@@ -54,9 +54,6 @@ def read_config(cfg_path):
 class WsgiContainerTest(unittest.TestCase):
 
     def setUp(self):
-        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
-        self.mock_supervisorctl = supervisorctl_patch.start()
-        self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
@@ -72,7 +69,10 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.kill)
 
     def test_wsgi_app_works_via_fcgi(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        self.configure({
+            'plugins': ['sarge:NginxPlugin'],
+            'deployments': [{'name': 'testy'}],
+        })
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
@@ -93,7 +93,7 @@ class WsgiContainerTest(unittest.TestCase):
 
         self.popen_with_cleanup(command, cwd=version_folder, shell=True)
 
-        socket_path = version_folder/'sock.fcgi'
+        socket_path = version_folder/'wsgi-app.sock'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 
