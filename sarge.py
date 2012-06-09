@@ -109,6 +109,11 @@ class Deployment(object):
                                          socket_path=socket_path,
                                          version_folder=version_folder))
 
+                    self.config['command'] = (
+                        "/usr/bin/spawn-fcgi -s %(socket_path)s "
+                        "-f /usr/bin/php5-cgi -n"
+                        % {'socket_path': socket_path})
+
                 else:
                     raise NotImplementedError
 

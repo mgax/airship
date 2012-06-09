@@ -6,6 +6,13 @@ from path import path
 from mock import patch
 
 
+def read_config(cfg_path):
+    import ConfigParser
+    config = ConfigParser.RawConfigParser()
+    config.read([cfg_path])
+    return config
+
+
 def setUpModule(self):
     global sarge
     import sarge
@@ -96,5 +103,21 @@ class NginxConfigurationTest(unittest.TestCase):
             "    fastcgi_pass unix:%(version_folder)s/php.sock; "
             " }" % {'version_folder': version_folder})
 
+    def test_php_fcgi_startup_command_is_generated(self):
+        version_folder = self.configure_and_activate({
+            'name': 'testy',
+            'urlmap': [
+                {'url': '/',
+                 'type': 'php',
+                 'path': '/myphpcode'},
+            ],
+        })
 
-        # TODO start php fastcgi
+        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        command = config.get('program:testy', 'command')
+
+        self.assertEqual(command, "/usr/bin/spawn-fcgi "
+                                  "-s %(version_folder)s/php.sock "
+                                  "-f /usr/bin/php5-cgi -n" % {
+                                      'version_folder': version_folder,
+                                  })
