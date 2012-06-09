@@ -123,3 +123,18 @@ class NginxConfigurationTest(unittest.TestCase):
                                   "-f /usr/bin/php5-cgi -n" % {
                                       'version_folder': version_folder,
                                   })
+
+    def test_configure_nginx_arbitrary_options(self):
+        version_folder = self.configure_and_activate({
+            'nginx_options': {
+                'server_name': 'something.example.com',
+                'listen': '8013',
+            },
+        })
+        with open(version_folder/'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        self.assert_equivalent(nginx_conf,
+            "server { "
+            "    listen: 8013; "
+            "    server_name: something.example.com; "
+            "}")

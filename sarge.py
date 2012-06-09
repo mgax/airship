@@ -91,6 +91,10 @@ class Deployment(object):
         with open(version_folder/'nginx-site.conf', 'wb') as f:
             f.write("server {\n")
 
+            nginx_options = app_config.get('nginx_options', {})
+            for key, value in sorted(nginx_options.items()):
+                f.write("  %s: %s;\n" % (key, value))
+
             for entry in app_config.get('urlmap', []):
                 if entry['type'] == 'static':
                     f.write("location %(url)s {\n"
