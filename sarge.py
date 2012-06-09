@@ -1,6 +1,7 @@
 import sys
 import json
 import subprocess
+from importlib import import_module
 from path import path
 import blinker
 
@@ -143,6 +144,12 @@ class Deployment(object):
         self.sarge.supervisorctl(['stop', self.name])
 
 
+def _get_named_object(name):
+    module_name, attr_name = name.split(':')
+    module = import_module(module_name)
+    return getattr(module, attr_name)
+
+
 class Sarge(object):
 
     def __init__(self, home_path):
@@ -154,6 +161,9 @@ class Sarge(object):
     def _configure(self):
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
             config = json.load(f)
+            for plugin_name in config.get('plugins', []):
+                plugin_factory = _get_named_object(plugin_name)
+                plugin_factory(self)
             for deployment_config in config.pop('deployments'):
                 depl = Deployment()
                 depl.name = deployment_config['name']
@@ -161,9 +171,6 @@ class Sarge(object):
                 depl.sarge = self
                 self.deployments.append(depl)
             self.config = config
-
-    def register_plugin(self, plugin_factory):
-        plugin_factory(self)
 
     def generate_supervisord_configuration(self):
         with open(self.home_path/SUPERVISORD_CFG, 'wb') as f:

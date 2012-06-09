@@ -16,25 +16,30 @@ def tearDownModule(self):
     _subprocess_patch.stop()
 
 
+mock_plugin = Mock()
+
+
 class PluginApiTest(unittest.TestCase):
 
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, deployments):
+    def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': deployments}, f)
+            json.dump(config, f)
 
-    def test_register_plugin_calls_the_callback(self):
-        self.configure([])
+    def test_plugin_named_in_config_file_gets_called(self):
+        self.configure({
+            'plugins': [__name__+':mock_plugin'],
+            'deployments': [],
+        })
+        mock_plugin.reset_mock()
         s = sarge.Sarge(self.tmp)
-        mock_plugin = Mock()
-        s.register_plugin(mock_plugin)
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
 
     def test_subscribe_to_activation_event(self):
-        self.configure([{'name': 'testy'}])
+        self.configure({'deployments': [{'name': 'testy'}]})
         s = sarge.Sarge(self.tmp)
         mock_handler = Mock(im_self=None)
         s.on_activate_version.connect(mock_handler)
