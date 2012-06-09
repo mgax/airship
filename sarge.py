@@ -177,7 +177,7 @@ class NginxPlugin(object):
 
             nginx_options = app_config.get('nginx_options', {})
             for key, value in sorted(nginx_options.items()):
-                f.write('  %s: %s;\n' % (key, value))
+                f.write('  %s %s;\n' % (key, value))
 
             for entry in app_config.get('urlmap', []):
                 if entry['type'] == 'static':

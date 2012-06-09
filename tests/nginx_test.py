@@ -141,8 +141,8 @@ class NginxConfigurationTest(unittest.TestCase):
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
-            '    listen: 8013; '
-            '    server_name: something.example.com; '
+            '    listen 8013; '
+            '    server_name something.example.com; '
             '}')
 
     def test_activate_triggers_nginx_service_reload(self):
