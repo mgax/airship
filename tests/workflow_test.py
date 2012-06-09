@@ -25,9 +25,9 @@ class WorkflowTest(unittest.TestCase):
     def test_new_version(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
-        self.assertTrue(version_path.isdir())
-        self.assertEqual(version_path.parent.parent, self.tmp)
+        version_folder = path(testy.new_version())
+        self.assertTrue(version_folder.isdir())
+        self.assertEqual(version_folder.parent.parent, self.tmp)
 
     def test_versions_have_different_paths(self):
         s = sarge.Sarge(self.tmp)
@@ -39,27 +39,27 @@ class WorkflowTest(unittest.TestCase):
     def test_activation_triggers_supervisord_reread(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
+        version_folder = path(testy.new_version())
 
         self.mock_supervisorctl.reset_mock()
-        testy.activate_version(version_path)
+        testy.activate_version(version_folder)
         self.assertIn(call(['reread']), self.mock_supervisorctl.mock_calls)
 
     def test_activation_triggers_supervisord_restart_deployment(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
+        version_folder = path(testy.new_version())
 
         self.mock_supervisorctl.reset_mock()
-        testy.activate_version(version_path)
+        testy.activate_version(version_folder)
         self.assertIn(call(['restart', 'testy']),
                       self.mock_supervisorctl.mock_calls)
 
     def test_start_deployment_invokes_supervisorctl_start(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
-        testy.activate_version(version_path)
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
 
         self.mock_supervisorctl.reset_mock()
         testy.start()
@@ -69,8 +69,8 @@ class WorkflowTest(unittest.TestCase):
     def test_stop_deployment_invokes_supervisorctl_stop(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
-        testy.activate_version(version_path)
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
 
         self.mock_supervisorctl.reset_mock()
         testy.stop()

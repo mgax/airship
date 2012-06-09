@@ -28,22 +28,22 @@ class NginxConfigurationTest(unittest.TestCase):
         self.configure({'deployments': [deployment_config]})
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment(deployment_config['name'])
-        version_path = path(deployment.new_version())
-        deployment.activate_version(version_path)
-        return version_path
+        version_folder = path(deployment.new_version())
+        deployment.activate_version(version_folder)
+        return version_folder
 
     def assert_equivalent(self, cfg1, cfg2):
         collapse = lambda s: re.sub('\s+', ' ', s).strip()
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_no_web_services_yields_blank_configuration(self):
-        version_path = self.configure_and_activate({'name': 'testy'})
-        with open(version_path/'nginx-site.conf', 'rb') as f:
+        version_folder = self.configure_and_activate({'name': 'testy'})
+        with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "")
 
     def test_static_folder_is_configured_in_nginx(self):
-        version_path = self.configure_and_activate({
+        version_folder = self.configure_and_activate({
             'name': 'testy',
             'urlmap': [
                 {'url': '/media',
@@ -51,13 +51,13 @@ class NginxConfigurationTest(unittest.TestCase):
                  'path': 'mymedia'},
             ],
         })
-        with open(version_path/'nginx-site.conf', 'rb') as f:
+        with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "location /media { alias %s/mymedia; }" % version_path)
+            "location /media { alias %s/mymedia; }" % version_folder)
 
     def test_wsgi_app_is_configured_in_nginx(self):
-        version_path = self.configure_and_activate({
+        version_folder = self.configure_and_activate({
             'name': 'testy',
             'urlmap': [
                 {'url': '/',
@@ -65,7 +65,7 @@ class NginxConfigurationTest(unittest.TestCase):
                  'wsgi_app': 'wsgiref.simple_server:demo_app'},
             ],
         })
-        with open(version_path/'nginx-site.conf', 'rb') as f:
+        with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             "location / { "
@@ -73,10 +73,10 @@ class NginxConfigurationTest(unittest.TestCase):
             "    fastcgi_param PATH_INFO $fastcgi_script_name; "
             "    fastcgi_param SCRIPT_NAME ""; "
             "    fastcgi_pass unix:%(socket_path)s; "
-            " }" % {'socket_path': version_path/'wsgi-app.sock'})
+            " }" % {'socket_path': version_folder/'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
-        version_path = self.configure_and_activate({
+        version_folder = self.configure_and_activate({
             'name': 'testy',
             'urlmap': [
                 {'url': '/',
@@ -84,17 +84,17 @@ class NginxConfigurationTest(unittest.TestCase):
                  'path': '/myphpcode'},
             ],
         })
-        with open(version_path/'nginx-site.conf', 'rb') as f:
+        with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             "location / { "
             "    include /etc/nginx/fastcgi_params; "
             "    fastcgi_param SCRIPT_FILENAME "
-                            "%(version_path)s$fastcgi_script_name; "
+                            "%(version_folder)s$fastcgi_script_name; "
             "    fastcgi_param PATH_INFO $fastcgi_script_name; "
             "    fastcgi_param SCRIPT_NAME ""; "
-            "    fastcgi_pass unix:%(version_path)s/php.sock; "
-            " }" % {'version_path': version_path})
+            "    fastcgi_pass unix:%(version_folder)s/php.sock; "
+            " }" % {'version_folder': version_folder})
 
 
         # TODO start php fastcgi
