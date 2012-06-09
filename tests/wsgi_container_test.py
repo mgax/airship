@@ -54,9 +54,6 @@ def read_config(cfg_path):
 class WsgiContainerTest(unittest.TestCase):
 
     def setUp(self):
-        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
-        self.mock_supervisorctl = supervisorctl_patch.start()
-        self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 

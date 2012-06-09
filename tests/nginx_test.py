@@ -29,9 +29,6 @@ class NginxConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
-        self.mock_supervisorctl = supervisorctl_patch.start()
-        self.addCleanup(supervisorctl_patch.stop)
 
     def configure(self, config):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
@@ -148,5 +145,5 @@ class NginxConfigurationTest(unittest.TestCase):
     def test_activate_triggers_nginx_service_reload(self):
         mock_subprocess.reset_mock()
         version_folder = self.configure_and_activate({})
-        self.assertEqual(mock_subprocess.check_call.mock_calls,
-                         [call(['service', 'nginx', 'reload'])])
+        self.assertEqual(mock_subprocess.check_call.mock_calls[-1],
+                         call(['service', 'nginx', 'reload']))

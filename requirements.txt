@@ -1,3 +1,4 @@
 meld3==0.6.8
 supervisor==3.0a12
 flup==1.0.2
+blinker==1.2
