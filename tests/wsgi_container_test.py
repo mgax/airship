@@ -69,7 +69,10 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.kill)
 
     def test_wsgi_app_works_via_fcgi(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        self.configure({
+            'plugins': ['sarge:NginxPlugin'],
+            'deployments': [{'name': 'testy'}],
+        })
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')

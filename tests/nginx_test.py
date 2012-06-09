@@ -35,7 +35,10 @@ class NginxConfigurationTest(unittest.TestCase):
             json.dump(config, f)
 
     def configure_and_activate(self, app_config):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        self.configure({
+            'plugins': ['sarge:NginxPlugin'],
+            'deployments': [{'name': 'testy'}],
+        })
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')
         version_folder = path(deployment.new_version())
@@ -145,5 +148,5 @@ class NginxConfigurationTest(unittest.TestCase):
     def test_activate_triggers_nginx_service_reload(self):
         mock_subprocess.reset_mock()
         version_folder = self.configure_and_activate({})
-        self.assertEqual(mock_subprocess.check_call.mock_calls[-1],
-                         call(['service', 'nginx', 'reload']))
+        self.assertIn(call(['service', 'nginx', 'reload']),
+                      mock_subprocess.check_call.mock_calls)

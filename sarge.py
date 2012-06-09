@@ -66,7 +66,6 @@ class Deployment(object):
     def activate_version(self, version_folder):
         self.active_version_folder = version_folder # TODO persist on disk
         self.sarge.on_activate_version.send(self, folder=version_folder)
-        self.generate_nginx_configuration()
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             with open(version_folder/'quickapp.py', 'wb') as f:
@@ -80,62 +79,6 @@ class Deployment(object):
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
-        subprocess.check_call(['service', 'nginx', 'reload'])
-
-    def generate_nginx_configuration(self):
-        version_folder = self.active_version_folder
-
-        app_config_path = version_folder/'sargeapp.yaml'
-        if app_config_path.exists():
-            with open(app_config_path, 'rb') as f:
-                app_config = json.load(f)
-        else:
-            app_config = {}
-
-        with open(version_folder/'nginx-site.conf', 'wb') as f:
-            f.write("server {\n")
-
-            nginx_options = app_config.get('nginx_options', {})
-            for key, value in sorted(nginx_options.items()):
-                f.write("  %s: %s;\n" % (key, value))
-
-            for entry in app_config.get('urlmap', []):
-                if entry['type'] == 'static':
-                    f.write("location %(url)s {\n"
-                            "    alias %(version_folder)s/%(path)s;\n"
-                            "}\n" % dict(entry, version_folder=version_folder))
-                elif entry['type'] == 'wsgi':
-                    socket_path = version_folder/'wsgi-app.sock'
-                    f.write("location %(url)s {\n"
-                            "    include /etc/nginx/fastcgi_params;\n"
-                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
-                            "    fastcgi_param SCRIPT_NAME "";\n"
-                            "    fastcgi_pass unix:%(socket_path)s;\n"
-                            "}\n" % dict(entry, socket_path=socket_path))
-                    self.config['tmp-wsgi-app'] = entry['wsgi_app']
-
-                elif entry['type'] == 'php':
-                    socket_path = version_folder/'php.sock'
-                    f.write("location %(url)s {\n"
-                            "    include /etc/nginx/fastcgi_params;\n"
-                            "    fastcgi_param SCRIPT_FILENAME "
-                                    "%(version_folder)s$fastcgi_script_name;\n"
-                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
-                            "    fastcgi_param SCRIPT_NAME "";\n"
-                            "    fastcgi_pass unix:%(socket_path)s;\n"
-                            "}\n" % dict(entry,
-                                         socket_path=socket_path,
-                                         version_folder=version_folder))
-
-                    self.config['command'] = (
-                        "/usr/bin/spawn-fcgi -s %(socket_path)s "
-                        "-f /usr/bin/php5-cgi -n"
-                        % {'socket_path': socket_path})
-
-                else:
-                    raise NotImplementedError
-
-            f.write("}\n")
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])
@@ -212,6 +155,72 @@ class Sarge(object):
 
     def status(self):
         self.supervisorctl(['status'])
+
+
+class NginxPlugin(object):
+
+    def __init__(self, sarge):
+        sarge.on_activate_version.connect(self.configure, weak=False)
+
+    def configure(self, depl, folder):
+        version_folder = folder
+
+        app_config_path = version_folder/'sargeapp.yaml'
+        if app_config_path.exists():
+            with open(app_config_path, 'rb') as f:
+                app_config = json.load(f)
+        else:
+            app_config = {}
+
+        with open(version_folder/'nginx-site.conf', 'wb') as f:
+            f.write("server {\n")
+
+            nginx_options = app_config.get('nginx_options', {})
+            for key, value in sorted(nginx_options.items()):
+                f.write("  %s: %s;\n" % (key, value))
+
+            for entry in app_config.get('urlmap', []):
+                if entry['type'] == 'static':
+                    f.write("location %(url)s {\n"
+                            "    alias %(version_folder)s/%(path)s;\n"
+                            "}\n" % dict(entry, version_folder=version_folder))
+                elif entry['type'] == 'wsgi':
+                    socket_path = version_folder/'wsgi-app.sock'
+                    f.write("location %(url)s {\n"
+                            "    include /etc/nginx/fastcgi_params;\n"
+                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
+                            "    fastcgi_param SCRIPT_NAME "";\n"
+                            "    fastcgi_pass unix:%(socket_path)s;\n"
+                            "}\n" % dict(entry, socket_path=socket_path))
+                    depl.config['tmp-wsgi-app'] = entry['wsgi_app']
+
+                elif entry['type'] == 'php':
+                    socket_path = version_folder/'php.sock'
+                    f.write("location %(url)s {\n"
+                            "    include /etc/nginx/fastcgi_params;\n"
+                            "    fastcgi_param SCRIPT_FILENAME "
+                                    "%(version_folder)s$fastcgi_script_name;\n"
+                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
+                            "    fastcgi_param SCRIPT_NAME "";\n"
+                            "    fastcgi_pass unix:%(socket_path)s;\n"
+                            "}\n" % dict(entry,
+                                         socket_path=socket_path,
+                                         version_folder=version_folder))
+
+                    depl.config['command'] = (
+                        "/usr/bin/spawn-fcgi -s %(socket_path)s "
+                        "-f /usr/bin/php5-cgi -n"
+                        % {'socket_path': socket_path})
+
+                else:
+                    raise NotImplementedError
+
+            f.write("}\n")
+
+        self.reload_nginx()
+
+    def reload_nginx(self):
+        subprocess.check_call(['service', 'nginx', 'reload'])
 
 
 def init_cmd(sarge, args):
