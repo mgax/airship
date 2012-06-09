@@ -6,8 +6,14 @@ from mock import patch, call
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 def invoke_wsgi_app(app, environ):
@@ -66,23 +72,28 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.kill)
 
     def test_wsgi_app_works_via_fcgi(self):
-        depl_config = {
-            'name': 'testy',
-            'tmp-wsgi-app': 'wsgiref.simple_server:demo_app',
-        }
-        self.configure({'deployments': [depl_config]})
+        self.configure({'deployments': [{'name': 'testy'}]})
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
-        testy.activate_version(version_path)
+        version_folder = path(testy.new_version())
+        app_config = {
+            'urlmap': [
+                {'url': '/',
+                 'type': 'wsgi',
+                 'wsgi_app': 'wsgiref.simple_server:demo_app'},
+            ],
+        }
+        with open(version_folder/'sargeapp.yaml', 'wb') as f:
+            json.dump(app_config, f)
+        testy.activate_version(version_folder)
 
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
         command = config.get('program:testy', 'command')
 
-        self.popen_with_cleanup(command, cwd=version_path, shell=True)
+        self.popen_with_cleanup(command, cwd=version_folder, shell=True)
 
-        socket_path = version_path/'sock.fcgi'
+        socket_path = version_folder/'sock.fcgi'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 

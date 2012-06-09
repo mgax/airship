@@ -7,8 +7,14 @@ from mock import patch
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 def read_config(cfg_path):
@@ -36,7 +42,7 @@ def config_file_checker(cfg_path):
     return eq_config
 
 
-class ConfigurationTest(unittest.TestCase):
+class SupervisorConfigurationTest(unittest.TestCase):
 
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
@@ -84,9 +90,7 @@ class ConfigurationTest(unittest.TestCase):
         eq_config('unix_http_server', 'chown', 'theone')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
-        self.configure({'deployments': [
-            {'name': 'testy', 'command': "echo starting up"},
-        ]})
+        self.configure({'deployments': [{'name': 'testy'}]})
 
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
@@ -117,7 +121,7 @@ class ConfigurationTest(unittest.TestCase):
 
     def test_autorestart_option(self):
         self.configure({'deployments': [
-            {'name': 'testy', 'command': "echo", 'autorestart': 'always'},
+            {'name': 'testy', 'autorestart': 'always'},
         ]})
 
         s = sarge.Sarge(self.tmp)
@@ -144,10 +148,10 @@ class ConfigurationTest(unittest.TestCase):
             testy = s.get_deployment('testy')
 
     def test_directory_updated_after_activation(self):
-        self.configure({'deployments': [{'name': 'testy', 'command': 'echo'}]})
+        self.configure({'deployments': [{'name': 'testy'}]})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
-        version_path = path(testy.new_version())
-        testy.activate_version(version_path)
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
         eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
-        eq_config('program:testy', 'directory', version_path)
+        eq_config('program:testy', 'directory', version_folder)
