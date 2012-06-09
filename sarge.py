@@ -173,49 +173,50 @@ class NginxPlugin(object):
             app_config = {}
 
         with open(version_folder/'nginx-site.conf', 'wb') as f:
-            f.write("server {\n")
+            f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
             for key, value in sorted(nginx_options.items()):
-                f.write("  %s: %s;\n" % (key, value))
+                f.write('  %s: %s;\n' % (key, value))
 
             for entry in app_config.get('urlmap', []):
                 if entry['type'] == 'static':
-                    f.write("location %(url)s {\n"
-                            "    alias %(version_folder)s/%(path)s;\n"
-                            "}\n" % dict(entry, version_folder=version_folder))
+                    f.write('location %(url)s {\n'
+                            '    alias %(version_folder)s/%(path)s;\n'
+                            '}\n' % dict(entry, version_folder=version_folder))
                 elif entry['type'] == 'wsgi':
                     socket_path = version_folder/'wsgi-app.sock'
-                    f.write("location %(url)s {\n"
-                            "    include /etc/nginx/fastcgi_params;\n"
-                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
-                            "    fastcgi_param SCRIPT_NAME "";\n"
-                            "    fastcgi_pass unix:%(socket_path)s;\n"
-                            "}\n" % dict(entry, socket_path=socket_path))
+                    f.write('location %(url)s {\n'
+                            '    include /etc/nginx/fastcgi_params;\n'
+                            '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
+                            '    fastcgi_param SCRIPT_NAME "";\n'
+                            '    fastcgi_pass unix:%(socket_path)s;\n'
+                            '}\n' % dict(entry,
+                                         socket_path=socket_path))
                     depl.config['tmp-wsgi-app'] = entry['wsgi_app']
 
                 elif entry['type'] == 'php':
                     socket_path = version_folder/'php.sock'
-                    f.write("location %(url)s {\n"
-                            "    include /etc/nginx/fastcgi_params;\n"
-                            "    fastcgi_param SCRIPT_FILENAME "
-                                    "%(version_folder)s$fastcgi_script_name;\n"
-                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
-                            "    fastcgi_param SCRIPT_NAME "";\n"
-                            "    fastcgi_pass unix:%(socket_path)s;\n"
-                            "}\n" % dict(entry,
+                    f.write('location %(url)s {\n'
+                            '    include /etc/nginx/fastcgi_params;\n'
+                            '    fastcgi_param SCRIPT_FILENAME '
+                                    '%(version_folder)s$fastcgi_script_name;\n'
+                            '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
+                            '    fastcgi_param SCRIPT_NAME "";\n'
+                            '    fastcgi_pass unix:%(socket_path)s;\n'
+                            '}\n' % dict(entry,
                                          socket_path=socket_path,
                                          version_folder=version_folder))
 
                     depl.config['command'] = (
-                        "/usr/bin/spawn-fcgi -s %(socket_path)s "
-                        "-f /usr/bin/php5-cgi -n"
+                        '/usr/bin/spawn-fcgi -s %(socket_path)s '
+                        '-f /usr/bin/php5-cgi -n'
                         % {'socket_path': socket_path})
 
                 else:
                     raise NotImplementedError
 
-            f.write("}\n")
+            f.write('}\n')
 
         self.reload_nginx()
 
