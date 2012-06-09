@@ -74,3 +74,27 @@ class NginxConfigurationTest(unittest.TestCase):
             "    fastcgi_param SCRIPT_NAME ""; "
             "    fastcgi_pass unix:%(socket_path)s; "
             " }" % {'socket_path': version_path/'wsgi-app.sock'})
+
+    def test_php_app_is_configured_in_nginx(self):
+        version_path = self.configure_and_activate({
+            'name': 'testy',
+            'urlmap': [
+                {'url': '/',
+                 'type': 'php',
+                 'path': '/myphpcode'},
+            ],
+        })
+        with open(version_path/'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        self.assert_equivalent(nginx_conf,
+            "location / { "
+            "    include /etc/nginx/fastcgi_params; "
+            "    fastcgi_param SCRIPT_FILENAME "
+                            "%(version_path)s$fastcgi_script_name; "
+            "    fastcgi_param PATH_INFO $fastcgi_script_name; "
+            "    fastcgi_param SCRIPT_NAME ""; "
+            "    fastcgi_pass unix:%(version_path)s/php.sock; "
+            " }" % {'version_path': version_path})
+
+
+        # TODO start php fastcgi

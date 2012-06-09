@@ -96,6 +96,19 @@ class Deployment(object):
                             "}\n" % dict(entry, socket_path=socket_path))
                     self.config['tmp-wsgi-app'] = entry['wsgi_app']
 
+                elif entry['type'] == 'php':
+                    socket_path = version_folder/'php.sock'
+                    f.write("location %(url)s {\n"
+                            "    include /etc/nginx/fastcgi_params;\n"
+                            "    fastcgi_param SCRIPT_FILENAME "
+                                    "%(version_folder)s$fastcgi_script_name;\n"
+                            "    fastcgi_param PATH_INFO $fastcgi_script_name;\n"
+                            "    fastcgi_param SCRIPT_NAME "";\n"
+                            "    fastcgi_pass unix:%(socket_path)s;\n"
+                            "}\n" % dict(entry,
+                                         socket_path=socket_path,
+                                         version_folder=version_folder))
+
                 else:
                     raise NotImplementedError
 
