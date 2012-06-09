@@ -159,6 +159,9 @@ class Sarge(object):
                 self.deployments.append(depl)
             self.config = config
 
+    def register_plugin(self, plugin_factory):
+        plugin_factory(self)
+
     def generate_supervisord_configuration(self):
         with open(self.home_path/SUPERVISORD_CFG, 'wb') as f:
             extra_server_stuff = ""
