@@ -7,8 +7,14 @@ from mock import patch
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 def read_config(cfg_path):

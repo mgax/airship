@@ -3,7 +3,7 @@ import tempfile
 import json
 import re
 from path import path
-from mock import patch
+from mock import patch, call
 
 
 def read_config(cfg_path):
@@ -14,8 +14,14 @@ def read_config(cfg_path):
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 class NginxConfigurationTest(unittest.TestCase):
@@ -138,3 +144,9 @@ class NginxConfigurationTest(unittest.TestCase):
             "    listen: 8013; "
             "    server_name: something.example.com; "
             "}")
+
+    def test_activate_triggers_nginx_service_reload(self):
+        mock_subprocess.reset_mock()
+        version_folder = self.configure_and_activate({})
+        self.assertEqual(mock_subprocess.check_call.mock_calls,
+                         [call(['service', 'nginx', 'reload'])])

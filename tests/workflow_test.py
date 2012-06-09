@@ -7,8 +7,14 @@ from mock import patch, call
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 class WorkflowTest(unittest.TestCase):
@@ -91,8 +97,8 @@ class SupervisorInvocationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         (self.tmp/sarge.DEPLOYMENT_CFG).write_bytes('{"deployments": []}')
 
-    @patch('sarge.subprocess')
-    def test_invoke_supervisorctl(self, mock_subprocess):
+    def test_invoke_supervisorctl(self):
+        mock_subprocess.reset_mock()
         s = sarge.Sarge(self.tmp)
         s.supervisorctl(['hello', 'world!'])
         self.assertEqual(mock_subprocess.check_call.mock_calls,

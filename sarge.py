@@ -77,6 +77,7 @@ class Deployment(object):
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
+        subprocess.check_call(['service', 'nginx', 'reload'])
 
     def generate_nginx_configuration(self):
         version_folder = self.active_version_folder

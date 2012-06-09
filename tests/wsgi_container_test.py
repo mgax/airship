@@ -6,8 +6,14 @@ from mock import patch, call
 
 
 def setUpModule(self):
-    global sarge
+    global sarge, _subprocess_patch, mock_subprocess
     import sarge
+    _subprocess_patch = patch('sarge.subprocess')
+    mock_subprocess = _subprocess_patch.start()
+
+
+def tearDownModule(self):
+    _subprocess_patch.stop()
 
 
 def invoke_wsgi_app(app, environ):
