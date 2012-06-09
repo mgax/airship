@@ -162,6 +162,8 @@ class NginxPlugin(object):
     def __init__(self, sarge):
         sarge.on_activate_version.connect(self.configure, weak=False)
 
+    fcgi_params_path = '/etc/nginx/fastcgi_params'
+
     def configure(self, depl, folder):
         version_folder = folder
 
@@ -187,18 +189,19 @@ class NginxPlugin(object):
                 elif entry['type'] == 'wsgi':
                     socket_path = version_folder/'wsgi-app.sock'
                     f.write('location %(url)s {\n'
-                            '    include /etc/nginx/fastcgi_params;\n'
+                            '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
                             '    fastcgi_param SCRIPT_NAME "";\n'
                             '    fastcgi_pass unix:%(socket_path)s;\n'
                             '}\n' % dict(entry,
-                                         socket_path=socket_path))
+                                         socket_path=socket_path,
+                                         fcgi_params_path=self.fcgi_params_path))
                     depl.config['tmp-wsgi-app'] = entry['wsgi_app']
 
                 elif entry['type'] == 'php':
                     socket_path = version_folder/'php.sock'
                     f.write('location %(url)s {\n'
-                            '    include /etc/nginx/fastcgi_params;\n'
+                            '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param SCRIPT_FILENAME '
                                     '%(version_folder)s$fastcgi_script_name;\n'
                             '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
@@ -206,7 +209,8 @@ class NginxPlugin(object):
                             '    fastcgi_pass unix:%(socket_path)s;\n'
                             '}\n' % dict(entry,
                                          socket_path=socket_path,
-                                         version_folder=version_folder))
+                                         version_folder=version_folder,
+                                         fcgi_params_path=self.fcgi_params_path))
 
                     depl.config['command'] = (
                         '/usr/bin/spawn-fcgi -s %(socket_path)s '
