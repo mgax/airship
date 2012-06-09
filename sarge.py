@@ -80,8 +80,16 @@ class Deployment(object):
 
     def generate_nginx_configuration(self):
         version_folder = self.active_version_folder
+
+        app_config_path = version_folder/'sargeapp.yaml'
+        if app_config_path.exists():
+            with open(app_config_path, 'rb') as f:
+                app_config = json.load(f)
+        else:
+            app_config = {}
+
         with open(version_folder/'nginx-site.conf', 'wb') as f:
-            for entry in self.config.get('urlmap', []):
+            for entry in app_config.get('urlmap', []):
                 if entry['type'] == 'static':
                     f.write("location %(url)s {\n"
                             "    alias %(version_folder)s/%(path)s;\n"

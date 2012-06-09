@@ -31,11 +31,13 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump(config, f)
 
-    def configure_and_activate(self, deployment_config):
-        self.configure({'deployments': [deployment_config]})
+    def configure_and_activate(self, app_config):
+        self.configure({'deployments': [{'name': 'testy'}]})
         s = sarge.Sarge(self.tmp)
-        deployment = s.get_deployment(deployment_config['name'])
+        deployment = s.get_deployment('testy')
         version_folder = path(deployment.new_version())
+        with open(version_folder/'sargeapp.yaml', 'wb') as f:
+            json.dump(app_config, f)
         deployment.activate_version(version_folder)
         return version_folder
 
@@ -44,14 +46,13 @@ class NginxConfigurationTest(unittest.TestCase):
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_no_web_services_yields_blank_configuration(self):
-        version_folder = self.configure_and_activate({'name': 'testy'})
+        version_folder = self.configure_and_activate({})
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "")
 
     def test_static_folder_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
-            'name': 'testy',
             'urlmap': [
                 {'url': '/media',
                  'type': 'static',
@@ -65,7 +66,6 @@ class NginxConfigurationTest(unittest.TestCase):
 
     def test_wsgi_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
-            'name': 'testy',
             'urlmap': [
                 {'url': '/',
                  'type': 'wsgi',
@@ -84,7 +84,6 @@ class NginxConfigurationTest(unittest.TestCase):
 
     def test_php_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
-            'name': 'testy',
             'urlmap': [
                 {'url': '/',
                  'type': 'php',
@@ -105,7 +104,6 @@ class NginxConfigurationTest(unittest.TestCase):
 
     def test_php_fcgi_startup_command_is_generated(self):
         version_folder = self.configure_and_activate({
-            'name': 'testy',
             'urlmap': [
                 {'url': '/',
                  'type': 'php',

@@ -66,19 +66,20 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.kill)
 
     def test_wsgi_app_works_via_fcgi(self):
-        depl_config = {
-            'name': 'testy',
+        self.configure({'deployments': [{'name': 'testy'}]})
+
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        app_config = {
             'urlmap': [
                 {'url': '/',
                  'type': 'wsgi',
                  'wsgi_app': 'wsgiref.simple_server:demo_app'},
             ],
         }
-        self.configure({'deployments': [depl_config]})
-
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
-        version_folder = path(testy.new_version())
+        with open(version_folder/'sargeapp.yaml', 'wb') as f:
+            json.dump(app_config, f)
         testy.activate_version(version_folder)
 
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
