@@ -93,7 +93,7 @@ class WsgiContainerTest(unittest.TestCase):
 
         self.popen_with_cleanup(command, cwd=version_folder, shell=True)
 
-        socket_path = version_folder/'sock.fcgi'
+        socket_path = version_folder/'wsgi-app.sock'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 

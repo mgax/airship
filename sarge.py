@@ -73,7 +73,7 @@ class Deployment(object):
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
                     'module_name': module_name,
                     'attribute_name': attribute_name,
-                    'socket_path': str(version_folder/'sock.fcgi'),
+                    'socket_path': str(version_folder/'wsgi-app.sock'),
                 })
             self.config['command'] = "%s quickapp.py" % sys.executable
         self.sarge.generate_supervisord_configuration()
