@@ -32,3 +32,14 @@ class PluginApiTest(unittest.TestCase):
         mock_plugin = Mock()
         s.register_plugin(mock_plugin)
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
+
+    def test_subscribe_to_activation_event(self):
+        self.configure([{'name': 'testy'}])
+        s = sarge.Sarge(self.tmp)
+        mock_handler = Mock(im_self=None)
+        s.on_activate_version.connect(mock_handler)
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+        self.assertEqual(mock_handler.mock_calls,
+                         [call(testy, folder=version_folder)])

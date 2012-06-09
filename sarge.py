@@ -2,6 +2,7 @@ import sys
 import json
 import subprocess
 from path import path
+import blinker
 
 
 DEPLOYMENT_CFG = 'deployments.yaml'
@@ -63,6 +64,7 @@ class Deployment(object):
 
     def activate_version(self, version_folder):
         self.active_version_folder = version_folder # TODO persist on disk
+        self.sarge.on_activate_version.send(self, folder=version_folder)
         self.generate_nginx_configuration()
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -144,6 +146,7 @@ class Deployment(object):
 class Sarge(object):
 
     def __init__(self, home_path):
+        self.on_activate_version = blinker.Signal()
         self.home_path = home_path
         self.deployments = []
         self._configure()
