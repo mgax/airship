@@ -89,6 +89,8 @@ class Deployment(object):
             app_config = {}
 
         with open(version_folder/'nginx-site.conf', 'wb') as f:
+            f.write("server {\n")
+
             for entry in app_config.get('urlmap', []):
                 if entry['type'] == 'static':
                     f.write("location %(url)s {\n"
@@ -124,6 +126,8 @@ class Deployment(object):
 
                 else:
                     raise NotImplementedError
+
+            f.write("}\n")
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])

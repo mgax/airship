@@ -49,7 +49,7 @@ class NginxConfigurationTest(unittest.TestCase):
         version_folder = self.configure_and_activate({})
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf, "")
+        self.assert_equivalent(nginx_conf, "server { }")
 
     def test_static_folder_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -62,7 +62,7 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "location /media { alias %s/mymedia; }" % version_folder)
+            "server { location /media { alias %s/mymedia; } }" % version_folder)
 
     def test_wsgi_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -75,12 +75,14 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "location / { "
+            "server { "
+            "  location / { "
             "    include /etc/nginx/fastcgi_params; "
             "    fastcgi_param PATH_INFO $fastcgi_script_name; "
             "    fastcgi_param SCRIPT_NAME ""; "
             "    fastcgi_pass unix:%(socket_path)s; "
-            " }" % {'socket_path': version_folder/'wsgi-app.sock'})
+            "  } "
+            "}" % {'socket_path': version_folder/'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -93,14 +95,16 @@ class NginxConfigurationTest(unittest.TestCase):
         with open(version_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            "location / { "
+            "server { "
+            "  location / { "
             "    include /etc/nginx/fastcgi_params; "
             "    fastcgi_param SCRIPT_FILENAME "
                             "%(version_folder)s$fastcgi_script_name; "
             "    fastcgi_param PATH_INFO $fastcgi_script_name; "
             "    fastcgi_param SCRIPT_NAME ""; "
             "    fastcgi_pass unix:%(version_folder)s/php.sock; "
-            " }" % {'version_folder': version_folder})
+            "  } "
+            "}" % {'version_folder': version_folder})
 
     def test_php_fcgi_startup_command_is_generated(self):
         version_folder = self.configure_and_activate({
