@@ -44,6 +44,8 @@ server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
 
+supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
+
 
 class Deployment(object):
 
@@ -75,7 +77,8 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(version_folder/'wsgi-app.sock'),
                 })
-            self.config['command'] = "%s quickapp.py" % sys.executable
+            self.config['command'] = "%s %s" % (sys.executable,
+                                                version_folder/'quickapp.py')
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
@@ -150,7 +153,7 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
-        base_args = ['supervisorctl', '-c', self.home_path/SUPERVISORD_CFG]
+        base_args = [supervisorctl_path, '-c', self.home_path/SUPERVISORD_CFG]
         return subprocess.check_call(base_args + cmd_args)
 
     def status(self):
