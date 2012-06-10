@@ -2,6 +2,7 @@ import unittest
 from StringIO import StringIO
 import json
 from fabric.api import env, run, sudo, put
+from fabric.contrib.files import exists
 from path import path
 
 
@@ -10,21 +11,23 @@ cfg['sarge-home'] = path('/var/local/sarge')
 cfg['sarge-venv'] = cfg['sarge-home']/'sandbox'
 
 
-def setUpModule():
-    global sarge
-    import sarge
-    env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
-    env['host_string'] = 'vagrant@192.168.13.13'
-
+def provision():
     sudo("mkdir '%(sarge-home)s'" % cfg)
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install -r /sarge-src/requirements.txt" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install importlib argparse" % cfg)
 
 
-def tearDownModule():
-    sudo("rm -rf '%(sarge-home)s'" % cfg)
+def setUpModule():
+    global sarge
+    import sarge
+    env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
+    env['host_string'] = 'vagrant@192.168.13.13'
+    if not exists(cfg['sarge-home']):
+        provision()
 
+
+def tearDownModule():
     from fabric.network import disconnect_all
     disconnect_all()
 
