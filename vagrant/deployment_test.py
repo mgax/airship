@@ -46,6 +46,8 @@ class VagrantDeploymentTest(unittest.TestCase):
     def tearDown(self):
         current_names = set(remote_listdir(cfg['sarge-home']))
         new_names = current_names - self._orig_names
+        if 'supervisord.pid' in new_names:
+            sudo("kill -9 `cat '%(sarge-home)s'/supervisord.pid`" % cfg)
         for name in new_names:
             sudo("rm -rf '%s'" % (cfg['sarge-home']/name,))
 
@@ -58,4 +60,6 @@ class VagrantDeploymentTest(unittest.TestCase):
         self.configure({'deployments': []})
         sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
               "'%(sarge-home)s' init" % cfg)
+        sudo("'%(sarge-venv)s'/bin/supervisord "
+             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
         assert run('pwd') == '/home/vagrant'
