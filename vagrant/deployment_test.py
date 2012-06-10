@@ -18,7 +18,7 @@ def setUpModule():
 
     sudo("mkdir '%(sarge-home)s'" % cfg)
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install -r /vagrant/requirements.txt" % cfg)
+    sudo("'%(sarge-venv)s'/bin/pip install -r /sarge-src/requirements.txt" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install importlib argparse" % cfg)
 
 
@@ -53,6 +53,6 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_ping(self):
         self.configure({'deployments': []})
-        sudo("'%(sarge-venv)s'/bin/python /vagrant/sarge.py "
+        sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
               "'%(sarge-home)s' init" % cfg)
         assert run('pwd') == '/home/vagrant'

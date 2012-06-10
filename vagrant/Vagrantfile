@@ -9,4 +9,6 @@ Vagrant::Config.run do |config|
 
   config.vm.provision :shell, :path => "provision.sh"
 
+  config.vm.share_folder "sarge-repo", "/sarge-src", "../"
+
 end
