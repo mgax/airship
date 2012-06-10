@@ -16,7 +16,6 @@ def setUpModule():
     env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
 
-    sudo("apt-get install -y python-virtualenv")
     sudo("mkdir '%(sarge-home)s'" % cfg)
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install -r /vagrant/requirements.txt" % cfg)
