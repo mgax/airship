@@ -77,7 +77,8 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(version_folder/'wsgi-app.sock'),
                 })
-            self.config['command'] = "%s quickapp.py" % sys.executable
+            self.config['command'] = "%s %s" % (sys.executable,
+                                                version_folder/'quickapp.py')
         self.sarge.generate_supervisord_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
