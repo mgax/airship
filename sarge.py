@@ -44,6 +44,8 @@ server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
 
+supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
+
 
 class Deployment(object):
 
@@ -150,7 +152,7 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
-        base_args = ['supervisorctl', '-c', self.home_path/SUPERVISORD_CFG]
+        base_args = [supervisorctl_path, '-c', self.home_path/SUPERVISORD_CFG]
         return subprocess.check_call(base_args + cmd_args)
 
     def status(self):

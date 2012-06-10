@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import json
+import sys
 from StringIO import StringIO
 from path import path
 from mock import patch, call
@@ -101,8 +102,9 @@ class SupervisorInvocationTest(unittest.TestCase):
         mock_subprocess.reset_mock()
         s = sarge.Sarge(self.tmp)
         s.supervisorctl(['hello', 'world!'])
+        supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
         self.assertEqual(mock_subprocess.check_call.mock_calls,
-                         [call(['supervisorctl',
+                         [call([supervisorctl_path,
                                 '-c', self.tmp/sarge.SUPERVISORD_CFG,
                                 'hello', 'world!'])])
 
