@@ -8,6 +8,7 @@ import blinker
 
 DEPLOYMENT_CFG = 'deployments.yaml'
 SUPERVISORD_CFG = 'supervisord.conf'
+RUN_FOLDER = 'run'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
@@ -68,7 +69,11 @@ class Deployment(object):
                 return version_folder
 
     def activate_version(self, version_folder):
-        self.active_version_folder = version_folder # TODO persist on disk
+        self.active_version_folder = version_folder
+        self.active_run_folder = run_folder = path(version_folder + '.run')
+        run_folder.mkdir()
+        symlink_path = self.sarge.run_links_folder/self.name
+        run_folder.symlink(symlink_path)
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -105,6 +110,13 @@ class Sarge(object):
         self.home_path = home_path
         self.deployments = []
         self._configure()
+
+    @property
+    def run_links_folder(self):
+        folder = self.home_path/RUN_FOLDER
+        if not folder.isdir():
+            folder.makedirs()
+        return folder
 
     def _configure(self):
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:

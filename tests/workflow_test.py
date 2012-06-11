@@ -43,6 +43,19 @@ class WorkflowTest(unittest.TestCase):
         version_path_2 = path(testy.new_version())
         self.assertNotEqual(version_path_1, version_path_2)
 
+    def test_activation_creates_runtime_folder(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        run_folder = path(version_folder + '.run')
+        self.assertTrue(run_folder.isdir())
+
+        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        self.assertTrue(symlink_path.islink())
+        self.assertEqual(symlink_path.readlink(), run_folder)
+
     def test_activation_triggers_supervisord_reread(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
