@@ -49,11 +49,13 @@ supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
 
 class Deployment(object):
 
+    DEPLOY_FOLDER_FMT = '%s.deploy'
+
     active_version_folder = None
 
     @property
     def folder(self):
-        return self.sarge.home_path/self.name
+        return self.sarge.home_path/(self.DEPLOY_FOLDER_FMT % self.name)
 
     def new_version(self):
         # TODO make sure we don't reuse version IDs. we probably need to
