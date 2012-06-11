@@ -89,7 +89,7 @@ class Deployment(object):
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
                     'module_name': module_name,
                     'attribute_name': attribute_name,
-                    'socket_path': str(version_folder/'wsgi-app.sock'),
+                    'socket_path': str(run_folder/'wsgi-app.sock'),
                 })
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
@@ -190,6 +190,7 @@ class NginxPlugin(object):
 
     def configure(self, depl, folder):
         version_folder = folder
+        run_folder = path(folder + '.run')
 
         app_config_path = version_folder/'sargeapp.yaml'
         if app_config_path.exists():
@@ -198,7 +199,7 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        with open(version_folder/'nginx-site.conf', 'wb') as f:
+        with open(run_folder/'nginx-site.conf', 'wb') as f:
             f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
@@ -211,7 +212,7 @@ class NginxPlugin(object):
                             '    alias %(version_folder)s/%(path)s;\n'
                             '}\n' % dict(entry, version_folder=version_folder))
                 elif entry['type'] == 'wsgi':
-                    socket_path = version_folder/'wsgi-app.sock'
+                    socket_path = run_folder/'wsgi-app.sock'
                     f.write('location %(url)s {\n'
                             '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
@@ -223,7 +224,7 @@ class NginxPlugin(object):
                     depl.config['tmp-wsgi-app'] = entry['wsgi_app']
 
                 elif entry['type'] == 'php':
-                    socket_path = version_folder/'php.sock'
+                    socket_path = run_folder/'php.sock'
                     f.write('location %(url)s {\n'
                             '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param SCRIPT_FILENAME '

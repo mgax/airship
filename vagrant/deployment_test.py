@@ -76,10 +76,11 @@ class VagrantDeploymentTest(unittest.TestCase):
              "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
         version_folder = path(sudo(sarge_cmd + "new_version testy"))
+        run_folder = path(version_folder + '.run')
 
         nginx_symlink = '/etc/nginx/sites-enabled/testy'
         sudo("ln -s '%s' '%s'"
-             % (version_folder/'nginx-site.conf', nginx_symlink))
+             % (run_folder/'nginx-site.conf', nginx_symlink))
         self.addCleanup(sudo, "rm %s" % nginx_symlink)
 
         url_cfg = {

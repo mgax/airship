@@ -87,13 +87,14 @@ class WsgiContainerTest(unittest.TestCase):
         with open(version_folder/'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
         testy.activate_version(version_folder)
+        run_folder = path(version_folder + '.run')
 
         config = read_config(testy.active_run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         command = config.get('program:testy', 'command')
 
         self.popen_with_cleanup(command, cwd=version_folder, shell=True)
 
-        socket_path = version_folder/'wsgi-app.sock'
+        socket_path = run_folder/'wsgi-app.sock'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 
