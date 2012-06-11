@@ -73,6 +73,8 @@ class Deployment(object):
         self.active_run_folder = run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         symlink_path = self.sarge.run_links_folder/self.name
+        if symlink_path.exists():
+            symlink_path.unlink()
         run_folder.symlink(symlink_path)
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
