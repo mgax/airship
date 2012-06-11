@@ -113,8 +113,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
-        eq_config('program:testy', 'stdout_logfile',
-                  version_folder/'stdout.log')
+        eq_config('program:testy', 'stdout_logfile', run_folder/'stdout.log')
         eq_config('program:testy', 'startsecs', '2')
         eq_config('program:testy', 'autorestart', MISSING)
 

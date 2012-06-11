@@ -35,7 +35,7 @@ SUPERVISORD_PROGRAM_TEMPLATE = """
 [program:%(name)s]
 directory = %(directory)s
 redirect_stderr = true
-stdout_logfile = %(directory)s/stdout.log
+stdout_logfile = %(run)s/stdout.log
 startsecs = 2
 %(extra_program_stuff)s
 """
@@ -99,6 +99,7 @@ class Deployment(object):
 
     def generate_supervisor_program_configuration(self):
         version_folder = self.active_version_folder
+        run_folder = path(version_folder + '.run')
         with open(self.active_run_folder/SUPERVISOR_DEPLOY_CFG, 'wb') as f:
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
@@ -109,6 +110,7 @@ class Deployment(object):
             f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                 'name': self.name,
                 'directory': version_folder,
+                'run': run_folder,
                 'extra_program_stuff': extra_program_stuff,
             })
 
