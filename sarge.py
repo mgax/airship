@@ -8,6 +8,7 @@ import blinker
 
 DEPLOYMENT_CFG = 'deployments.yaml'
 SUPERVISORD_CFG = 'supervisord.conf'
+SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 RUN_FOLDER = 'run'
 
 SUPERVISORD_CFG_TEMPLATE = """\
@@ -25,6 +26,9 @@ directory = %(home_path)s
 
 [supervisorctl]
 serverurl = unix://%(home_path)s/supervisord.sock
+
+[include]
+files = """ + path(RUN_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
 """
 
 SUPERVISORD_PROGRAM_TEMPLATE = """
@@ -89,9 +93,24 @@ class Deployment(object):
                 })
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
-        self.sarge.generate_supervisord_configuration()
+        self.generate_supervisor_program_configuration()
         self.sarge.supervisorctl(['reread'])
         self.sarge.supervisorctl(['restart', self.name])
+
+    def generate_supervisor_program_configuration(self):
+        version_folder = self.active_version_folder
+        with open(self.active_run_folder/SUPERVISOR_DEPLOY_CFG, 'wb') as f:
+            extra_program_stuff = ""
+            if self.config.get('autorestart', None) == 'always':
+                extra_program_stuff = "autorestart = true\n"
+            command = self.config.get('command')
+            if command is not None:
+                extra_program_stuff = "command = %s\n" % command
+            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                'name': self.name,
+                'directory': version_folder,
+                'extra_program_stuff': extra_program_stuff,
+            })
 
     def start(self):
         self.sarge.supervisorctl(['start', self.name])
@@ -146,21 +165,6 @@ class Sarge(object):
                 'home_path': self.home_path,
                 'extra_server_stuff': extra_server_stuff,
             })
-            for depl in self.deployments:
-                version_folder = depl.active_version_folder
-                if version_folder is None:
-                    continue
-                extra_program_stuff = ""
-                if depl.config.get('autorestart', None) == 'always':
-                    extra_program_stuff = "autorestart = true\n"
-                command = depl.config.get('command')
-                if command is not None:
-                    extra_program_stuff = "command = %s\n" % command
-                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                    'name': depl.name,
-                    'directory': version_folder,
-                    'extra_program_stuff': extra_program_stuff,
-                })
 
     def get_deployment(self, name):
         for depl in self.deployments:

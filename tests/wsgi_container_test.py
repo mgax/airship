@@ -88,7 +88,7 @@ class WsgiContainerTest(unittest.TestCase):
             json.dump(app_config, f)
         testy.activate_version(version_folder)
 
-        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        config = read_config(testy.active_run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         command = config.get('program:testy', 'command')
 
         self.popen_with_cleanup(command, cwd=version_folder, shell=True)

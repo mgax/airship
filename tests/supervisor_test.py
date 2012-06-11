@@ -73,6 +73,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
                   'unix://' + self.tmp/'supervisord.sock')
+        eq_config('include', 'files', 'run/*/supervisor_deploy.conf')
 
     def test_generate_supervisord_cfg_with_socket_owner(self):
         self.configure({
@@ -95,7 +96,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
         self.assertEqual(config.sections(),
                          ['unix_http_server', 'rpcinterface:supervisor',
-                          'supervisord', 'supervisorctl'])
+                          'supervisord', 'supervisorctl', 'include'])
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
         self.configure({'deployments': [
@@ -107,7 +108,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
@@ -126,7 +128,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'autorestart', 'true')
 
@@ -150,5 +153,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         eq_config('program:testy', 'directory', version_folder)
