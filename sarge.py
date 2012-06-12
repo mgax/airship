@@ -132,6 +132,7 @@ class Sarge(object):
 
     def __init__(self, home_path):
         self.on_activate_version = blinker.Signal()
+        self.on_initialize = blinker.Signal()
         self.home_path = home_path
         self.deployments = []
         self._configure()
@@ -198,9 +199,21 @@ class Sarge(object):
 class NginxPlugin(object):
 
     def __init__(self, sarge):
+        self.sarge = sarge
         sarge.on_activate_version.connect(self.configure, weak=False)
+        sarge.on_initialize.connect(self.initialize, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
+
+    FOLDER_NAME = 'nginx.plugin'
+
+    @property
+    def sites_folder(self):
+        return self.sarge.home_path/self.FOLDER_NAME/'sites'
+
+    def initialize(self, sarge):
+        if not self.sites_folder.isdir():
+            (self.sites_folder).makedirs()
 
     def configure(self, depl, folder):
         version_folder = folder
@@ -268,6 +281,7 @@ class NginxPlugin(object):
 
 
 def init_cmd(sarge, args):
+    sarge.on_initialize.send(sarge)
     (sarge.home_path/DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
 

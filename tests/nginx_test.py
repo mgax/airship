@@ -30,9 +30,9 @@ class NginxConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
     def configure_and_activate(self, app_config):
-        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')
@@ -46,6 +46,11 @@ class NginxConfigurationTest(unittest.TestCase):
     def assert_equivalent(self, cfg1, cfg2):
         collapse = lambda s: re.sub('\s+', ' ', s).strip()
         self.assertEqual(collapse(cfg1), collapse(cfg2))
+
+    def test_nginx_common_config_created_on_init(self):
+        sarge.init_cmd(sarge.Sarge(self.tmp), None)
+        nginx_sites = self.tmp/sarge.NginxPlugin.FOLDER_NAME/'sites'
+        self.assertTrue(nginx_sites.isdir())
 
     def test_no_web_services_yields_blank_configuration(self):
         version_folder, run_folder = self.configure_and_activate({})
