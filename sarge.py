@@ -83,6 +83,9 @@ class Deployment(object):
             version_folder = self.folder/str(c)
             if not version_folder.exists():
                 version_folder.makedirs()
+                if 'user' in self.config:
+                    subprocess.check_call(['chown', self.config['user']+':',
+                                           version_folder])
                 return version_folder
 
     def activate_version(self, version_folder):
