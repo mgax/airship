@@ -210,7 +210,7 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_activate_version.connect(self.configure, weak=False)
+        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
         sarge.on_initialize.connect(self.initialize, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
@@ -232,7 +232,7 @@ class NginxPlugin(object):
         if not all_sites_conf.isfile():
             all_sites_conf.write_text('include %s/*;' % self.sites_folder)
 
-    def configure(self, depl, folder):
+    def activate_deployment(self, depl, folder):
         version_folder = folder
         run_folder = path(folder + '.run')
 
