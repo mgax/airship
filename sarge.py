@@ -147,12 +147,15 @@ class Sarge(object):
         if not (self.home_path/DEPLOYMENT_CFG).isfile():
             self.config = {}
             return
+        def iter_deployments(config):
+            for conf in config.pop('deployments'):
+                yield conf
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
             config = json.load(f)
             for plugin_name in config.get('plugins', []):
                 plugin_factory = _get_named_object(plugin_name)
                 plugin_factory(self)
-            for deployment_config in config.pop('deployments'):
+            for deployment_config in iter_deployments(config):
                 depl = Deployment()
                 depl.name = deployment_config['name']
                 depl.config = deployment_config
