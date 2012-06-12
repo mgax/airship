@@ -243,7 +243,8 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        with open(run_folder/'nginx-site.conf', 'wb') as f:
+        run_conf = run_folder/'nginx-site.conf'
+        with open(run_conf, 'wb') as f:
             f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
@@ -291,6 +292,8 @@ class NginxPlugin(object):
 
             f.write('}\n')
 
+        ensure_folder(self.sites_folder)
+        force_symlink(run_conf, self.sites_folder/depl.name)
         self.reload_nginx()
 
     def reload_nginx(self):
