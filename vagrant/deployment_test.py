@@ -35,6 +35,17 @@ def tearDownModule(self):
     disconnect_all()
 
 
+def sarge_cmd(cmd):
+    base = ("'%(sarge-venv)s'/bin/python "
+            "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
+    return sudo(base + cmd)
+
+def supervisorctl_cmd(cmd):
+    base = ("'%(sarge-venv)s'/bin/supervisorctl "
+            "-c '%(sarge-home)s'/supervisord.conf " % cfg)
+    return sudo(base + cmd)
+
+
 def remote_listdir(name):
     cmd = ("python -c 'import json,os; "
            "print json.dumps(os.listdir(\"%s\"))'" % name)
@@ -49,6 +60,12 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
+        put_json({'plugins': ['sarge:NginxPlugin']},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
+                 use_sudo=True)
+        sarge_cmd("init")
+        sudo("'%(sarge-venv)s'/bin/supervisord "
+             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
     def tearDown(self):
         if 'supervisord.pid' in remote_listdir(cfg['sarge-home']):
@@ -56,30 +73,14 @@ class VagrantDeploymentTest(unittest.TestCase):
         sudo("rm -rf '%(sarge-home)s'" % cfg)
 
     def test_ping(self):
-        sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
-              "'%(sarge-home)s' init" % cfg)
-        sudo("'%(sarge-venv)s'/bin/supervisord "
-             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
-                 use_sudo=True)
-
-        sarge_cmd = ("'%(sarge-venv)s'/bin/python "
-                     "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
-        supervisorctl_cmd = ("'%(sarge-venv)s'/bin/supervisorctl "
-                             "-c '%(sarge-home)s'/supervisord.conf " % cfg)
-        sudo(sarge_cmd + "init")
-        sudo("'%(sarge-venv)s'/bin/supervisord "
-             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
-
         put_json({'name': 'testy'},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
-        version_folder = path(sudo(sarge_cmd + "new_version testy"))
+        version_folder = path(sarge_cmd("new_version testy"))
         run_folder = path(version_folder + '.run')
 
         url_cfg = {
@@ -93,7 +94,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    start_response("200 OK", [])\n'
                   '    return ["hello sarge!\\n"]\n')
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'), use_sudo=True)
-        sudo(sarge_cmd + "activate_version testy '%s'" % version_folder)
+        sarge_cmd("activate_version testy '%s'" % version_folder)
 
         try:
             import urllib
@@ -102,4 +103,4 @@ class VagrantDeploymentTest(unittest.TestCase):
             self.assertEqual(data, "hello sarge!\n")
 
         finally:
-            sudo(supervisorctl_cmd + "shutdown")
+            supervisorctl_cmd("shutdown")
