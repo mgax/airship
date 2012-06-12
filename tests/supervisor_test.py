@@ -4,6 +4,7 @@ import json
 import ConfigParser
 from path import path
 from mock import patch
+from utils import configure_deployment
 
 
 def setUpModule(self):
@@ -49,12 +50,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
 
     def configure(self, config):
-        deployment_config_folder = self.tmp/sarge.DEPLOYMENT_CFG_DIR
         for depl_config in config.pop('deployments', []):
-            deployment_config_folder.makedirs()
-            filename = depl_config['name'] + '.yaml'
-            with open(deployment_config_folder/filename, 'wb') as f:
-                json.dump(depl_config, f)
+            configure_deployment(self.tmp, depl_config)
         with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump(config, f)
 
