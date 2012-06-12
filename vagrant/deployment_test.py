@@ -1,6 +1,7 @@
 import unittest
 from StringIO import StringIO
 import json
+import urllib
 from fabric.api import env, run, sudo, put
 from fabric.contrib.files import exists
 from path import path
@@ -35,6 +36,17 @@ def tearDownModule(self):
     disconnect_all()
 
 
+def sarge_cmd(cmd):
+    base = ("'%(sarge-venv)s'/bin/python "
+            "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
+    return sudo(base + cmd)
+
+def supervisorctl_cmd(cmd):
+    base = ("'%(sarge-venv)s'/bin/supervisorctl "
+            "-c '%(sarge-home)s'/supervisord.conf " % cfg)
+    return sudo(base + cmd)
+
+
 def remote_listdir(name):
     cmd = ("python -c 'import json,os; "
            "print json.dumps(os.listdir(\"%s\"))'" % name)
@@ -45,42 +57,38 @@ def put_json(data, remote_path, **kwargs):
     return put(StringIO(json.dumps(data)), str(remote_path), **kwargs)
 
 
+def get_url(url):
+    f = urllib.urlopen('http://192.168.13.13:8013/')
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
-
-    def tearDown(self):
-        if 'supervisord.pid' in remote_listdir(cfg['sarge-home']):
-            sudo("kill -9 `cat '%(sarge-home)s'/supervisord.pid`" % cfg)
-        sudo("rm -rf '%(sarge-home)s'" % cfg)
-
-    def test_ping(self):
-        sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
-              "'%(sarge-home)s' init" % cfg)
-        sudo("'%(sarge-venv)s'/bin/supervisord "
-             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
-        assert run('pwd') == '/home/vagrant'
-
-    def test_deploy_simple_wsgi_app(self):
         put_json({'plugins': ['sarge:NginxPlugin']},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
                  use_sudo=True)
-
-        sarge_cmd = ("'%(sarge-venv)s'/bin/python "
-                     "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
-        supervisorctl_cmd = ("'%(sarge-venv)s'/bin/supervisorctl "
-                             "-c '%(sarge-home)s'/supervisord.conf " % cfg)
-        sudo(sarge_cmd + "init")
+        sarge_cmd("init")
         sudo("'%(sarge-venv)s'/bin/supervisord "
              "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
+    def tearDown(self):
+        supervisorctl_cmd("shutdown")
+        sudo("rm -rf '%(sarge-home)s'" % cfg)
+
+    def test_ping(self):
+        assert run('pwd') == '/home/vagrant'
+
+    def test_deploy_simple_wsgi_app(self):
         put_json({'name': 'testy'},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
-        version_folder = path(sudo(sarge_cmd + "new_version testy"))
-        run_folder = path(version_folder + '.run')
+        version_folder = path(sarge_cmd("new_version testy"))
 
         url_cfg = {
             'type': 'wsgi',
@@ -93,19 +101,45 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    start_response("200 OK", [])\n'
                   '    return ["hello sarge!\\n"]\n')
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'), use_sudo=True)
-        sudo(sarge_cmd + "activate_version testy '%s'" % version_folder)
-        sudo(supervisorctl_cmd + "reread")
-        sudo(supervisorctl_cmd + "add testy")
+        sarge_cmd("activate_version testy '%s'" % version_folder)
 
-        # force a stop/start because start waits for program to be up (2s)
-        sudo(supervisorctl_cmd + "stop testy")
-        sudo(supervisorctl_cmd + "start testy")
+        self.assertEqual(get_url('http://192.168.13.13:8013/'),
+                         "hello sarge!\n")
 
-        try:
-            import urllib
-            f = urllib.urlopen('http://192.168.13.13:8013/')
-            data = f.read()
-            self.assertEqual(data, "hello sarge!\n")
+    def test_deploy_new_app_version(self):
+        url_cfg = {
+            'type': 'wsgi',
+            'url': '/',
+            'wsgi_app': 'mytinyapp:theapp',
+        }
+        app_py_tmpl = ('def theapp(environ, start_response):\n'
+                       '    start_response("200 OK", [])\n'
+                       '    return ["hello sarge %s!\\n"]\n')
 
-        finally:
-            sudo(supervisorctl_cmd + "shutdown")
+        put_json({'name': 'testy'},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 use_sudo=True)
+
+        # deploy version one
+        version_folder_1 = path(sarge_cmd("new_version testy"))
+        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
+                 version_folder_1/'sargeapp.yaml', use_sudo=True)
+        put(StringIO(app_py_tmpl % 'one'),
+            str(version_folder_1/'mytinyapp.py'),
+            use_sudo=True)
+        sarge_cmd("activate_version testy '%s'" % version_folder_1)
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/'),
+                         "hello sarge one!\n")
+
+        # deploy version two
+        version_folder_2 = path(sarge_cmd("new_version testy"))
+        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
+                 version_folder_2/'sargeapp.yaml', use_sudo=True)
+        put(StringIO(app_py_tmpl % 'two'),
+            str(version_folder_2/'mytinyapp.py'),
+            use_sudo=True)
+        sarge_cmd("activate_version testy '%s'" % version_folder_2)
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/'),
+                         "hello sarge two!\n")
