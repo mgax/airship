@@ -53,6 +53,10 @@ server.run()
 supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
 
 
+def force_symlink(target, link):
+    target.symlink(link)
+
+
 class Deployment(object):
 
     DEPLOY_FOLDER_FMT = '%s.deploy'
