@@ -59,6 +59,11 @@ def force_symlink(target, link):
     target.symlink(link)
 
 
+def ensure_folder(folder):
+    if not folder.isdir():
+        folder.makedirs()
+
+
 class Deployment(object):
 
     DEPLOY_FOLDER_FMT = '%s.deploy'
