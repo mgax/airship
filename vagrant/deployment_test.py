@@ -18,8 +18,7 @@ def provision():
 
 
 def setUpModule(self):
-    global sarge
-    import sarge
+    import sarge; self.sarge = sarge
     env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
     if not exists(cfg['sarge-venv']):

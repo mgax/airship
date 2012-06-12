@@ -15,14 +15,13 @@ def read_config(cfg_path):
 
 
 def setUpModule(self):
-    global sarge, _subprocess_patch, mock_subprocess
-    import sarge
-    _subprocess_patch = patch('sarge.subprocess')
-    mock_subprocess = _subprocess_patch.start()
+    import sarge; self.sarge = sarge
+    self._subprocess_patch = patch('sarge.subprocess')
+    self.mock_subprocess = self._subprocess_patch.start()
 
 
 def tearDownModule(self):
-    _subprocess_patch.stop()
+    self._subprocess_patch.stop()
 
 
 class NginxConfigurationTest(unittest.TestCase):
