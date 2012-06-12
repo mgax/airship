@@ -206,5 +206,8 @@ class ShellTest(unittest.TestCase):
         with open(other_tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
             json.dump({'deployments': []}, f)
         sarge.main([str(other_tmp), 'init'])
-        self.assertItemsEqual([f.name for f in other_tmp.listdir()],
-                              [sarge.DEPLOYMENT_CFG, sarge.SUPERVISORD_CFG])
+        expected = [sarge.DEPLOYMENT_CFG,
+                    sarge.SUPERVISORD_CFG,
+                    sarge.DEPLOYMENT_CFG_DIR]
+        self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
+        self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())

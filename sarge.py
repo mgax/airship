@@ -7,6 +7,7 @@ import blinker
 
 
 DEPLOYMENT_CFG = 'deployments.yaml'
+DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 RUN_FOLDER = 'run'
@@ -256,6 +257,7 @@ class NginxPlugin(object):
 
 
 def init_cmd(sarge, args):
+    (sarge.home_path/DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
 
 
