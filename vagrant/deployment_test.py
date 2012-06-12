@@ -68,8 +68,7 @@ class VagrantDeploymentTest(unittest.TestCase):
              "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
     def tearDown(self):
-        if 'supervisord.pid' in remote_listdir(cfg['sarge-home']):
-            sudo("kill -9 `cat '%(sarge-home)s'/supervisord.pid`" % cfg)
+        supervisorctl_cmd("shutdown")
         sudo("rm -rf '%(sarge-home)s'" % cfg)
 
     def test_ping(self):
@@ -81,7 +80,6 @@ class VagrantDeploymentTest(unittest.TestCase):
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))
-        run_folder = path(version_folder + '.run')
 
         url_cfg = {
             'type': 'wsgi',
@@ -96,11 +94,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'), use_sudo=True)
         sarge_cmd("activate_version testy '%s'" % version_folder)
 
-        try:
-            import urllib
-            f = urllib.urlopen('http://192.168.13.13:8013/')
-            data = f.read()
-            self.assertEqual(data, "hello sarge!\n")
-
-        finally:
-            supervisorctl_cmd("shutdown")
+        import urllib
+        f = urllib.urlopen('http://192.168.13.13:8013/')
+        data = f.read()
+        self.assertEqual(data, "hello sarge!\n")
