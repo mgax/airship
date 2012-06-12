@@ -54,6 +54,8 @@ supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
 
 
 def force_symlink(target, link):
+    if link.exists():
+        link.unlink()
     target.symlink(link)
 
 
