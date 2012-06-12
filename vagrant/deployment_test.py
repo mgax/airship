@@ -1,6 +1,7 @@
 import unittest
 from StringIO import StringIO
 import json
+import urllib
 from fabric.api import env, run, sudo, put
 from fabric.contrib.files import exists
 from path import path
@@ -56,6 +57,14 @@ def put_json(data, remote_path, **kwargs):
     return put(StringIO(json.dumps(data)), str(remote_path), **kwargs)
 
 
+def get_url(url):
+    f = urllib.urlopen('http://192.168.13.13:8013/')
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -94,7 +103,5 @@ class VagrantDeploymentTest(unittest.TestCase):
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'), use_sudo=True)
         sarge_cmd("activate_version testy '%s'" % version_folder)
 
-        import urllib
-        f = urllib.urlopen('http://192.168.13.13:8013/')
-        data = f.read()
-        self.assertEqual(data, "hello sarge!\n")
+        self.assertEqual(get_url('http://192.168.13.13:8013/'),
+                         "hello sarge!\n")
