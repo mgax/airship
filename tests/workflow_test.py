@@ -1,7 +1,6 @@
 import unittest
 import tempfile
 import json
-import sys
 from StringIO import StringIO
 from path import path
 from mock import patch, call
@@ -127,23 +126,6 @@ class WorkflowTest(unittest.TestCase):
         self.mock_supervisorctl.reset_mock()
         s.status()
         self.assertIn(call(['status']), self.mock_supervisorctl.mock_calls)
-
-
-class SupervisorInvocationTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
-
-    def test_invoke_supervisorctl(self):
-        mock_subprocess.reset_mock()
-        s = sarge.Sarge(self.tmp)
-        s.supervisorctl(['hello', 'world!'])
-        supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
-        self.assertEqual(mock_subprocess.check_call.mock_calls,
-                         [call([supervisorctl_path,
-                                '-c', self.tmp/sarge.SUPERVISORD_CFG,
-                                'hello', 'world!'])])
 
 
 class ShellTest(unittest.TestCase):

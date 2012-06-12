@@ -1,9 +1,10 @@
 import unittest
 import tempfile
 import json
+import sys
 import ConfigParser
 from path import path
-from mock import patch
+from mock import patch, call
 from utils import configure_sarge, configure_deployment
 
 
@@ -139,3 +140,20 @@ class SupervisorConfigurationTest(unittest.TestCase):
         run_folder = testy.active_run_folder
         eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         eq_config('program:testy', 'directory', version_folder)
+
+
+class SupervisorInvocationTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = path(tempfile.mkdtemp())
+        self.addCleanup(self.tmp.rmtree)
+
+    def test_invoke_supervisorctl(self):
+        mock_subprocess.reset_mock()
+        s = sarge.Sarge(self.tmp)
+        s.supervisorctl(['hello', 'world!'])
+        supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
+        self.assertEqual(mock_subprocess.check_call.mock_calls,
+                         [call([supervisorctl_path,
+                                '-c', self.tmp/sarge.SUPERVISORD_CFG,
+                                'hello', 'world!'])])
