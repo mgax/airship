@@ -8,11 +8,10 @@ from path import path
 
 cfg = {}
 cfg['sarge-home'] = path('/var/local/sarge')
-cfg['sarge-venv'] = cfg['sarge-home']/'sandbox'
+cfg['sarge-venv'] = path('/var/local/sarge-sandbox')
 
 
 def provision():
-    sudo("mkdir '%(sarge-home)s'" % cfg)
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install -r /sarge-src/requirements.txt" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install importlib argparse" % cfg)
@@ -23,7 +22,7 @@ def setUpModule():
     import sarge
     env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    if not exists(cfg['sarge-home']):
+    if not exists(cfg['sarge-venv']):
         provision()
 
 
@@ -45,21 +44,14 @@ def put_json(data, remote_path, **kwargs):
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        self._orig_names = set(remote_listdir(cfg['sarge-home']))
+        sudo("mkdir '%(sarge-home)s'" % cfg)
 
     def tearDown(self):
-        current_names = set(remote_listdir(cfg['sarge-home']))
-        new_names = current_names - self._orig_names
-        if 'supervisord.pid' in new_names:
+        if 'supervisord.pid' in remote_listdir(cfg['sarge-home']):
             sudo("kill -9 `cat '%(sarge-home)s'/supervisord.pid`" % cfg)
-        for name in new_names:
-            sudo("rm -rf '%s'" % (cfg['sarge-home']/name,))
-
-    def configure(self, config):
-        put_json(config, cfg['sarge-home']/sarge.DEPLOYMENT_CFG, use_sudo=True)
+        sudo("rm -rf '%(sarge-home)s'" % cfg)
 
     def test_ping(self):
-        self.configure({'deployments': []})
         sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
               "'%(sarge-home)s' init" % cfg)
         sudo("'%(sarge-venv)s'/bin/supervisord "
@@ -67,10 +59,10 @@ class VagrantDeploymentTest(unittest.TestCase):
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        self.configure({
-            'plugins': ['sarge:NginxPlugin'],
-            'deployments': [{'name': 'testy'}],
-        })
+        put_json({'plugins': ['sarge:NginxPlugin']},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
+                 use_sudo=True)
+
         sarge_cmd = ("'%(sarge-venv)s'/bin/python "
                      "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
         supervisorctl_cmd = ("'%(sarge-venv)s'/bin/supervisorctl "
@@ -79,11 +71,16 @@ class VagrantDeploymentTest(unittest.TestCase):
         sudo("'%(sarge-venv)s'/bin/supervisord "
              "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
+        put_json({'name': 'testy'},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 use_sudo=True)
+
         version_folder = path(sudo(sarge_cmd + "new_version testy"))
+        run_folder = path(version_folder + '.run')
 
         nginx_symlink = '/etc/nginx/sites-enabled/testy'
         sudo("ln -s '%s' '%s'"
-             % (version_folder/'nginx-site.conf', nginx_symlink))
+             % (run_folder/'nginx-site.conf', nginx_symlink))
         self.addCleanup(sudo, "rm %s" % nginx_symlink)
 
         url_cfg = {

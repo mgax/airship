@@ -4,6 +4,7 @@ import json
 import ConfigParser
 from path import path
 from mock import patch
+from utils import configure_sarge, configure_deployment
 
 
 def setUpModule(self):
@@ -48,18 +49,12 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     def test_enumerate_deployments(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
-
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        self.configure({'deployments': []})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
@@ -73,12 +68,10 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
                   'unix://' + self.tmp/'supervisord.sock')
+        eq_config('include', 'files', 'run/*/supervisor_deploy.conf')
 
     def test_generate_supervisord_cfg_with_socket_owner(self):
-        self.configure({
-            'supervisord_socket_owner': 'theone',
-            'deployments': [],
-        })
+        configure_sarge(self.tmp, {'supervisord_socket_owner': 'theone'})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
@@ -87,68 +80,63 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('unix_http_server', 'chown', 'theone')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
-
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
         self.assertEqual(config.sections(),
                          ['unix_http_server', 'rpcinterface:supervisor',
-                          'supervisord', 'supervisorctl'])
+                          'supervisord', 'supervisorctl', 'include'])
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
-        self.configure({'deployments': [
-            {'name': 'testy', 'command': "echo starting up"},
-        ]})
-
+        configure_deployment(self.tmp, {'name': 'testy',
+                                        'command': "echo starting up"})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
-        eq_config('program:testy', 'stdout_logfile',
-                  version_folder/'stdout.log')
+        eq_config('program:testy', 'stdout_logfile', run_folder/'stdout.log')
         eq_config('program:testy', 'startsecs', '2')
         eq_config('program:testy', 'autorestart', MISSING)
 
     def test_autorestart_option(self):
-        self.configure({'deployments': [
-            {'name': 'testy', 'autorestart': 'always'},
-        ]})
-
+        configure_deployment(self.tmp, {'name': 'testy',
+                                        'autorestart': 'always'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'autorestart', 'true')
 
     def test_get_deployment(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
-
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         self.assertEqual(testy.name, 'testy')
 
     def test_get_deployment_invalid_name(self):
-        self.configure({'deployments': []})
-
         s = sarge.Sarge(self.tmp)
         with self.assertRaises(KeyError):
             testy = s.get_deployment('testy')
 
     def test_directory_updated_after_activation(self):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         eq_config('program:testy', 'directory', version_folder)

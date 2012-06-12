@@ -3,6 +3,7 @@ import tempfile
 import json
 from path import path
 from mock import patch, call
+from utils import configure_sarge, configure_deployment
 
 
 def setUpModule(self):
@@ -57,10 +58,6 @@ class WsgiContainerTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     def popen_with_cleanup(self, *args, **kwargs):
         import subprocess
         p = subprocess.Popen(*args, **kwargs)
@@ -69,10 +66,8 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.kill)
 
     def test_wsgi_app_works_via_fcgi(self):
-        self.configure({
-            'plugins': ['sarge:NginxPlugin'],
-            'deployments': [{'name': 'testy'}],
-        })
+        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
+        configure_deployment(self.tmp, {'name': 'testy'})
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
@@ -87,13 +82,14 @@ class WsgiContainerTest(unittest.TestCase):
         with open(version_folder/'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
         testy.activate_version(version_folder)
+        run_folder = path(version_folder + '.run')
 
-        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        config = read_config(testy.active_run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         command = config.get('program:testy', 'command')
 
         self.popen_with_cleanup(command, cwd=version_folder, shell=True)
 
-        socket_path = version_folder/'wsgi-app.sock'
+        socket_path = run_folder/'wsgi-app.sock'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 

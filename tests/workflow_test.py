@@ -5,6 +5,7 @@ import sys
 from StringIO import StringIO
 from path import path
 from mock import patch, call
+from utils import configure_deployment
 
 
 def setUpModule(self):
@@ -26,8 +27,7 @@ class WorkflowTest(unittest.TestCase):
         self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': [{'name': 'testy'}]}, f)
+        configure_deployment(self.tmp, {'name': 'testy'})
 
     def test_new_version(self):
         s = sarge.Sarge(self.tmp)
@@ -42,6 +42,45 @@ class WorkflowTest(unittest.TestCase):
         version_path_1 = path(testy.new_version())
         version_path_2 = path(testy.new_version())
         self.assertNotEqual(version_path_1, version_path_2)
+
+    def test_activation_creates_runtime_folder(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        run_folder = path(version_folder + '.run')
+        self.assertTrue(run_folder.isdir())
+
+        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        self.assertTrue(symlink_path.islink())
+        self.assertEqual(symlink_path.readlink(), run_folder)
+
+    def test_activation_next_version_overwrites_symlink(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder_1 = path(testy.new_version())
+        testy.activate_version(version_folder_1)
+        version_folder_2 = path(testy.new_version())
+        testy.activate_version(version_folder_2)
+
+        run_folder_2 = path(version_folder_2 + '.run')
+        self.assertTrue(run_folder_2.isdir())
+
+        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        self.assertTrue(symlink_path.islink())
+        self.assertEqual(symlink_path.readlink(), run_folder_2)
+
+    def test_activation_of_new_version_clears_old_runtime_folder(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder_1 = path(testy.new_version())
+        testy.activate_version(version_folder_1)
+        version_folder_2 = path(testy.new_version())
+        testy.activate_version(version_folder_2)
+
+        run_folder_1 = path(version_folder_1 + '.run')
+        self.assertFalse(run_folder_1.exists())
 
     def test_activation_triggers_supervisord_reread(self):
         s = sarge.Sarge(self.tmp)
@@ -96,7 +135,6 @@ class SupervisorInvocationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        (self.tmp/sarge.DEPLOYMENT_CFG).write_bytes('{"deployments": []}')
 
     def test_invoke_supervisorctl(self):
         mock_subprocess.reset_mock()
@@ -115,14 +153,10 @@ class ShellTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         mock_stdout = StringIO()
         with patch('sys.stdout', mock_stdout):
             sarge.main([str(self.tmp), 'new_version', 'testy'])
@@ -131,7 +165,7 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
@@ -144,26 +178,26 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         sarge.main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
     @patch('sarge.Deployment.stop')
     def test_stop_calls_api_method(self, mock_stop):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         sarge.main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
     @patch('sarge.Sarge.status')
     def test_stop_calls_api_method(self, mock_status):
-        self.configure({'deployments': []})
         sarge.main([str(self.tmp), 'status'])
         self.assertEqual(mock_status.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
-        self.configure({'deployments': []})
-        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
-                              [sarge.DEPLOYMENT_CFG])
-        sarge.main([str(self.tmp), 'init'])
-        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
-                              [sarge.DEPLOYMENT_CFG, sarge.SUPERVISORD_CFG])
+        other_tmp = path(tempfile.mkdtemp())
+        self.addCleanup(other_tmp.rmtree)
+
+        sarge.main([str(other_tmp), 'init'])
+        expected = [sarge.SUPERVISORD_CFG, sarge.DEPLOYMENT_CFG_DIR]
+        self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
+        self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())
