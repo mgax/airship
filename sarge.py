@@ -150,9 +150,7 @@ class Sarge(object):
         else:
             config = {}
 
-        def iter_deployments(config):
-            for conf in config.pop('deployments', []):
-                yield conf
+        def iter_deployments():
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
                 for depl_cfg_path in (deployment_config_folder).listdir():
@@ -161,7 +159,7 @@ class Sarge(object):
         for plugin_name in config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
             plugin_factory(self)
-        for deployment_config in iter_deployments(config):
+        for deployment_config in iter_deployments():
             depl = Deployment()
             depl.name = deployment_config['name']
             depl.config = deployment_config

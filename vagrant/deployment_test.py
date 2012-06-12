@@ -51,11 +51,7 @@ class VagrantDeploymentTest(unittest.TestCase):
             sudo("kill -9 `cat '%(sarge-home)s'/supervisord.pid`" % cfg)
         sudo("rm -rf '%(sarge-home)s'" % cfg)
 
-    def configure(self, config):
-        put_json(config, cfg['sarge-home']/sarge.DEPLOYMENT_CFG, use_sudo=True)
-
     def test_ping(self):
-        self.configure({'deployments': []})
         sudo("'%(sarge-venv)s'/bin/python /sarge-src/sarge.py "
               "'%(sarge-home)s' init" % cfg)
         sudo("'%(sarge-venv)s'/bin/supervisord "
@@ -63,10 +59,10 @@ class VagrantDeploymentTest(unittest.TestCase):
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        self.configure({
-            'plugins': ['sarge:NginxPlugin'],
-            'deployments': [{'name': 'testy'}],
-        })
+        put_json({'plugins': ['sarge:NginxPlugin']},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
+                 use_sudo=True)
+
         sarge_cmd = ("'%(sarge-venv)s'/bin/python "
                      "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
         supervisorctl_cmd = ("'%(sarge-venv)s'/bin/supervisorctl "
@@ -74,6 +70,10 @@ class VagrantDeploymentTest(unittest.TestCase):
         sudo(sarge_cmd + "init")
         sudo("'%(sarge-venv)s'/bin/supervisord "
              "-c '%(sarge-home)s'/supervisord.conf" % cfg)
+
+        put_json({'name': 'testy'},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 use_sudo=True)
 
         version_folder = path(sudo(sarge_cmd + "new_version testy"))
         run_folder = path(version_folder + '.run')
