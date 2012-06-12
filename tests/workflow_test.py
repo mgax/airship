@@ -5,6 +5,7 @@ import sys
 from StringIO import StringIO
 from path import path
 from mock import patch, call
+from utils import configure_deployment
 
 
 def setUpModule(self):
@@ -26,8 +27,7 @@ class WorkflowTest(unittest.TestCase):
         self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': [{'name': 'testy'}]}, f)
+        configure_deployment(self.tmp, {'name': 'testy'})
 
     def test_new_version(self):
         s = sarge.Sarge(self.tmp)
@@ -135,7 +135,6 @@ class SupervisorInvocationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        (self.tmp/sarge.DEPLOYMENT_CFG).write_bytes('{"deployments": []}')
 
     def test_invoke_supervisorctl(self):
         mock_subprocess.reset_mock()
@@ -154,14 +153,10 @@ class ShellTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         mock_stdout = StringIO()
         with patch('sys.stdout', mock_stdout):
             sarge.main([str(self.tmp), 'new_version', 'testy'])
@@ -170,7 +165,7 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
@@ -183,13 +178,13 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         sarge.main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
     @patch('sarge.Deployment.stop')
     def test_stop_calls_api_method(self, mock_stop):
-        self.configure({'deployments': [{'name': 'testy'}]})
+        configure_deployment(self.tmp, {'name': 'testy'})
         sarge.main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
