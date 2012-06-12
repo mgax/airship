@@ -106,7 +106,7 @@ class Deployment(object):
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
         self.generate_supervisor_program_configuration()
-        self.sarge.supervisorctl(['reread'])
+        self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
 
     def generate_supervisor_program_configuration(self):
