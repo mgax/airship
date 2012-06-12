@@ -144,6 +144,9 @@ class Sarge(object):
         return folder
 
     def _configure(self):
+        if not (self.home_path/DEPLOYMENT_CFG).isfile():
+            self.config = {}
+            return
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
             config = json.load(f)
             for plugin_name in config.get('plugins', []):
