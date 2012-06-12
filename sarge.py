@@ -144,9 +144,11 @@ class Sarge(object):
         return folder
 
     def _configure(self):
-        if not (self.home_path/DEPLOYMENT_CFG).isfile():
-            self.config = {}
-            return
+        if (self.home_path/DEPLOYMENT_CFG).isfile():
+            with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
+                config = json.load(f)
+        else:
+            config = {}
 
         def iter_deployments(config):
             for conf in config.pop('deployments', []):
@@ -156,18 +158,17 @@ class Sarge(object):
                 for depl_cfg_path in (deployment_config_folder).listdir():
                     yield json.loads(depl_cfg_path.bytes())
 
-        with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-            config = json.load(f)
-            for plugin_name in config.get('plugins', []):
-                plugin_factory = _get_named_object(plugin_name)
-                plugin_factory(self)
-            for deployment_config in iter_deployments(config):
-                depl = Deployment()
-                depl.name = deployment_config['name']
-                depl.config = deployment_config
-                depl.sarge = self
-                self.deployments.append(depl)
-            self.config = config
+        for plugin_name in config.get('plugins', []):
+            plugin_factory = _get_named_object(plugin_name)
+            plugin_factory(self)
+        for deployment_config in iter_deployments(config):
+            depl = Deployment()
+            depl.name = deployment_config['name']
+            depl.config = deployment_config
+            depl.sarge = self
+            self.deployments.append(depl)
+
+        self.config = config
 
     def generate_supervisord_configuration(self):
         with open(self.home_path/SUPERVISORD_CFG, 'wb') as f:
