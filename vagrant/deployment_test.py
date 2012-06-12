@@ -94,12 +94,6 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    return ["hello sarge!\\n"]\n')
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'), use_sudo=True)
         sudo(sarge_cmd + "activate_version testy '%s'" % version_folder)
-        sudo(supervisorctl_cmd + "reread")
-        sudo(supervisorctl_cmd + "add testy")
-
-        # force a stop/start because start waits for program to be up (2s)
-        sudo(supervisorctl_cmd + "stop testy")
-        sudo(supervisorctl_cmd + "start testy")
 
         try:
             import urllib
