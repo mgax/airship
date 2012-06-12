@@ -53,6 +53,17 @@ server.run()
 supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
 
 
+def force_symlink(target, link):
+    if link.exists() or link.islink():
+        link.unlink()
+    target.symlink(link)
+
+
+def ensure_folder(folder):
+    if not folder.isdir():
+        folder.makedirs()
+
+
 class Deployment(object):
 
     DEPLOY_FOLDER_FMT = '%s.deploy'
@@ -80,8 +91,7 @@ class Deployment(object):
         symlink_path = self.sarge.run_links_folder/self.name
         if symlink_path.exists():
             symlink_path.readlink().rmtree()
-            symlink_path.unlink()
-        run_folder.symlink(symlink_path)
+        force_symlink(run_folder, symlink_path)
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -132,6 +142,7 @@ class Sarge(object):
 
     def __init__(self, home_path):
         self.on_activate_version = blinker.Signal()
+        self.on_initialize = blinker.Signal()
         self.home_path = home_path
         self.deployments = []
         self._configure()
@@ -198,11 +209,30 @@ class Sarge(object):
 class NginxPlugin(object):
 
     def __init__(self, sarge):
-        sarge.on_activate_version.connect(self.configure, weak=False)
+        self.sarge = sarge
+        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+        sarge.on_initialize.connect(self.initialize, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
-    def configure(self, depl, folder):
+    FOLDER_NAME = 'nginx.plugin'
+
+    @property
+    def folder(self):
+        return self.sarge.home_path/self.FOLDER_NAME
+
+    @property
+    def sites_folder(self):
+        return self.folder/'sites'
+
+    def initialize(self, sarge):
+        if not self.sites_folder.isdir():
+            (self.sites_folder).makedirs()
+        all_sites_conf = self.folder/'all_sites.conf'
+        if not all_sites_conf.isfile():
+            all_sites_conf.write_text('include %s/*;' % self.sites_folder)
+
+    def activate_deployment(self, depl, folder):
         version_folder = folder
         run_folder = path(folder + '.run')
 
@@ -213,7 +243,8 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        with open(run_folder/'nginx-site.conf', 'wb') as f:
+        run_conf = run_folder/'nginx-site.conf'
+        with open(run_conf, 'wb') as f:
             f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
@@ -261,6 +292,8 @@ class NginxPlugin(object):
 
             f.write('}\n')
 
+        ensure_folder(self.sites_folder)
+        force_symlink(run_conf, self.sites_folder/depl.name)
         self.reload_nginx()
 
     def reload_nginx(self):
@@ -268,6 +301,7 @@ class NginxPlugin(object):
 
 
 def init_cmd(sarge, args):
+    sarge.on_initialize.send(sarge)
     (sarge.home_path/DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
 

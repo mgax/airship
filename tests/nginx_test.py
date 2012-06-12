@@ -15,14 +15,13 @@ def read_config(cfg_path):
 
 
 def setUpModule(self):
-    global sarge, _subprocess_patch, mock_subprocess
-    import sarge
-    _subprocess_patch = patch('sarge.subprocess')
-    mock_subprocess = _subprocess_patch.start()
+    import sarge; self.sarge = sarge
+    self._subprocess_patch = patch('sarge.subprocess')
+    self.mock_subprocess = self._subprocess_patch.start()
 
 
 def tearDownModule(self):
-    _subprocess_patch.stop()
+    self._subprocess_patch.stop()
 
 
 class NginxConfigurationTest(unittest.TestCase):
@@ -30,9 +29,9 @@ class NginxConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
     def configure_and_activate(self, app_config):
-        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')
@@ -47,11 +46,30 @@ class NginxConfigurationTest(unittest.TestCase):
         collapse = lambda s: re.sub('\s+', ' ', s).strip()
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
+    def test_nginx_common_config_created_on_init(self):
+        sarge.init_cmd(sarge.Sarge(self.tmp), None)
+        nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
+        nginx_sites = nginx_folder/'sites'
+        self.assertTrue(nginx_sites.isdir())
+
+        nginx_common = nginx_folder/'all_sites.conf'
+        self.assertTrue(nginx_common.isfile())
+        self.assertEqual(nginx_common.text(),
+                         'include ' + nginx_folder + '/sites/*;')
+
     def test_no_web_services_yields_blank_configuration(self):
         version_folder, run_folder = self.configure_and_activate({})
         with open(run_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "server { }")
+
+    def test_activation_creates_symlink_in_sites_folder(self):
+        version_folder, run_folder = self.configure_and_activate({})
+        nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
+        link_path = nginx_folder/'sites'/'testy'
+        link_target = run_folder/'nginx-site.conf'
+        self.assertTrue(link_path.islink())
+        self.assertEqual(link_path.readlink(), link_target)
 
     def test_static_folder_is_configured_in_nginx(self):
         version_folder, run_folder = self.configure_and_activate({

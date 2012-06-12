@@ -17,16 +17,20 @@ def provision():
     sudo("'%(sarge-venv)s'/bin/pip install importlib argparse" % cfg)
 
 
-def setUpModule():
-    global sarge
-    import sarge
+def setUpModule(self):
+    import sarge; self.sarge = sarge
     env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
     if not exists(cfg['sarge-venv']):
         provision()
 
+    self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
+    nginx_all_sites = cfg['sarge-home']/'nginx.plugin'/'all_sites.conf'
+    sudo("ln -s '%s' '%s'" % (nginx_all_sites, self._nginx_symlink))
 
-def tearDownModule():
+
+def tearDownModule(self):
+    sudo("rm %s" % self._nginx_symlink)
     from fabric.network import disconnect_all
     disconnect_all()
 
@@ -77,11 +81,6 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         version_folder = path(sudo(sarge_cmd + "new_version testy"))
         run_folder = path(version_folder + '.run')
-
-        nginx_symlink = '/etc/nginx/sites-enabled/testy'
-        sudo("ln -s '%s' '%s'"
-             % (run_folder/'nginx-site.conf', nginx_symlink))
-        self.addCleanup(sudo, "rm %s" % nginx_symlink)
 
         url_cfg = {
             'type': 'wsgi',
