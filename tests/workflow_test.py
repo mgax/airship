@@ -200,9 +200,11 @@ class ShellTest(unittest.TestCase):
         self.assertEqual(mock_status.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
-        self.configure({'deployments': []})
-        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
-                              [sarge.DEPLOYMENT_CFG])
-        sarge.main([str(self.tmp), 'init'])
-        self.assertItemsEqual([f.name for f in self.tmp.listdir()],
+        other_tmp = path(tempfile.mkdtemp())
+        self.addCleanup(other_tmp.rmtree)
+
+        with open(other_tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
+            json.dump({'deployments': []}, f)
+        sarge.main([str(other_tmp), 'init'])
+        self.assertItemsEqual([f.name for f in other_tmp.listdir()],
                               [sarge.DEPLOYMENT_CFG, sarge.SUPERVISORD_CFG])
