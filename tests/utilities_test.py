@@ -31,3 +31,13 @@ class ForceSymlinkTest(unittest.TestCase):
         sarge.force_symlink(target, link)
         self.assertTrue(link.islink())
         self.assertEqual(link.readlink(), target)
+
+    def test_overwrite_existing_broken_link(self):
+        target = self.tmp/'target'
+        target.write_text('bla')
+        target2 = self.tmp/'target2'
+        link = self.tmp/'link'
+        target2.symlink(link)
+        sarge.force_symlink(target, link)
+        self.assertTrue(link.islink())
+        self.assertEqual(link.readlink(), target)
