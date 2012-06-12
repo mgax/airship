@@ -147,9 +147,15 @@ class Sarge(object):
         if not (self.home_path/DEPLOYMENT_CFG).isfile():
             self.config = {}
             return
+
         def iter_deployments(config):
-            for conf in config.pop('deployments'):
+            for conf in config.pop('deployments', []):
                 yield conf
+            deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
+            if deployment_config_folder.isdir():
+                for depl_cfg_path in (deployment_config_folder).listdir():
+                    yield json.loads(depl_cfg_path.bytes())
+
         with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
             config = json.load(f)
             for plugin_name in config.get('plugins', []):
