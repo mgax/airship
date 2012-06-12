@@ -32,12 +32,13 @@ serverurl = unix://%(home_path)s/supervisord.sock
 files = """ + path(RUN_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
 """
 
-SUPERVISORD_PROGRAM_TEMPLATE = """
+SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
 directory = %(directory)s
 redirect_stderr = true
 stdout_logfile = %(run)s/stdout.log
 startsecs = 2
+autostart = false
 %(extra_program_stuff)s
 """
 
