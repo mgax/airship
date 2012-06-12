@@ -83,6 +83,9 @@ class Deployment(object):
             version_folder = self.folder/str(c)
             if not version_folder.exists():
                 version_folder.makedirs()
+                if 'user' in self.config:
+                    subprocess.check_call(['chown', self.config['user']+':',
+                                           version_folder])
                 return version_folder
 
     def activate_version(self, version_folder):
@@ -116,6 +119,9 @@ class Deployment(object):
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
                 extra_program_stuff = "autorestart = true\n"
+            user = self.config.get('user', None)
+            if user is not None:
+                extra_program_stuff = "user = %s\n" % user
             command = self.config.get('command')
             if command is not None:
                 extra_program_stuff = "command = %s\n" % command

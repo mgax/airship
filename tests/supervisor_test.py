@@ -120,6 +120,19 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
         eq_config('program:testy', 'autorestart', 'true')
 
+    def test_user_option(self):
+        configure_deployment(self.tmp, {'name': 'testy',
+                                        'user': 'someone'})
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+
+        run_folder = testy.active_run_folder
+        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+
+        eq_config('program:testy', 'user', 'someone')
+
     def test_get_deployment(self):
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
