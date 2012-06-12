@@ -59,7 +59,6 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        self.configure({'deployments': []})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
@@ -140,8 +139,6 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.assertEqual(testy.name, 'testy')
 
     def test_get_deployment_invalid_name(self):
-        self.configure({'deployments': []})
-
         s = sarge.Sarge(self.tmp)
         with self.assertRaises(KeyError):
             testy = s.get_deployment('testy')

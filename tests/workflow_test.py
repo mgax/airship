@@ -195,7 +195,6 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Sarge.status')
     def test_stop_calls_api_method(self, mock_status):
-        self.configure({'deployments': []})
         sarge.main([str(self.tmp), 'status'])
         self.assertEqual(mock_status.mock_calls, [call()])
 
@@ -203,11 +202,7 @@ class ShellTest(unittest.TestCase):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)
 
-        with open(other_tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump({'deployments': []}, f)
         sarge.main([str(other_tmp), 'init'])
-        expected = [sarge.DEPLOYMENT_CFG,
-                    sarge.SUPERVISORD_CFG,
-                    sarge.DEPLOYMENT_CFG_DIR]
+        expected = [sarge.SUPERVISORD_CFG, sarge.DEPLOYMENT_CFG_DIR]
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())
