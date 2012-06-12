@@ -49,8 +49,14 @@ class NginxConfigurationTest(unittest.TestCase):
 
     def test_nginx_common_config_created_on_init(self):
         sarge.init_cmd(sarge.Sarge(self.tmp), None)
-        nginx_sites = self.tmp/sarge.NginxPlugin.FOLDER_NAME/'sites'
+        nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
+        nginx_sites = nginx_folder/'sites'
         self.assertTrue(nginx_sites.isdir())
+
+        nginx_common = nginx_folder/'all_sites.conf'
+        self.assertTrue(nginx_common.isfile())
+        self.assertEqual(nginx_common.text(),
+                         'include ' + nginx_folder + '/sites/*;')
 
     def test_no_web_services_yields_blank_configuration(self):
         version_folder, run_folder = self.configure_and_activate({})

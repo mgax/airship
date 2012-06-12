@@ -208,12 +208,19 @@ class NginxPlugin(object):
     FOLDER_NAME = 'nginx.plugin'
 
     @property
+    def folder(self):
+        return self.sarge.home_path/self.FOLDER_NAME
+
+    @property
     def sites_folder(self):
-        return self.sarge.home_path/self.FOLDER_NAME/'sites'
+        return self.folder/'sites'
 
     def initialize(self, sarge):
         if not self.sites_folder.isdir():
             (self.sites_folder).makedirs()
+        all_sites_conf = self.folder/'all_sites.conf'
+        if not all_sites_conf.isfile():
+            all_sites_conf.write_text('include %s/*;' % self.sites_folder)
 
     def configure(self, depl, folder):
         version_folder = folder
