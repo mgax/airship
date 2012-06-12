@@ -4,7 +4,7 @@ import json
 import re
 from path import path
 from mock import patch, call
-from utils import configure_deployment
+from utils import configure_sarge, configure_deployment
 
 
 def read_config(cfg_path):
@@ -31,12 +31,8 @@ class NginxConfigurationTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     def configure_and_activate(self, app_config):
-        self.configure({'plugins': ['sarge:NginxPlugin']})
+        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')

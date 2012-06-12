@@ -4,7 +4,7 @@ import json
 import ConfigParser
 from path import path
 from mock import patch
-from utils import configure_deployment
+from utils import configure_sarge, configure_deployment
 
 
 def setUpModule(self):
@@ -49,10 +49,6 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
-    def configure(self, config):
-        with open(self.tmp/sarge.DEPLOYMENT_CFG, 'wb') as f:
-            json.dump(config, f)
-
     def test_enumerate_deployments(self):
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
@@ -75,7 +71,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('include', 'files', 'run/*/supervisor_deploy.conf')
 
     def test_generate_supervisord_cfg_with_socket_owner(self):
-        self.configure({'supervisord_socket_owner': 'theone'})
+        configure_sarge(self.tmp, {'supervisord_socket_owner': 'theone'})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
