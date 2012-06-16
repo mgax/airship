@@ -71,6 +71,7 @@ def ensure_folder(folder):
 class Deployment(object):
 
     log = logging.getLogger('sarge.Deployment')
+    log.setLevel(logging.DEBUG)
 
     DEPLOY_FOLDER_FMT = '%s.deploy'
 
@@ -166,6 +167,7 @@ def _get_named_object(name):
 class Sarge(object):
 
     log = logging.getLogger('sarge.Sarge')
+    log.setLevel(logging.DEBUG)
 
     def __init__(self, home_path):
         self.on_activate_version = blinker.Signal()
@@ -240,6 +242,7 @@ class Sarge(object):
 class NginxPlugin(object):
 
     log = logging.getLogger('sarge.NginxPlugin')
+    log.setLevel(logging.DEBUG)
 
     def __init__(self, sarge):
         self.sarge = sarge
@@ -395,10 +398,20 @@ def build_args_parser():
     return parser
 
 
+def set_up_logging(sarge_home_path):
+    handler = logging.FileHandler(sarge_home_path/'sarge.log')
+    log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
+    handler.setFormatter(logging.Formatter(log_format))
+    handler.setLevel(logging.DEBUG)
+    sarge_log.addHandler(handler)
+
+
 def main(raw_arguments):
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments)
-    sarge = Sarge(path(args.sarge_home).abspath())
+    sarge_home_path = path(args.sarge_home).abspath()
+    set_up_logging(sarge_home_path)
+    sarge = Sarge(sarge_home_path)
     args.func(sarge, args)
 
 
