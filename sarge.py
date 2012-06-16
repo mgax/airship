@@ -1,9 +1,12 @@
 import sys
 import json
 import subprocess
+import logging
 from importlib import import_module
 from path import path
 import blinker
+
+sarge_log = logging.getLogger('sarge')
 
 
 DEPLOYMENT_CFG = 'deployments.yaml'
@@ -67,6 +70,8 @@ def ensure_folder(folder):
 
 class Deployment(object):
 
+    log = logging.getLogger('sarge.Deployment')
+
     DEPLOY_FOLDER_FMT = '%s.deploy'
 
     active_version_folder = None
@@ -82,6 +87,8 @@ class Deployment(object):
         for c in itertools.count(1):
             version_folder = self.folder/str(c)
             if not version_folder.exists():
+                self.log.info("New version folder for deployment %r at %r.",
+                              self.name, version_folder)
                 version_folder.makedirs()
                 if 'user' in self.config:
                     subprocess.check_call(['chown', self.config['user']+':',
@@ -89,6 +96,8 @@ class Deployment(object):
                 return version_folder
 
     def activate_version(self, version_folder):
+        self.log.info("Activating version at %r for deployment %r",
+                      version_folder, self.name)
         self.active_version_folder = version_folder
         self.active_run_folder = run_folder = path(version_folder + '.run')
         run_folder.mkdir()
@@ -99,7 +108,10 @@ class Deployment(object):
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
-            with open(version_folder/'quickapp.py', 'wb') as f:
+            script_path = version_folder/'quickapp.py'
+            self.log.debug("Writing WSGI script for deployment %r at %r.",
+                           self.name, script_path)
+            with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
                     'module_name': module_name,
@@ -115,7 +127,11 @@ class Deployment(object):
     def generate_supervisor_program_configuration(self):
         version_folder = self.active_version_folder
         run_folder = path(version_folder + '.run')
-        with open(self.active_run_folder/SUPERVISOR_DEPLOY_CFG, 'wb') as f:
+        supervisor_deploy_cfg_path = self.active_run_folder/SUPERVISOR_DEPLOY_CFG
+        self.log.debug("Writing supervisor configuration fragment for "
+                       "deployment %r at %r.",
+                       self.name, supervisor_deploy_cfg_path)
+        with open(supervisor_deploy_cfg_path, 'wb') as f:
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
                 extra_program_stuff = "autorestart = true\n"
@@ -133,9 +149,11 @@ class Deployment(object):
             })
 
     def start(self):
+        self.log.info("Starting deployment %r.", self.name)
         self.sarge.supervisorctl(['start', self.name])
 
     def stop(self):
+        self.log.info("Stopping deployment %r.", self.name)
         self.sarge.supervisorctl(['stop', self.name])
 
 
@@ -146,6 +164,8 @@ def _get_named_object(name):
 
 
 class Sarge(object):
+
+    log = logging.getLogger('sarge.Sarge')
 
     def __init__(self, home_path):
         self.on_activate_version = blinker.Signal()
@@ -187,7 +207,10 @@ class Sarge(object):
         self.config = config
 
     def generate_supervisord_configuration(self):
-        with open(self.home_path/SUPERVISORD_CFG, 'wb') as f:
+        supervisord_cfg_path = self.home_path/SUPERVISORD_CFG
+        self.log.debug("Writing main supervisord configuration file at %r.",
+                       supervisord_cfg_path)
+        with open(supervisord_cfg_path, 'wb') as f:
             extra_server_stuff = ""
             sock_owner = self.config.get('supervisord_socket_owner')
             if sock_owner is not None:
@@ -206,6 +229,7 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
+        self.log.debug("Invoking supervisorctl with arguments %r.", cmd_args)
         base_args = [supervisorctl_path, '-c', self.home_path/SUPERVISORD_CFG]
         return subprocess.check_call(base_args + cmd_args)
 
@@ -214,6 +238,8 @@ class Sarge(object):
 
 
 class NginxPlugin(object):
+
+    log = logging.getLogger('sarge.NginxPlugin')
 
     def __init__(self, sarge):
         self.sarge = sarge
@@ -237,6 +263,8 @@ class NginxPlugin(object):
             (self.sites_folder).makedirs()
         all_sites_conf = self.folder/'all_sites.conf'
         if not all_sites_conf.isfile():
+            self.log.debug("Writing \"all_sites\" nginx configuration at %r.",
+                           all_sites_conf)
             all_sites_conf.write_text('include %s/*;' % self.sites_folder)
 
     def activate_deployment(self, depl, folder):
@@ -251,6 +279,10 @@ class NginxPlugin(object):
             app_config = {}
 
         run_conf = run_folder/'nginx-site.conf'
+
+        self.log.debug("Writing nginx configuration for deployment %r at %r.",
+                       depl.name, run_conf)
+
         with open(run_conf, 'wb') as f:
             f.write('server {\n')
 
@@ -259,6 +291,8 @@ class NginxPlugin(object):
                 f.write('  %s %s;\n' % (key, value))
 
             for entry in app_config.get('urlmap', []):
+                self.log.debug("urlmap entry: %r", entry)
+
                 if entry['type'] == 'static':
                     f.write('location %(url)s {\n'
                             '    alias %(version_folder)s/%(path)s;\n'
@@ -304,10 +338,12 @@ class NginxPlugin(object):
         self.reload_nginx()
 
     def reload_nginx(self):
+        self.log.debug("Reloading configuration for nginx server.")
         subprocess.check_call(['service', 'nginx', 'reload'])
 
 
 def init_cmd(sarge, args):
+    sarge.log.info("Initializing sarge folder at %r.", sarge.home_path)
     sarge.on_initialize.send(sarge)
     (sarge.home_path/DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
