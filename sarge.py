@@ -97,7 +97,7 @@ class Deployment(object):
     def activate_version(self, version_folder):
         self.log.info("Activating version at %r for deployment %r",
                       version_folder, self.name)
-        self.active_run_folder = run_folder = path(version_folder + '.run')
+        run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         symlink_path = self.sarge.run_links_folder/self.name
         if symlink_path.exists():
@@ -118,13 +118,13 @@ class Deployment(object):
                 })
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
-        self.generate_supervisor_program_configuration(version_folder)
+        self.generate_supervisor_program_configuration(version_folder, run_folder)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
 
-    def generate_supervisor_program_configuration(self, version_folder):
+    def generate_supervisor_program_configuration(self, version_folder, run_folder):
         run_folder = path(version_folder + '.run')
-        supervisor_deploy_cfg_path = self.active_run_folder/SUPERVISOR_DEPLOY_CFG
+        supervisor_deploy_cfg_path = run_folder/SUPERVISOR_DEPLOY_CFG
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
