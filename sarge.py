@@ -210,9 +210,6 @@ class Sarge(object):
                        supervisord_cfg_path)
         with open(supervisord_cfg_path, 'wb') as f:
             extra_server_stuff = ""
-            sock_owner = self.config.get('supervisord_socket_owner')
-            if sock_owner is not None:
-                extra_server_stuff += "chown = %s\n" % sock_owner
 
             f.write(SUPERVISORD_CFG_TEMPLATE % {
                 'home_path': self.home_path,

@@ -70,15 +70,6 @@ class SupervisorConfigurationTest(unittest.TestCase):
                   'unix://' + self.tmp/'supervisord.sock')
         eq_config('include', 'files', 'run/*/supervisor_deploy.conf')
 
-    def test_generate_supervisord_cfg_with_socket_owner(self):
-        configure_sarge(self.tmp, {'supervisord_socket_owner': 'theone'})
-        s = sarge.Sarge(self.tmp)
-        s.generate_supervisord_configuration()
-
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
-
-        eq_config('unix_http_server', 'chown', 'theone')
-
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
         configure_deployment(self.tmp, {'name': 'testy'})
         s = sarge.Sarge(self.tmp)
