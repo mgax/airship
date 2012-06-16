@@ -118,11 +118,11 @@ class Deployment(object):
                 })
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
-        self.generate_supervisor_program_configuration(version_folder, run_folder)
+        self.write_supervisor_program_config(version_folder, run_folder)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
 
-    def generate_supervisor_program_configuration(self, version_folder, run_folder):
+    def write_supervisor_program_config(self, version_folder, run_folder):
         run_folder = path(version_folder + '.run')
         supervisor_deploy_cfg_path = run_folder/SUPERVISOR_DEPLOY_CFG
         self.log.debug("Writing supervisor configuration fragment for "
