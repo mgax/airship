@@ -6,6 +6,7 @@ API
 .. automodule:: sarge
 
 .. autoclass:: sarge.Sarge
+    :members:
 
     Instances provide a number of Blinker signals:
 
@@ -19,6 +20,7 @@ API
         `folder` - absolute path to new active version folder.
 
 .. autoclass:: sarge.Deployment
+    :members:
 
 
 Plugins
