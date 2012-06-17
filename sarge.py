@@ -69,6 +69,9 @@ def ensure_folder(folder):
 
 
 class Deployment(object):
+    """ Web application that is deployed using sarge. It has a configuration
+    file and a number of version folders. Only one version is "active" and
+    running. """
 
     log = logging.getLogger('sarge.Deployment')
     log.setLevel(logging.DEBUG)
@@ -165,6 +168,9 @@ def _get_named_object(name):
 
 
 class Sarge(object):
+    """ The sarge object implements most operations performed by sarge. It acts
+    as container for deployments.
+    """
 
     log = logging.getLogger('sarge.Sarge')
     log.setLevel(logging.DEBUG)
