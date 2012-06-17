@@ -2,3 +2,4 @@
 .vagrant
 MANIFEST
 dist
+*.egg-info
