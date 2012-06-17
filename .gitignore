@@ -1,2 +1,4 @@
 *.pyc
 .vagrant
+MANIFEST
+dist
