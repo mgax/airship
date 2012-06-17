@@ -404,9 +404,9 @@ def set_up_logging(sarge_home_path):
     sarge_log.addHandler(handler)
 
 
-def main(raw_arguments):
+def main(raw_arguments=None):
     parser = build_args_parser()
-    args = parser.parse_args(raw_arguments)
+    args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home_path = path(args.sarge_home).abspath()
     set_up_logging(sarge_home_path)
     sarge = Sarge(sarge_home_path)
@@ -414,4 +414,4 @@ def main(raw_arguments):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
