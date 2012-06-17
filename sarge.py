@@ -243,6 +243,9 @@ class Sarge(object):
 
 
 class NginxPlugin(object):
+    """ Generates a configuration file for each deployment based on its urlmap.
+    Upon activation of a new deployment version, the new nginx configuration is
+    written, and nginx is reloaded. """
 
     log = logging.getLogger('sarge.NginxPlugin')
     log.setLevel(logging.DEBUG)
