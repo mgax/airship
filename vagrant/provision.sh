@@ -34,7 +34,7 @@ EOF
 
 
 apt-get update
-apt-get install -y vim python-virtualenv squid3 nginx
+apt-get install -y vim python-virtualenv squid3 nginx php5-cgi spawn-fcgi
 
 if [ ! -f /etc/squid3/squid.conf.orig ]; then
     mv /etc/squid3/squid.conf /etc/squid3/squid.conf.orig
