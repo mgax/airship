@@ -57,7 +57,7 @@ def put_json(data, remote_path, **kwargs):
 
 
 def get_url(url):
-    f = urllib.urlopen('http://192.168.13.13:8013/')
+    f = urllib.urlopen(url)
     try:
         return f.read()
     finally:
