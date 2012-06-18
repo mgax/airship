@@ -149,7 +149,7 @@ class NginxConfigurationTest(unittest.TestCase):
         command = read_config(config_path).get('program:testy', 'command')
 
         self.assertEqual(command, '/usr/bin/spawn-fcgi '
-                                  '-s %(run_folder)s/php.sock '
+                                  '-s %(run_folder)s/php.sock -M 0777 '
                                   '-f /usr/bin/php5-cgi -n' % {
                                       'run_folder': run_folder,
                                   })

@@ -14,8 +14,7 @@ cfg['sarge-venv'] = path('/var/local/sarge-sandbox')
 
 def provision():
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install -r /sarge-src/requirements.txt" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install importlib argparse" % cfg)
+    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % cfg)
 
 
 def setUpModule(self):
@@ -58,7 +57,7 @@ def put_json(data, remote_path, **kwargs):
 
 
 def get_url(url):
-    f = urllib.urlopen('http://192.168.13.13:8013/')
+    f = urllib.urlopen(url)
     try:
         return f.read()
     finally:
@@ -141,3 +140,21 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge two!\n")
+
+    def test_deploy_php(self):
+        put_json({'name': 'testy', 'user': 'vagrant'},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 use_sudo=True)
+
+        version_folder = path(sarge_cmd("new_version testy"))
+
+        url_cfg = {'type': 'php', 'url': '/'}
+        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
+                 version_folder/'sargeapp.yaml')
+
+        app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
+        put(StringIO(app_php), str(version_folder/'someapp.php'))
+        sarge_cmd("activate_version testy '%s'" % version_folder)
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
+                         "hello from PHP!\n")

@@ -1,10 +1,10 @@
 import sys
-import json
 import subprocess
 import logging
 from importlib import import_module
 from path import path
 import blinker
+import yaml
 
 sarge_log = logging.getLogger('sarge')
 
@@ -135,13 +135,13 @@ class Deployment(object):
         with open(supervisor_deploy_cfg_path, 'wb') as f:
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
-                extra_program_stuff = "autorestart = true\n"
+                extra_program_stuff += "autorestart = true\n"
             user = self.config.get('user', None)
             if user is not None:
-                extra_program_stuff = "user = %s\n" % user
+                extra_program_stuff += "user = %s\n" % user
             command = self.config.get('command')
             if command is not None:
-                extra_program_stuff = "command = %s\n" % command
+                extra_program_stuff += "command = %s\n" % command
             f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                 'name': self.name,
                 'directory': version_folder,
@@ -186,7 +186,7 @@ class Sarge(object):
     def _configure(self):
         if (self.home_path/DEPLOYMENT_CFG).isfile():
             with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-                config = json.load(f)
+                config = yaml.load(f)
         else:
             config = {}
 
@@ -194,7 +194,7 @@ class Sarge(object):
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
                 for depl_cfg_path in (deployment_config_folder).listdir():
-                    yield json.loads(depl_cfg_path.bytes())
+                    yield yaml.load(depl_cfg_path.bytes())
 
         for plugin_name in config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
@@ -275,7 +275,7 @@ class NginxPlugin(object):
         app_config_path = version_folder/'sargeapp.yaml'
         if app_config_path.exists():
             with open(app_config_path, 'rb') as f:
-                app_config = json.load(f)
+                app_config = yaml.load(f)
         else:
             app_config = {}
 
@@ -325,7 +325,7 @@ class NginxPlugin(object):
                                          fcgi_params_path=self.fcgi_params_path))
 
                     depl.config['command'] = (
-                        '/usr/bin/spawn-fcgi -s %(socket_path)s '
+                        '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
                         '-f /usr/bin/php5-cgi -n'
                         % {'socket_path': socket_path})
 
@@ -404,9 +404,9 @@ def set_up_logging(sarge_home_path):
     sarge_log.addHandler(handler)
 
 
-def main(raw_arguments):
+def main(raw_arguments=None):
     parser = build_args_parser()
-    args = parser.parse_args(raw_arguments)
+    args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home_path = path(args.sarge_home).abspath()
     set_up_logging(sarge_home_path)
     sarge = Sarge(sarge_home_path)
@@ -414,4 +414,4 @@ def main(raw_arguments):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
