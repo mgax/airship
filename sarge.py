@@ -1,10 +1,10 @@
 import sys
-import json
 import subprocess
 import logging
 from importlib import import_module
 from path import path
 import blinker
+import yaml
 
 sarge_log = logging.getLogger('sarge')
 
@@ -186,7 +186,7 @@ class Sarge(object):
     def _configure(self):
         if (self.home_path/DEPLOYMENT_CFG).isfile():
             with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-                config = json.load(f)
+                config = yaml.load(f)
         else:
             config = {}
 
@@ -194,7 +194,7 @@ class Sarge(object):
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
                 for depl_cfg_path in (deployment_config_folder).listdir():
-                    yield json.loads(depl_cfg_path.bytes())
+                    yield yaml.load(depl_cfg_path.bytes())
 
         for plugin_name in config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
@@ -275,7 +275,7 @@ class NginxPlugin(object):
         app_config_path = version_folder/'sargeapp.yaml'
         if app_config_path.exists():
             with open(app_config_path, 'rb') as f:
-                app_config = json.load(f)
+                app_config = yaml.load(f)
         else:
             app_config = {}
 
