@@ -18,3 +18,5 @@ if [ ! -d /home/vagrant/.pip ]; then
 fi
 echo "$MY_PIP_CFG" > /home/vagrant/.pip/pip.conf
 chown vagrant: /home/vagrant/.pip/pip.conf
+
+/etc/init.d/nginx start
