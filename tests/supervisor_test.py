@@ -68,7 +68,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
                   'unix://' + self.tmp/'supervisord.sock')
-        eq_config('include', 'files', 'run/*/supervisor_deploy.conf')
+        eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
         configure_deployment(self.tmp, {'name': 'testy'})

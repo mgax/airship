@@ -13,7 +13,7 @@ DEPLOYMENT_CFG = 'deployments.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
-CFG_LINKS_FOLDER = 'run'
+CFG_LINKS_FOLDER = 'active'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
