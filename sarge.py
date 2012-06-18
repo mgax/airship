@@ -13,7 +13,7 @@ DEPLOYMENT_CFG = 'deployments.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
-RUN_FOLDER = 'run'
+CFG_LINKS_FOLDER = 'active'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
@@ -32,7 +32,7 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 
 [include]
-files = """ + path(RUN_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
+files = """ + path(CFG_LINKS_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
 """
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
@@ -99,10 +99,13 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        symlink_path = self.sarge.run_links_folder/self.name
-        if symlink_path.exists():
-            symlink_path.readlink().rmtree()
-        force_symlink(run_folder, symlink_path)
+        if 'user' in self.config:
+            subprocess.check_call(['chown', self.config['user']+':',
+                                   run_folder])
+        cfg_folder = path(version_folder + '.cfg')
+        cfg_folder.mkdir()
+        symlink_path = self.sarge.cfg_links_folder/self.name
+        force_symlink(cfg_folder, symlink_path)
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -118,13 +121,14 @@ class Deployment(object):
                 })
             self.config['command'] = "%s %s" % (sys.executable,
                                                 version_folder/'quickapp.py')
-        self.write_supervisor_program_config(version_folder, run_folder)
+        self.write_supervisor_program_config(version_folder)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
 
-    def write_supervisor_program_config(self, version_folder, run_folder):
+    def write_supervisor_program_config(self, version_folder):
         run_folder = path(version_folder + '.run')
-        supervisor_deploy_cfg_path = run_folder/SUPERVISOR_DEPLOY_CFG
+        cfg_folder = path(version_folder + '.cfg')
+        supervisor_deploy_cfg_path = cfg_folder/SUPERVISOR_DEPLOY_CFG
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
@@ -173,8 +177,8 @@ class Sarge(object):
         self._configure()
 
     @property
-    def run_links_folder(self):
-        folder = self.home_path/RUN_FOLDER
+    def cfg_links_folder(self):
+        folder = self.home_path/CFG_LINKS_FOLDER
         if not folder.isdir():
             folder.makedirs()
         return folder
@@ -266,6 +270,7 @@ class NginxPlugin(object):
     def activate_deployment(self, depl, folder):
         version_folder = folder
         run_folder = path(folder + '.run')
+        cfg_folder = path(folder + '.cfg')
 
         app_config_path = version_folder/'sargeapp.yaml'
         if app_config_path.exists():
@@ -274,12 +279,12 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        run_conf = run_folder/'nginx-site.conf'
+        conf_path = cfg_folder/'nginx-site.conf'
 
         self.log.debug("Writing nginx configuration for deployment %r at %r.",
-                       depl.name, run_conf)
+                       depl.name, conf_path)
 
-        with open(run_conf, 'wb') as f:
+        with open(conf_path, 'wb') as f:
             f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
@@ -330,7 +335,7 @@ class NginxPlugin(object):
             f.write('}\n')
 
         ensure_folder(self.sites_folder)
-        force_symlink(run_conf, self.sites_folder/depl.name)
+        force_symlink(conf_path, self.sites_folder/depl.name)
         self.reload_nginx()
 
     def reload_nginx(self):

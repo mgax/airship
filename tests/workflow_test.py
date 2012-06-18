@@ -43,12 +43,36 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(call(['chown', 'someone:', version_folder]),
                       mock_subprocess.mock_calls)
 
+    def test_activation_with_user_option_calls_chown(self):
+        configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        mock_subprocess.reset_mock()
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+        run_folder = path(version_folder + '.run')
+        self.assertIn(call(['chown', 'someone:', run_folder]),
+                      mock_subprocess.mock_calls)
+
     def test_versions_have_different_paths(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_path_1 = path(testy.new_version())
         version_path_2 = path(testy.new_version())
         self.assertNotEqual(version_path_1, version_path_2)
+
+    def test_activation_creates_configuration_folder(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        self.assertTrue(cfg_folder.isdir())
+
+        symlink_path = self.tmp/sarge.CFG_LINKS_FOLDER/'testy'
+        self.assertTrue(symlink_path.islink())
+        self.assertEqual(symlink_path.readlink(), cfg_folder)
 
     def test_activation_creates_runtime_folder(self):
         s = sarge.Sarge(self.tmp)
@@ -59,10 +83,6 @@ class WorkflowTest(unittest.TestCase):
         run_folder = path(version_folder + '.run')
         self.assertTrue(run_folder.isdir())
 
-        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
-        self.assertTrue(symlink_path.islink())
-        self.assertEqual(symlink_path.readlink(), run_folder)
-
     def test_activation_next_version_overwrites_symlink(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
@@ -71,23 +91,12 @@ class WorkflowTest(unittest.TestCase):
         version_folder_2 = path(testy.new_version())
         testy.activate_version(version_folder_2)
 
-        run_folder_2 = path(version_folder_2 + '.run')
-        self.assertTrue(run_folder_2.isdir())
+        cfg_folder_2 = path(version_folder_2 + '.cfg')
+        self.assertTrue(cfg_folder_2.isdir())
 
-        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        symlink_path = self.tmp/sarge.CFG_LINKS_FOLDER/'testy'
         self.assertTrue(symlink_path.islink())
-        self.assertEqual(symlink_path.readlink(), run_folder_2)
-
-    def test_activation_of_new_version_clears_old_runtime_folder(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
-        version_folder_1 = path(testy.new_version())
-        testy.activate_version(version_folder_1)
-        version_folder_2 = path(testy.new_version())
-        testy.activate_version(version_folder_2)
-
-        run_folder_1 = path(version_folder_1 + '.run')
-        self.assertFalse(run_folder_1.exists())
+        self.assertEqual(symlink_path.readlink(), cfg_folder_2)
 
     def test_activation_triggers_supervisord_reread(self):
         s = sarge.Sarge(self.tmp)
