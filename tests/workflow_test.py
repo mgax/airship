@@ -59,7 +59,7 @@ class WorkflowTest(unittest.TestCase):
         run_folder = path(version_folder + '.run')
         self.assertTrue(run_folder.isdir())
 
-        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        symlink_path = self.tmp/sarge.CFG_LINKS_FOLDER/'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), run_folder)
 
@@ -74,7 +74,7 @@ class WorkflowTest(unittest.TestCase):
         run_folder_2 = path(version_folder_2 + '.run')
         self.assertTrue(run_folder_2.isdir())
 
-        symlink_path = self.tmp/sarge.RUN_FOLDER/'testy'
+        symlink_path = self.tmp/sarge.CFG_LINKS_FOLDER/'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), run_folder_2)
 

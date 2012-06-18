@@ -13,7 +13,7 @@ DEPLOYMENT_CFG = 'deployments.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
-RUN_FOLDER = 'run'
+CFG_LINKS_FOLDER = 'run'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
@@ -32,7 +32,7 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 
 [include]
-files = """ + path(RUN_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
+files = """ + path(CFG_LINKS_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
 """
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
@@ -99,7 +99,7 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        symlink_path = self.sarge.run_links_folder/self.name
+        symlink_path = self.sarge.cfg_links_folder/self.name
         if symlink_path.exists():
             symlink_path.readlink().rmtree()
         force_symlink(run_folder, symlink_path)
@@ -173,8 +173,8 @@ class Sarge(object):
         self._configure()
 
     @property
-    def run_links_folder(self):
-        folder = self.home_path/RUN_FOLDER
+    def cfg_links_folder(self):
+        folder = self.home_path/CFG_LINKS_FOLDER
         if not folder.isdir():
             folder.makedirs()
         return folder
