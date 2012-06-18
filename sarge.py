@@ -99,6 +99,8 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
+        cfg_folder = path(version_folder + '.cfg')
+        cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
         if symlink_path.exists():
             symlink_path.readlink().rmtree()

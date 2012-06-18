@@ -50,6 +50,15 @@ class WorkflowTest(unittest.TestCase):
         version_path_2 = path(testy.new_version())
         self.assertNotEqual(version_path_1, version_path_2)
 
+    def test_activation_creates_configuration_folder(self):
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        self.assertTrue(cfg_folder.isdir())
+
     def test_activation_creates_runtime_folder(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
