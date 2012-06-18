@@ -58,17 +58,17 @@ class NginxConfigurationTest(unittest.TestCase):
 
     def test_no_web_services_yields_blank_configuration(self):
         version_folder = self.configure_and_activate({})
-        run_folder = path(version_folder + '.run')
-        with open(run_folder/'nginx-site.conf', 'rb') as f:
+        cfg_folder = path(version_folder + '.cfg')
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "server { }")
 
     def test_activation_creates_symlink_in_sites_folder(self):
         version_folder = self.configure_and_activate({})
-        run_folder = path(version_folder + '.run')
+        cfg_folder = path(version_folder + '.cfg')
         nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
         link_path = nginx_folder/'sites'/'testy'
-        link_target = run_folder/'nginx-site.conf'
+        link_target = cfg_folder/'nginx-site.conf'
         self.assertTrue(link_path.islink())
         self.assertEqual(link_path.readlink(), link_target)
 
@@ -80,8 +80,8 @@ class NginxConfigurationTest(unittest.TestCase):
                  'path': 'mymedia'},
             ],
         })
-        run_folder = path(version_folder + '.run')
-        with open(run_folder/'nginx-site.conf', 'rb') as f:
+        cfg_folder = path(version_folder + '.cfg')
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             "server { location /media { alias %s/mymedia; } }" % version_folder)
@@ -94,8 +94,9 @@ class NginxConfigurationTest(unittest.TestCase):
                  'wsgi_app': 'wsgiref.simple_server:demo_app'},
             ],
         })
+        cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(run_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -115,8 +116,9 @@ class NginxConfigurationTest(unittest.TestCase):
                  'path': '/myphpcode'},
             ],
         })
+        cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(run_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -139,6 +141,7 @@ class NginxConfigurationTest(unittest.TestCase):
                  'path': '/myphpcode'},
             ],
         })
+        cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
 
@@ -158,8 +161,8 @@ class NginxConfigurationTest(unittest.TestCase):
                 'listen': '8013',
             },
         })
-        run_folder = path(version_folder + '.run')
-        with open(run_folder/'nginx-site.conf', 'rb') as f:
+        cfg_folder = path(version_folder + '.cfg')
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '

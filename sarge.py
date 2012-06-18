@@ -270,6 +270,7 @@ class NginxPlugin(object):
     def activate_deployment(self, depl, folder):
         version_folder = folder
         run_folder = path(folder + '.run')
+        cfg_folder = path(folder + '.cfg')
 
         app_config_path = version_folder/'sargeapp.yaml'
         if app_config_path.exists():
@@ -278,12 +279,12 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        run_conf = run_folder/'nginx-site.conf'
+        conf_path = cfg_folder/'nginx-site.conf'
 
         self.log.debug("Writing nginx configuration for deployment %r at %r.",
-                       depl.name, run_conf)
+                       depl.name, conf_path)
 
-        with open(run_conf, 'wb') as f:
+        with open(conf_path, 'wb') as f:
             f.write('server {\n')
 
             nginx_options = app_config.get('nginx_options', {})
@@ -334,7 +335,7 @@ class NginxPlugin(object):
             f.write('}\n')
 
         ensure_folder(self.sites_folder)
-        force_symlink(run_conf, self.sites_folder/depl.name)
+        force_symlink(conf_path, self.sites_folder/depl.name)
         self.reload_nginx()
 
     def reload_nginx(self):
