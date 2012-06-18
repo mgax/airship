@@ -127,7 +127,8 @@ class Deployment(object):
 
     def write_supervisor_program_config(self, version_folder):
         run_folder = path(version_folder + '.run')
-        supervisor_deploy_cfg_path = run_folder/SUPERVISOR_DEPLOY_CFG
+        cfg_folder = path(version_folder + '.cfg')
+        supervisor_deploy_cfg_path = cfg_folder/SUPERVISOR_DEPLOY_CFG
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)

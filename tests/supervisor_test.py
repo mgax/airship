@@ -89,7 +89,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         testy.activate_version(version_folder)
 
         run_folder = path(version_folder + '.run')
-        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'command', "echo starting up")
         eq_config('program:testy', 'redirect_stderr', 'true')
@@ -106,8 +107,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        run_folder = path(version_folder + '.run')
-        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'autorestart', 'true')
 
@@ -119,8 +120,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
 
-        run_folder = path(version_folder + '.run')
-        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
         eq_config('program:testy', 'user', 'someone')
 
@@ -142,8 +143,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
 
-        run_folder = path(version_folder + '.run')
-        eq_config = config_file_checker(run_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         eq_config('program:testy', 'directory', version_folder)
 
 

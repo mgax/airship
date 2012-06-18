@@ -140,8 +140,9 @@ class NginxConfigurationTest(unittest.TestCase):
             ],
         })
         run_folder = path(version_folder + '.run')
+        cfg_folder = path(version_folder + '.cfg')
 
-        config_path = run_folder/sarge.SUPERVISOR_DEPLOY_CFG
+        config_path = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
         command = read_config(config_path).get('program:testy', 'command')
 
         self.assertEqual(command, '/usr/bin/spawn-fcgi '
