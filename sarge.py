@@ -102,7 +102,7 @@ class Deployment(object):
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
-        force_symlink(run_folder, symlink_path)
+        force_symlink(cfg_folder, symlink_path)
         self.sarge.on_activate_version.send(self, folder=version_folder)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
