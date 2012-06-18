@@ -99,6 +99,9 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
+        if 'user' in self.config:
+            subprocess.check_call(['chown', self.config['user']+':',
+                                   run_folder])
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
