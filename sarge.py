@@ -325,7 +325,7 @@ class NginxPlugin(object):
                                          fcgi_params_path=self.fcgi_params_path))
 
                     depl.config['command'] = (
-                        '/usr/bin/spawn-fcgi -s %(socket_path)s '
+                        '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
                         '-f /usr/bin/php5-cgi -n'
                         % {'socket_path': socket_path})
 
