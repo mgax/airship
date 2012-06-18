@@ -87,17 +87,6 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), run_folder_2)
 
-    def test_activation_of_new_version_clears_old_runtime_folder(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
-        version_folder_1 = path(testy.new_version())
-        testy.activate_version(version_folder_1)
-        version_folder_2 = path(testy.new_version())
-        testy.activate_version(version_folder_2)
-
-        run_folder_1 = path(version_folder_1 + '.run')
-        self.assertFalse(run_folder_1.exists())
-
     def test_activation_triggers_supervisord_reread(self):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
