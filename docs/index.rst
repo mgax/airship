@@ -13,7 +13,7 @@ Contents:
    :maxdepth: 2
 
    tutorial
-   setup
+   development
    api
 
 
