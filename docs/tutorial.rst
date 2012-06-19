@@ -30,7 +30,8 @@ Set up a virtual environment and install sarge::
 
 Initialize sarge::
 
-    bin/sarge init
+    sudo bin/sarge init
+    sudo bin/supervisord
 
 
 The first deployment
@@ -50,7 +51,7 @@ file specifying a name and unix user::
 Before deploying we need to ask sarge to prepare a new version of our
 deployment::
 
-    bin/sarge . new_version demo
+    sudo bin/sarge . new_version demo
 
 The `new_version` command should print the absolute path of a newly
 created folder and it's probably ``/var/local/sarge-home/demo/1``.
@@ -76,9 +77,16 @@ use the `demo application from wsgiref`_::
 Now it's time to activate the version. This tells sarge to set up
 `nginx` and `supervisor` and then starts up the application::
 
-    bin/sarge . activate_version demo demo/1
+    sudo bin/sarge . activate_version demo demo/1
 
 To make sure the application is working, access the homepage using
 `cURL`::
 
     curl http://localhost:8013/
+
+
+More examples
+-------------
+For working examples of deployments, see ``vagrant/deployment_test.py``
+in the sarge source code repository. Those are automated tests that
+deploy against a local virtual machine.
