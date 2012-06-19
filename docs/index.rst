@@ -1,10 +1,11 @@
-.. Sarge documentation master file, created by
-   sphinx-quickstart on Sat Jun 16 20:37:31 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Sarge's documentation!
 =================================
+
+Sarge is a deployment tool that automates server-side configuration
+tasks for web applications. It's currently in early development, and
+thus not stable, and may crash and burn at any time. Use at your own
+risk.
+
 
 Contents:
 
