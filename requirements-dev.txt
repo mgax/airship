@@ -1,4 +1,4 @@
--e requirements.txt
+-r requirements.txt
 nose==1.1.2
 mock==0.8.0
 Fabric==1.4.2
