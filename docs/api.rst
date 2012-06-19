@@ -27,6 +27,8 @@ API
     :members:
 
 
+.. _plugins:
+
 Plugins
 -------
 The main entry point for a plugin must be a one-argument callable. It
