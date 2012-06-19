@@ -1,4 +1,8 @@
 import json
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 
 def configure_sarge(sarge_home, config):
