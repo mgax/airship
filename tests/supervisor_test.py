@@ -76,9 +76,9 @@ class SupervisorConfigurationTest(unittest.TestCase):
         s.generate_supervisord_configuration()
 
         config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
-        self.assertEqual(config.sections(),
-                         ['unix_http_server', 'rpcinterface:supervisor',
-                          'supervisord', 'supervisorctl', 'include'])
+        self.assertItemsEqual(config.sections(),
+                              ['unix_http_server', 'rpcinterface:supervisor',
+                               'supervisord', 'supervisorctl', 'include'])
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
         configure_deployment(self.tmp, {'name': 'testy',
