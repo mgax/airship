@@ -9,7 +9,7 @@ import yaml
 sarge_log = logging.getLogger('sarge')
 
 
-DEPLOYMENT_CFG = 'deployments.yaml'
+DEPLOYMENT_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
