@@ -83,18 +83,19 @@ class VagrantDeploymentTest(unittest.TestCase):
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        put_json({'name': 'testy', 'user': 'vagrant'},
+        put_json({'name': 'testy',
+                  'user': 'vagrant',
+                  'nginx_options': {'listen': '8013'}},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))
 
-        url_cfg = {
-            'type': 'wsgi',
-            'url': '/',
-            'wsgi_app': 'mytinyapp:theapp',
-        }
-        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
+        put_json({'urlmap': [
+                    {'type': 'wsgi',
+                     'url': '/',
+                     'wsgi_app': 'mytinyapp:theapp'},
+                 ]},
                  version_folder/'sargeapp.yaml')
         app_py = ('def theapp(environ, start_response):\n'
                   '    start_response("200 OK", [])\n'
@@ -106,23 +107,26 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge!\n")
 
     def test_deploy_new_app_version(self):
-        url_cfg = {
-            'type': 'wsgi',
-            'url': '/',
-            'wsgi_app': 'mytinyapp:theapp',
+        app_cfg = {
+            'urlmap': [
+                {'type': 'wsgi',
+                 'url': '/',
+                 'wsgi_app': 'mytinyapp:theapp'},
+            ],
         }
         app_py_tmpl = ('def theapp(environ, start_response):\n'
                        '    start_response("200 OK", [])\n'
                        '    return ["hello sarge %s!\\n"]\n')
 
-        put_json({'name': 'testy', 'user': 'vagrant'},
+        put_json({'name': 'testy',
+                  'user': 'vagrant',
+                  'nginx_options': {'listen': '8013'}},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         # deploy version one
         version_folder_1 = path(sarge_cmd("new_version testy"))
-        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
-                 version_folder_1/'sargeapp.yaml')
+        put_json(app_cfg, version_folder_1/'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'one'),
             str(version_folder_1/'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder_1)
@@ -132,8 +136,7 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         # deploy version two
         version_folder_2 = path(sarge_cmd("new_version testy"))
-        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
-                 version_folder_2/'sargeapp.yaml')
+        put_json(app_cfg, version_folder_2/'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'two'),
             str(version_folder_2/'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder_2)
@@ -142,14 +145,17 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge two!\n")
 
     def test_deploy_php(self):
-        put_json({'name': 'testy', 'user': 'vagrant'},
+        put_json({'name': 'testy',
+                  'user': 'vagrant',
+                  'nginx_options': {'listen': '8013'}},
                  cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))
 
-        url_cfg = {'type': 'php', 'url': '/'}
-        put_json({'urlmap': [url_cfg], 'nginx_options': {'listen': '8013'}},
+        put_json({'urlmap': [
+                    {'type': 'php', 'url': '/'},
+                 ]},
                  version_folder/'sargeapp.yaml')
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')

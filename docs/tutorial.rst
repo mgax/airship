@@ -45,7 +45,13 @@ Let's create a deployment for our application. It's just a configuration
 file specifying a name and unix user::
 
     cat > deployments/demo.yaml <<EOF
-    {"name": "demo", "user": "joe"}
+    {
+        "name": "demo",
+        "user": "joe",
+        "nginx_options": {
+            "listen": "8013"
+        }
+    }
     EOF
 
 Before deploying we need to ask sarge to prepare a new version of our
@@ -65,9 +71,6 @@ use the `demo application from wsgiref`_::
             "type": "wsgi",
             "url": "/",
             "wsgi_app": "wsgiref.simple_server:demo_app"
-        },
-        "nginx_options": {
-            "listen": "8013"
         }
     }
     EOF

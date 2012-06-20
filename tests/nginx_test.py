@@ -31,8 +31,10 @@ class NginxConfigurationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
-    def configure_and_activate(self, app_config):
-        configure_deployment(self.tmp, {'name': 'testy'})
+    def configure_and_activate(self, app_config, deployment_config_extra={}):
+        deployment_config = {'name': 'testy'}
+        deployment_config.update(deployment_config_extra)
+        configure_deployment(self.tmp, deployment_config)
         s = sarge.Sarge(self.tmp)
         deployment = s.get_deployment('testy')
         version_folder = path(deployment.new_version())
@@ -155,7 +157,7 @@ class NginxConfigurationTest(unittest.TestCase):
                                   })
 
     def test_configure_nginx_arbitrary_options(self):
-        version_folder = self.configure_and_activate({
+        version_folder = self.configure_and_activate({}, {
             'nginx_options': {
                 'server_name': 'something.example.com',
                 'listen': '8013',

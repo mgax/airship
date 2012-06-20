@@ -302,7 +302,7 @@ class NginxPlugin(object):
         with open(conf_path, 'wb') as f:
             f.write('server {\n')
 
-            nginx_options = app_config.get('nginx_options', {})
+            nginx_options = depl.config.get('nginx_options', {})
             for key, value in sorted(nginx_options.items()):
                 f.write('  %s %s;\n' % (key, value))
 
