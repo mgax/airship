@@ -7,6 +7,10 @@ thus not stable, and may crash and burn at any time. Use at your own
 risk.
 
 
+The source code is maintained on GitHub:
+https://github.com/alex-morega/Sarge.
+
+
 Contents:
 
 .. toctree::
