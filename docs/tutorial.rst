@@ -26,16 +26,21 @@ in as `joe`. Create the folder and fetch the source code::
 Set up a virtual environment and install sarge::
 
     virtualenv .
-    bin/pip install https://github.com/alex-morega/sarge/zipball/master
+    bin/pip install https://github.com/alex-morega/Sarge/zipball/master
 
-Initialize sarge::
+Configure and initialize sarge::
 
-    sudo bin/sarge init
+    echo '{"plugins": ["sarge:NginxPlugin"]}' > sargecfg.yaml
+    sudo bin/sarge . init
+
+Link up the nginx configuration; start up supervisor::
+
+    sudo ln -s `pwd`/nginx.plugin/all_sites.conf /etc/nginx/sites-enabled/sarge_sites
     sudo bin/supervisord
 
 
-The first deployment
---------------------
+Preparing a deployment
+----------------------
 Each application installed with sarge needs its own `deployment`. Think
 of a deployment as an application container, configured to provide
 whatever resources (e.g. database, temporary folder) the application
@@ -44,7 +49,7 @@ needs.
 Let's create a deployment for our application. It's just a configuration
 file specifying a name and unix user::
 
-    cat > deployments/demo.yaml <<EOF
+    cat > demo.yaml <<EOF
     {
         "name": "demo",
         "user": "joe",
@@ -53,7 +58,11 @@ file specifying a name and unix user::
         }
     }
     EOF
+    sudo mv demo.yaml deployments/
 
+
+Deploying the first version
+---------------------------
 Before deploying we need to ask sarge to prepare a new version of our
 deployment::
 
@@ -65,13 +74,13 @@ That's where we're supposed to write our application. We'll just write
 an application configuration file with the urlmap and nginx port, and
 use the `demo application from wsgiref`_::
 
-    cat > demo/1/sargeapp.yaml <<EOF
+    cat > demo.deploy/1/sargeapp.yaml <<EOF
     {
-        "url_cfg": {
+        "urlmap": [{
             "type": "wsgi",
             "url": "/",
             "wsgi_app": "wsgiref.simple_server:demo_app"
-        }
+        }]
     }
     EOF
 
