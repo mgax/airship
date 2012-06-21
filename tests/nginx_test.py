@@ -114,8 +114,7 @@ class NginxConfigurationTest(unittest.TestCase):
         version_folder = self.configure_and_activate({
             'urlmap': [
                 {'url': '/',
-                 'type': 'php',
-                 'path': '/myphpcode'},
+                 'type': 'php'},
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
@@ -139,8 +138,7 @@ class NginxConfigurationTest(unittest.TestCase):
         version_folder = self.configure_and_activate({
             'urlmap': [
                 {'url': '/',
-                 'type': 'php',
-                 'path': '/myphpcode'},
+                 'type': 'php'},
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
