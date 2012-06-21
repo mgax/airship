@@ -202,7 +202,7 @@ class ShellTest(unittest.TestCase):
         sarge.main([str(other_tmp), 'init'])
         expected = [sarge.SUPERVISORD_CFG,
                     sarge.DEPLOYMENT_CFG_DIR,
-                    sarge.DEPLOYMENT_CFG,
+                    sarge.SARGE_CFG,
                     'sarge.log']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())

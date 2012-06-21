@@ -69,7 +69,7 @@ class VagrantDeploymentTest(unittest.TestCase):
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
+                 cfg['sarge-home']/sarge.SARGE_CFG,
                  use_sudo=True)
         sarge_cmd("init")
         sudo("'%(sarge-venv)s'/bin/supervisord "

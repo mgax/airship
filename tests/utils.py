@@ -9,7 +9,7 @@ except ImportError:
 
 def configure_sarge(sarge_home, config):
     import sarge
-    with open(sarge_home/sarge.DEPLOYMENT_CFG, 'wb') as f:
+    with open(sarge_home/sarge.SARGE_CFG, 'wb') as f:
         json.dump(config, f)
 
 

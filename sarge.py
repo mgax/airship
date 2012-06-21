@@ -9,7 +9,7 @@ import yaml
 sarge_log = logging.getLogger('sarge')
 
 
-DEPLOYMENT_CFG = 'sargecfg.yaml'
+SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
@@ -192,7 +192,7 @@ class Sarge(object):
         return folder
 
     def _configure(self):
-        with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
+        with open(self.home_path/SARGE_CFG, 'rb') as f:
             config = yaml.load(f)
 
         def iter_deployments():
