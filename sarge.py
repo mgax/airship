@@ -140,13 +140,14 @@ class Deployment(object):
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
         with open(supervisor_deploy_cfg_path, 'wb') as f:
+            command = self.config.get('command')
+            if command is None:
+                return
             extra_program_stuff = ""
+            extra_program_stuff += "command = %s\n" % command
             if self.config.get('autorestart', None) == 'always':
                 extra_program_stuff += "autorestart = true\n"
             extra_program_stuff += "user = %s\n" % self.config['user']
-            command = self.config.get('command')
-            if command is not None:
-                extra_program_stuff += "command = %s\n" % command
             f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                 'name': self.name,
                 'directory': version_folder,
