@@ -4,7 +4,7 @@ import json
 from StringIO import StringIO
 from path import path
 from mock import patch, call
-from utils import configure_deployment, username
+from utils import configure_deployment, configure_sarge, username
 
 
 def setUpModule(self):
@@ -25,6 +25,7 @@ class WorkflowTest(unittest.TestCase):
         self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
     def test_new_version(self):
@@ -151,6 +152,7 @@ class ShellTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
@@ -195,10 +197,12 @@ class ShellTest(unittest.TestCase):
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)
+        configure_sarge(other_tmp, {})
 
         sarge.main([str(other_tmp), 'init'])
         expected = [sarge.SUPERVISORD_CFG,
                     sarge.DEPLOYMENT_CFG_DIR,
+                    sarge.DEPLOYMENT_CFG,
                     'sarge.log']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())

@@ -24,6 +24,7 @@ class PluginApiTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_plugin_named_in_config_file_gets_called(self):
         configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})

@@ -192,11 +192,8 @@ class Sarge(object):
         return folder
 
     def _configure(self):
-        if (self.home_path/DEPLOYMENT_CFG).isfile():
-            with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-                config = yaml.load(f)
-        else:
-            config = {}
+        with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
+            config = yaml.load(f)
 
         def iter_deployments():
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR

@@ -48,6 +48,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_enumerate_deployments(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -154,6 +155,7 @@ class SupervisorInvocationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_invoke_supervisorctl(self):
         mock_subprocess.reset_mock()
