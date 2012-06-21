@@ -276,11 +276,11 @@ class NginxPlugin(object):
     def initialize(self, sarge):
         if not self.sites_folder.isdir():
             (self.sites_folder).makedirs()
-        all_sites_conf = self.folder/'all_sites.conf'
-        if not all_sites_conf.isfile():
-            self.log.debug("Writing \"all_sites\" nginx configuration at %r.",
-                           all_sites_conf)
-            all_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
+        sarge_sites_conf = self.folder/'sarge_sites.conf'
+        if not sarge_sites_conf.isfile():
+            self.log.debug("Writing \"sarge_sites\" nginx configuration at %r.",
+                           sarge_sites_conf)
+            sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
     def activate_deployment(self, depl, folder):
         version_folder = folder

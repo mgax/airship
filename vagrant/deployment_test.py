@@ -25,7 +25,7 @@ def setUpModule(self):
         provision()
 
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
-    nginx_all_sites = cfg['sarge-home']/'nginx.plugin'/'all_sites.conf'
+    nginx_all_sites = cfg['sarge-home']/'nginx.plugin'/'sarge_sites.conf'
     sudo("ln -s '%s' '%s'" % (nginx_all_sites, self._nginx_symlink))
 
 

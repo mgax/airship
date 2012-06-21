@@ -53,7 +53,7 @@ class NginxConfigurationTest(unittest.TestCase):
         nginx_sites = nginx_folder/'sites'
         self.assertTrue(nginx_sites.isdir())
 
-        nginx_common = nginx_folder/'all_sites.conf'
+        nginx_common = nginx_folder/'sarge_sites.conf'
         self.assertTrue(nginx_common.isfile())
         self.assertEqual(nginx_common.text(),
                          'include ' + nginx_folder + '/sites/*;\n')
