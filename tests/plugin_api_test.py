@@ -3,7 +3,7 @@ import tempfile
 import json
 from path import path
 from mock import Mock, patch, call
-from utils import configure_sarge, configure_deployment
+from utils import configure_sarge, configure_deployment, username
 
 
 def setUpModule(self):
@@ -24,6 +24,7 @@ class PluginApiTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_plugin_named_in_config_file_gets_called(self):
         configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})
@@ -32,7 +33,7 @@ class PluginApiTest(unittest.TestCase):
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
 
     def test_subscribe_to_activation_event(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         mock_handler = Mock(im_self=None)
         s.on_activate_version.connect(mock_handler)

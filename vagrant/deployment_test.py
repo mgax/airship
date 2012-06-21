@@ -25,7 +25,7 @@ def setUpModule(self):
         provision()
 
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
-    nginx_all_sites = cfg['sarge-home']/'nginx.plugin'/'all_sites.conf'
+    nginx_all_sites = cfg['sarge-home']/'nginx.plugin'/'sarge_sites.conf'
     sudo("ln -s '%s' '%s'" % (nginx_all_sites, self._nginx_symlink))
 
 
@@ -69,7 +69,7 @@ class VagrantDeploymentTest(unittest.TestCase):
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG,
+                 cfg['sarge-home']/sarge.SARGE_CFG,
                  use_sudo=True)
         sarge_cmd("init")
         sudo("'%(sarge-venv)s'/bin/supervisord "

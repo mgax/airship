@@ -35,7 +35,7 @@ Configure and initialize sarge::
 
 Link up the nginx configuration; start up supervisor::
 
-    sudo ln -s `pwd`/nginx.plugin/all_sites.conf /etc/nginx/sites-enabled/sarge_sites
+    sudo ln -s `pwd`/nginx.plugin/sarge_sites.conf /etc/nginx/sites-enabled/sarge_sites
     sudo bin/supervisord
 
 

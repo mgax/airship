@@ -4,7 +4,7 @@ import json
 from StringIO import StringIO
 from path import path
 from mock import patch, call
-from utils import configure_deployment
+from utils import configure_deployment, configure_sarge, username
 
 
 def setUpModule(self):
@@ -25,7 +25,8 @@ class WorkflowTest(unittest.TestCase):
         self.addCleanup(supervisorctl_patch.stop)
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_sarge(self.tmp, {})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
     def test_new_version(self):
         s = sarge.Sarge(self.tmp)
@@ -151,11 +152,12 @@ class ShellTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         mock_stdout = StringIO()
         with patch('sys.stdout', mock_stdout):
             sarge.main([str(self.tmp), 'new_version', 'testy'])
@@ -164,7 +166,7 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
@@ -177,13 +179,13 @@ class ShellTest(unittest.TestCase):
 
     @patch('sarge.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         sarge.main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
     @patch('sarge.Deployment.stop')
     def test_stop_calls_api_method(self, mock_stop):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         sarge.main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
@@ -195,10 +197,12 @@ class ShellTest(unittest.TestCase):
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)
+        configure_sarge(other_tmp, {})
 
         sarge.main([str(other_tmp), 'init'])
         expected = [sarge.SUPERVISORD_CFG,
                     sarge.DEPLOYMENT_CFG_DIR,
+                    sarge.SARGE_CFG,
                     'sarge.log']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())

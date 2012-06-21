@@ -4,7 +4,7 @@ import json
 import re
 from path import path
 from mock import patch, call
-from utils import configure_sarge, configure_deployment
+from utils import configure_sarge, configure_deployment, username
 
 
 def read_config(cfg_path):
@@ -32,7 +32,7 @@ class NginxConfigurationTest(unittest.TestCase):
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
-        deployment_config = {'name': 'testy'}
+        deployment_config = {'name': 'testy', 'user': username}
         deployment_config.update(deployment_config_extra)
         configure_deployment(self.tmp, deployment_config)
         s = sarge.Sarge(self.tmp)
@@ -53,10 +53,10 @@ class NginxConfigurationTest(unittest.TestCase):
         nginx_sites = nginx_folder/'sites'
         self.assertTrue(nginx_sites.isdir())
 
-        nginx_common = nginx_folder/'all_sites.conf'
+        nginx_common = nginx_folder/'sarge_sites.conf'
         self.assertTrue(nginx_common.isfile())
         self.assertEqual(nginx_common.text(),
-                         'include ' + nginx_folder + '/sites/*;')
+                         'include ' + nginx_folder + '/sites/*;\n')
 
     def test_no_web_services_yields_blank_configuration(self):
         version_folder = self.configure_and_activate({})
@@ -114,8 +114,7 @@ class NginxConfigurationTest(unittest.TestCase):
         version_folder = self.configure_and_activate({
             'urlmap': [
                 {'url': '/',
-                 'type': 'php',
-                 'path': '/myphpcode'},
+                 'type': 'php'},
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
@@ -139,8 +138,7 @@ class NginxConfigurationTest(unittest.TestCase):
         version_folder = self.configure_and_activate({
             'urlmap': [
                 {'url': '/',
-                 'type': 'php',
-                 'path': '/myphpcode'},
+                 'type': 'php'},
             ],
         })
         cfg_folder = path(version_folder + '.cfg')

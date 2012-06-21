@@ -5,7 +5,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import patch, call
-from utils import configure_sarge, configure_deployment
+from utils import configure_sarge, configure_deployment, username
 
 
 def setUpModule(self):
@@ -48,9 +48,10 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_enumerate_deployments(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         self.assertEqual([d.name for d in s.deployments], ['testy'])
 
@@ -71,7 +72,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
 
@@ -82,7 +83,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
         configure_deployment(self.tmp, {'name': 'testy',
-                                        'command': "echo starting up"})
+                                        'command': "echo starting up",
+                                        'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -101,7 +103,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
     def test_autorestart_option(self):
         configure_deployment(self.tmp, {'name': 'testy',
-                                        'autorestart': 'always'})
+                                        'autorestart': 'always',
+                                        'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -113,8 +116,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('program:testy', 'autorestart', 'true')
 
     def test_user_option(self):
-        configure_deployment(self.tmp, {'name': 'testy',
-                                        'user': 'someone'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -126,7 +128,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('program:testy', 'user', 'someone')
 
     def test_get_deployment(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         self.assertEqual(testy.name, 'testy')
@@ -137,7 +139,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
             testy = s.get_deployment('testy')
 
     def test_directory_updated_after_activation(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
@@ -153,6 +155,7 @@ class SupervisorInvocationTest(unittest.TestCase):
     def setUp(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
+        configure_sarge(self.tmp, {})
 
     def test_invoke_supervisorctl(self):
         mock_subprocess.reset_mock()

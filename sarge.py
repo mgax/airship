@@ -9,7 +9,7 @@ import yaml
 sarge_log = logging.getLogger('sarge')
 
 
-DEPLOYMENT_CFG = 'sargecfg.yaml'
+SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
@@ -94,9 +94,9 @@ class Deployment(object):
                 self.log.info("New version folder for deployment %r at %r.",
                               self.name, version_folder)
                 version_folder.makedirs()
-                if 'user' in self.config:
-                    subprocess.check_call(['chown', self.config['user']+':',
-                                           version_folder])
+                # TODO test
+                subprocess.check_call(['chown', self.config['user']+':',
+                                       version_folder])
                 return version_folder
 
     def activate_version(self, version_folder):
@@ -107,9 +107,8 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        if 'user' in self.config:
-            subprocess.check_call(['chown', self.config['user']+':',
-                                   run_folder])
+        subprocess.check_call(['chown', self.config['user']+':',
+                               run_folder])
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
@@ -144,9 +143,7 @@ class Deployment(object):
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
                 extra_program_stuff += "autorestart = true\n"
-            user = self.config.get('user', None)
-            if user is not None:
-                extra_program_stuff += "user = %s\n" % user
+            extra_program_stuff += "user = %s\n" % self.config['user']
             command = self.config.get('command')
             if command is not None:
                 extra_program_stuff += "command = %s\n" % command
@@ -195,11 +192,8 @@ class Sarge(object):
         return folder
 
     def _configure(self):
-        if (self.home_path/DEPLOYMENT_CFG).isfile():
-            with open(self.home_path/DEPLOYMENT_CFG, 'rb') as f:
-                config = yaml.load(f)
-        else:
-            config = {}
+        with open(self.home_path/SARGE_CFG, 'rb') as f:
+            config = yaml.load(f)
 
         def iter_deployments():
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
@@ -276,11 +270,11 @@ class NginxPlugin(object):
     def initialize(self, sarge):
         if not self.sites_folder.isdir():
             (self.sites_folder).makedirs()
-        all_sites_conf = self.folder/'all_sites.conf'
-        if not all_sites_conf.isfile():
-            self.log.debug("Writing \"all_sites\" nginx configuration at %r.",
-                           all_sites_conf)
-            all_sites_conf.write_text('include %s/*;' % self.sites_folder)
+        sarge_sites_conf = self.folder/'sarge_sites.conf'
+        if not sarge_sites_conf.isfile():
+            self.log.debug("Writing \"sarge_sites\" nginx configuration at %r.",
+                           sarge_sites_conf)
+            sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
     def activate_deployment(self, depl, folder):
         version_folder = folder
