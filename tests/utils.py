@@ -1,3 +1,5 @@
+import os
+import pwd
 import json
 try:
     import unittest2 as unittest
@@ -18,3 +20,5 @@ def configure_deployment(sarge_home, config):
     filename = config['name'] + '.yaml'
     with open(deployment_config_folder/filename, 'wb') as f:
         json.dump(config, f)
+
+username = pwd.getpwuid(os.getuid())[0]

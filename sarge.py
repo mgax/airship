@@ -94,9 +94,9 @@ class Deployment(object):
                 self.log.info("New version folder for deployment %r at %r.",
                               self.name, version_folder)
                 version_folder.makedirs()
-                if 'user' in self.config:
-                    subprocess.check_call(['chown', self.config['user']+':',
-                                           version_folder])
+                # TODO test
+                subprocess.check_call(['chown', self.config['user']+':',
+                                       version_folder])
                 return version_folder
 
     def activate_version(self, version_folder):
@@ -107,9 +107,8 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        if 'user' in self.config:
-            subprocess.check_call(['chown', self.config['user']+':',
-                                   run_folder])
+        subprocess.check_call(['chown', self.config['user']+':',
+                               run_folder])
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
@@ -144,9 +143,7 @@ class Deployment(object):
             extra_program_stuff = ""
             if self.config.get('autorestart', None) == 'always':
                 extra_program_stuff += "autorestart = true\n"
-            user = self.config.get('user', None)
-            if user is not None:
-                extra_program_stuff += "user = %s\n" % user
+            extra_program_stuff += "user = %s\n" % self.config['user']
             command = self.config.get('command')
             if command is not None:
                 extra_program_stuff += "command = %s\n" % command

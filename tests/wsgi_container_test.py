@@ -3,7 +3,7 @@ import tempfile
 import json
 from path import path
 from mock import patch, call
-from utils import configure_sarge, configure_deployment
+from utils import configure_sarge, configure_deployment, username
 
 
 def setUpModule(self):
@@ -66,7 +66,7 @@ class WsgiContainerTest(unittest.TestCase):
 
     def test_wsgi_app_works_via_fcgi(self):
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
-        configure_deployment(self.tmp, {'name': 'testy'})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
