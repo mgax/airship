@@ -2,7 +2,7 @@ import unittest
 from StringIO import StringIO
 import json
 import urllib
-from fabric.api import env, run, sudo, put
+from fabric.api import env, run, sudo, put, cd
 from fabric.contrib.files import exists
 from path import path
 
@@ -164,3 +164,30 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
                          "hello from PHP!\n")
+
+    def test_deploy_static_site(self):
+        put_json({'name': 'testy',
+                  'user': 'vagrant',
+                  'nginx_options': {'listen': '8013'}},
+                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 use_sudo=True)
+
+        version_folder = path(sarge_cmd("new_version testy"))
+
+        put_json({'urlmap': [
+                    {'type': 'static', 'url': '/', 'path': ''},
+                 ]},
+                 version_folder/'sargeapp.yaml')
+
+        with cd(str(version_folder)):
+            run("echo 'hello static!' > hello.html")
+            run("mkdir sub")
+            run("echo 'submarine' > sub/marine.txt")
+
+        sarge_cmd("activate_version testy '%s'" % version_folder)
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
+                         "hello static!\n")
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/sub/marine.txt'),
+                         "submarine\n")
