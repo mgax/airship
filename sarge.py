@@ -280,7 +280,7 @@ class NginxPlugin(object):
         if not all_sites_conf.isfile():
             self.log.debug("Writing \"all_sites\" nginx configuration at %r.",
                            all_sites_conf)
-            all_sites_conf.write_text('include %s/*;' % self.sites_folder)
+            all_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
     def activate_deployment(self, depl, folder):
         version_folder = folder

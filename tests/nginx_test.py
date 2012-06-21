@@ -56,7 +56,7 @@ class NginxConfigurationTest(unittest.TestCase):
         nginx_common = nginx_folder/'all_sites.conf'
         self.assertTrue(nginx_common.isfile())
         self.assertEqual(nginx_common.text(),
-                         'include ' + nginx_folder + '/sites/*;')
+                         'include ' + nginx_folder + '/sites/*;\n')
 
     def test_no_web_services_yields_blank_configuration(self):
         version_folder = self.configure_and_activate({})
