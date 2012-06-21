@@ -126,8 +126,8 @@ class Deployment(object):
                     'attribute_name': attribute_name,
                     'socket_path': str(run_folder/'wsgi-app.sock'),
                 })
-            self.config['command'] = "%s %s" % (sys.executable,
-                                                version_folder/'quickapp.py')
+            self.config['_command'] = "%s %s" % (sys.executable,
+                                                 version_folder/'quickapp.py')
         self.write_supervisor_program_config(version_folder)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
@@ -140,7 +140,7 @@ class Deployment(object):
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
         with open(supervisor_deploy_cfg_path, 'wb') as f:
-            command = self.config.get('command')
+            command = self.config.get('_command')
             if command is None:
                 return
             extra_program_stuff = ""
@@ -334,7 +334,7 @@ class NginxPlugin(object):
                                          version_folder=version_folder,
                                          fcgi_params_path=self.fcgi_params_path))
 
-                    depl.config['command'] = (
+                    depl.config['_command'] = (
                         '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
                         '-f /usr/bin/php5-cgi -n'
                         % {'socket_path': socket_path})

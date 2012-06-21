@@ -83,7 +83,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
         configure_deployment(self.tmp, {'name': 'testy',
-                                        'command': "echo starting up",
+                                        '_command': "echo starting up",
                                         'user': username})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
@@ -113,7 +113,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
     def test_autorestart_option(self):
         configure_deployment(self.tmp, {'name': 'testy',
-                                        'command': 'echo',
+                                        '_command': 'echo',
                                         'autorestart': 'always',
                                         'user': username})
         s = sarge.Sarge(self.tmp)
@@ -128,7 +128,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
     def test_user_option(self):
         configure_deployment(self.tmp, {'name': 'testy',
-                                        'command': 'echo',
+                                        '_command': 'echo',
                                         'user': 'someone'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
@@ -154,7 +154,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def test_directory_updated_after_activation(self):
         configure_deployment(self.tmp, {'name': 'testy',
                                         'user': username,
-                                        'command': 'echo'})
+                                        '_command': 'echo'})
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
