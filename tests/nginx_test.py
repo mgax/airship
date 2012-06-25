@@ -93,7 +93,7 @@ class NginxConfigurationTest(unittest.TestCase):
             'urlmap': [
                 {'url': '/',
                  'type': 'wsgi',
-                 'wsgi_app': 'wsgiref.simple_server:demo_app'},
+                 'app_factory': 'wsgiref.simple_server:demo_app'},
             ],
         })
         cfg_folder = path(version_folder + '.cfg')

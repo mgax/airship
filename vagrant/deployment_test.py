@@ -94,7 +94,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'urlmap': [
                     {'type': 'wsgi',
                      'url': '/',
-                     'wsgi_app': 'mytinyapp:gettheapp'},
+                     'app_factory': 'mytinyapp:gettheapp'},
                  ]},
                  version_folder/'sargeapp.yaml')
         app_py = ('def gettheapp(appcfg):\n'
@@ -113,7 +113,7 @@ class VagrantDeploymentTest(unittest.TestCase):
             'urlmap': [
                 {'type': 'wsgi',
                  'url': '/',
-                 'wsgi_app': 'mytinyapp:gettheapp'},
+                 'app_factory': 'mytinyapp:gettheapp'},
             ],
         }
         app_py_tmpl = ('def gettheapp(appcfg):\n'

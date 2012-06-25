@@ -324,7 +324,7 @@ class NginxPlugin(object):
                             '}\n' % dict(entry,
                                          socket_path=socket_path,
                                          fcgi_params_path=self.fcgi_params_path))
-                    depl.config['tmp-wsgi-app'] = entry['wsgi_app']
+                    depl.config['tmp-wsgi-app'] = entry['app_factory']
 
                 elif entry['type'] == 'php':
                     socket_path = run_folder/'php.sock'

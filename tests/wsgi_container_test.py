@@ -81,7 +81,7 @@ class WsgiContainerTest(unittest.TestCase):
             'urlmap': [
                 {'url': '/',
                  'type': 'wsgi',
-                 'wsgi_app': 'testyapp:testy_app_factory'},
+                 'app_factory': 'testyapp:testy_app_factory'},
             ],
         }
         with open(version_folder/'sargeapp.yaml', 'wb') as f:
