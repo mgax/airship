@@ -49,8 +49,9 @@ autostart = false
 QUICK_WSGI_APP_TEMPLATE = """\
 from flup.server.fcgi import WSGIServer
 from importlib import import_module
+appcfg = %(appcfg)r
 app_factory = getattr(import_module(%(module_name)r), %(attribute_name)r)
-app = app_factory({})
+app = app_factory(appcfg)
 server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
@@ -131,6 +132,7 @@ class Deployment(object):
                     'module_name': module_name,
                     'attribute_name': attribute_name,
                     'socket_path': str(run_folder/'wsgi-app.sock'),
+                    'appcfg': self._appcfg,
                 })
             self.config['_command'] = "%s %s" % (sys.executable,
                                                  version_folder/'quickapp.py')

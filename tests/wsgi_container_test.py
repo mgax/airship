@@ -60,8 +60,8 @@ class WsgiContainerTest(unittest.TestCase):
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
-        s = sarge.Sarge(self.tmp)
-        self.testy = s.get_deployment('testy')
+        self.sarge = sarge.Sarge(self.tmp)
+        self.testy = self.sarge.get_deployment('testy')
         self.version_folder = path(self.testy.new_version())
 
     def popen_with_cleanup(self, *args, **kwargs):
@@ -106,3 +106,30 @@ class WsgiContainerTest(unittest.TestCase):
         socket_path = self.start_app()
         response = get_fcgi_response(socket_path, {'PATH_INFO': '/'})
         self.assertIn('the matrix has you', response['data'])
+
+    def test_app_receives_configuration(self):
+        with (self.version_folder/'testyapp.py').open('wb') as f:
+            f.write("def testy_app_factory(appcfg):\n"
+                    "  def app(environ, start_response):\n"
+                    "    start_response('200 OK', [])\n"
+                    "    return [appcfg.get('hidden', 'no message :(')]\n"
+                    "  return app\n")
+        app_config = {
+            'urlmap': [
+                {'url': '/',
+                 'type': 'wsgi',
+                 'app_factory': 'testyapp:testy_app_factory'},
+            ],
+        }
+        with open(self.version_folder/'sargeapp.yaml', 'wb') as f:
+            json.dump(app_config, f)
+
+        @self.sarge.on_activate_version.connect
+        def set_message(depl, appcfg, **extra):
+            appcfg['hidden'] = "XKCD"
+
+        self.testy.activate_version(self.version_folder)
+
+        socket_path = self.start_app()
+        response = get_fcgi_response(socket_path, {'PATH_INFO': '/'})
+        self.assertIn("XKCD", response['data'])
