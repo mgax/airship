@@ -71,11 +71,17 @@ class WsgiContainerTest(unittest.TestCase):
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
+        with (version_folder/'testyapp.py').open('wb') as f:
+            f.write("def testy_app_factory(appcfg):\n"
+                    "  def app(environ, start_response):\n"
+                    "    start_response('200 OK', [])\n"
+                    "    return ['the matrix has you.']\n"
+                    "  return app\n")
         app_config = {
             'urlmap': [
                 {'url': '/',
                  'type': 'wsgi',
-                 'wsgi_app': 'wsgiref.simple_server:demo_app'},
+                 'wsgi_app': 'testyapp:testy_app_factory'},
             ],
         }
         with open(version_folder/'sargeapp.yaml', 'wb') as f:
@@ -93,7 +99,6 @@ class WsgiContainerTest(unittest.TestCase):
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 
-        msg = "the-matrix-has-you"
-        response = get_fcgi_response(socket_path, {'PATH_INFO': msg})
+        response = get_fcgi_response(socket_path, {'PATH_INFO': '/'})
 
-        self.assertIn(msg, response['data'])
+        self.assertIn('the matrix has you', response['data'])
