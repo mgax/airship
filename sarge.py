@@ -113,7 +113,10 @@ class Deployment(object):
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
-        self.sarge.on_activate_version.send(self, folder=version_folder)
+        share = {}
+        self.sarge.on_activate_version.send(self,
+                                            folder=version_folder,
+                                            share=share)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder/'quickapp.py'
@@ -277,7 +280,7 @@ class NginxPlugin(object):
                            sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder):
+    def activate_deployment(self, depl, folder, **extra):
         version_folder = folder
         run_folder = path(folder + '.run')
         cfg_folder = path(folder + '.cfg')
