@@ -49,7 +49,9 @@ autostart = false
 QUICK_WSGI_APP_TEMPLATE = """\
 from flup.server.fcgi import WSGIServer
 from importlib import import_module
-app = getattr(import_module(%(module_name)r), %(attribute_name)r)
+appcfg = %(appcfg)r
+app_factory = getattr(import_module(%(module_name)r), %(attribute_name)r)
+app = app_factory(appcfg)
 server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
@@ -113,7 +115,12 @@ class Deployment(object):
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
-        self.sarge.on_activate_version.send(self, folder=version_folder)
+        share = {}
+        self._appcfg = {}
+        self.sarge.on_activate_version.send(self,
+                                            folder=version_folder,
+                                            share=share,
+                                            appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder/'quickapp.py'
@@ -125,6 +132,7 @@ class Deployment(object):
                     'module_name': module_name,
                     'attribute_name': attribute_name,
                     'socket_path': str(run_folder/'wsgi-app.sock'),
+                    'appcfg': self._appcfg,
                 })
             self.config['_command'] = "%s %s" % (sys.executable,
                                                  version_folder/'quickapp.py')
@@ -277,7 +285,7 @@ class NginxPlugin(object):
                            sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder):
+    def activate_deployment(self, depl, folder, **extra):
         version_folder = folder
         run_folder = path(folder + '.run')
         cfg_folder = path(folder + '.cfg')
@@ -318,7 +326,7 @@ class NginxPlugin(object):
                             '}\n' % dict(entry,
                                          socket_path=socket_path,
                                          fcgi_params_path=self.fcgi_params_path))
-                    depl.config['tmp-wsgi-app'] = entry['wsgi_app']
+                    depl.config['tmp-wsgi-app'] = entry['app_factory']
 
                 elif entry['type'] == 'php':
                     socket_path = run_folder/'php.sock'

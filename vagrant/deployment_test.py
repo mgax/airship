@@ -94,12 +94,14 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'urlmap': [
                     {'type': 'wsgi',
                      'url': '/',
-                     'wsgi_app': 'mytinyapp:theapp'},
+                     'app_factory': 'mytinyapp:gettheapp'},
                  ]},
                  version_folder/'sargeapp.yaml')
-        app_py = ('def theapp(environ, start_response):\n'
-                  '    start_response("200 OK", [])\n'
-                  '    return ["hello sarge!\\n"]\n')
+        app_py = ('def gettheapp(appcfg):\n'
+                  '    def theapp(environ, start_response):\n'
+                  '        start_response("200 OK", [])\n'
+                  '        return ["hello sarge!\\n"]\n'
+                  '    return theapp\n')
         put(StringIO(app_py), str(version_folder/'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder)
 
@@ -111,12 +113,14 @@ class VagrantDeploymentTest(unittest.TestCase):
             'urlmap': [
                 {'type': 'wsgi',
                  'url': '/',
-                 'wsgi_app': 'mytinyapp:theapp'},
+                 'app_factory': 'mytinyapp:gettheapp'},
             ],
         }
-        app_py_tmpl = ('def theapp(environ, start_response):\n'
-                       '    start_response("200 OK", [])\n'
-                       '    return ["hello sarge %s!\\n"]\n')
+        app_py_tmpl = ('def gettheapp(appcfg):\n'
+                       '    def theapp(environ, start_response):\n'
+                       '        start_response("200 OK", [])\n'
+                       '        return ["hello sarge %s!\\n"]\n'
+                       '    return theapp\n')
 
         put_json({'name': 'testy',
                   'user': 'vagrant',
