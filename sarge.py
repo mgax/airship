@@ -114,9 +114,11 @@ class Deployment(object):
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
         share = {}
+        self._appcfg = {}
         self.sarge.on_activate_version.send(self,
                                             folder=version_folder,
-                                            share=share)
+                                            share=share,
+                                            appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder/'quickapp.py'

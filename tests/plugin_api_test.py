@@ -40,8 +40,7 @@ class PluginApiTest(unittest.TestCase):
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
-        self.assertEqual(mock_handler.mock_calls,
-                         [call(testy, folder=version_folder, share={})])
+        self.assertEqual(len(mock_handler.mock_calls), 1)
 
     def test_activation_event_passes_shared_dict(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -61,3 +60,16 @@ class PluginApiTest(unittest.TestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
         self.assertEqual(got, [123])
+
+    def test_activation_event_allows_passing_info_to_application(self):
+        def handler(depl, appcfg, **extra):
+            appcfg['your-order'] = "is here"
+
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        s = sarge.Sarge(self.tmp)
+        s.on_activate_version.connect(handler)
+
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+        self.assertEqual(testy._appcfg['your-order'], "is here")
