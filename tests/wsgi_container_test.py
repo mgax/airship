@@ -57,6 +57,13 @@ class WsgiContainerTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
 
+        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+
+        s = sarge.Sarge(self.tmp)
+        self.testy = s.get_deployment('testy')
+        self.version_folder = path(self.testy.new_version())
+
     def popen_with_cleanup(self, *args, **kwargs):
         import subprocess
         p = subprocess.Popen(*args, **kwargs)
@@ -64,14 +71,21 @@ class WsgiContainerTest(unittest.TestCase):
         self.addCleanup(p.wait)
         self.addCleanup(p.kill)
 
-    def test_wsgi_app_works_via_fcgi(self):
-        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+    def start_app(self):
+        cfg_folder = path(self.version_folder + '.cfg')
+        config = read_config(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        command = config.get('program:testy', 'command')
+        self.popen_with_cleanup(command, cwd=self.version_folder, shell=True)
 
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
-        version_folder = path(testy.new_version())
-        with (version_folder/'testyapp.py').open('wb') as f:
+        run_folder = path(self.version_folder + '.run')
+        socket_path = run_folder/'wsgi-app.sock'
+        if not wait_for(socket_path.exists, 0.01, 500):
+            self.fail('No socket found after 5 seconds')
+
+        return socket_path
+
+    def test_wsgi_app_works_via_fcgi(self):
+        with (self.version_folder/'testyapp.py').open('wb') as f:
             f.write("def testy_app_factory(appcfg):\n"
                     "  def app(environ, start_response):\n"
                     "    start_response('200 OK', [])\n"
@@ -84,21 +98,11 @@ class WsgiContainerTest(unittest.TestCase):
                  'app_factory': 'testyapp:testy_app_factory'},
             ],
         }
-        with open(version_folder/'sargeapp.yaml', 'wb') as f:
+        with open(self.version_folder/'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
-        testy.activate_version(version_folder)
-        run_folder = path(version_folder + '.run')
-        cfg_folder = path(version_folder + '.cfg')
 
-        config = read_config(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
-        command = config.get('program:testy', 'command')
+        self.testy.activate_version(self.version_folder)
 
-        self.popen_with_cleanup(command, cwd=version_folder, shell=True)
-
-        socket_path = run_folder/'wsgi-app.sock'
-        if not wait_for(socket_path.exists, 0.01, 500):
-            self.fail('No socket found after 5 seconds')
-
+        socket_path = self.start_app()
         response = get_fcgi_response(socket_path, {'PATH_INFO': '/'})
-
         self.assertIn('the matrix has you', response['data'])
