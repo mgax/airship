@@ -115,7 +115,7 @@ class Deployment(object):
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
-        share = {}
+        share = {'programs': []}
         self._appcfg = {}
         self.sarge.on_activate_version.send(self,
                                             folder=version_folder,
@@ -136,11 +136,18 @@ class Deployment(object):
                 })
             self.config['_command'] = "%s %s" % (sys.executable,
                                                  version_folder/'quickapp.py')
-        self.write_supervisor_program_config(version_folder)
+
+        if '_command' in self.config:
+            share['programs'].append({
+                'name': self.name,
+                'command': self.config.pop('_command'),
+            })
+
+        self.write_supervisor_program_config(version_folder, share)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
 
-    def write_supervisor_program_config(self, version_folder):
+    def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg_path = cfg_folder/SUPERVISOR_DEPLOY_CFG
@@ -148,20 +155,19 @@ class Deployment(object):
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
         with open(supervisor_deploy_cfg_path, 'wb') as f:
-            command = self.config.get('_command')
-            if command is None:
-                return
-            extra_program_stuff = ""
-            extra_program_stuff += "command = %s\n" % command
-            if self.config.get('autorestart', None) == 'always':
-                extra_program_stuff += "autorestart = true\n"
-            extra_program_stuff += "user = %s\n" % self.config['user']
-            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                'name': self.name,
-                'directory': version_folder,
-                'run': run_folder,
-                'extra_program_stuff': extra_program_stuff,
-            })
+            for program_cfg in share['programs']:
+                extra_program_stuff = ""
+                extra_program_stuff += "command = %s\n" % program_cfg['command']
+                if self.config.get('autorestart', None) == 'always':
+                    # TODO this should be specified in 'program_cfg'
+                    extra_program_stuff += "autorestart = true\n"
+                extra_program_stuff += "user = %s\n" % self.config['user']
+                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                    'name': program_cfg['name'],
+                    'directory': version_folder,
+                    'run': run_folder,
+                    'extra_program_stuff': extra_program_stuff,
+                })
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)

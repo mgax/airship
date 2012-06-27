@@ -159,6 +159,24 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
         eq_config('program:testy', 'directory', version_folder)
 
+    def test_shared_programs_list_generates_program_config_entry(self):
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        s = sarge.Sarge(self.tmp)
+        @s.on_activate_version.connect
+        def define_program(depl, share, **extra):
+            share['programs'].append({
+                'name': 'theone',
+                'command': 'echo',
+            })
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        eq_config('program:theone', 'directory', version_folder)
+        eq_config('program:theone', 'command', 'echo')
+
 
 class SupervisorInvocationTest(unittest.TestCase):
 
