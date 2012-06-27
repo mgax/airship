@@ -79,7 +79,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def test_generate_supervisord_cfg_with_deployment_command(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
-            '_command': "echo starting up",
+            'programs': [{'command': "echo starting up", 'name': 'testy'}],
             'user': username,
         })
         s = sarge.Sarge(self.tmp)
@@ -111,7 +111,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def test_autorestart_option(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
-            '_command': 'echo',
+            'programs': [{'command': 'echo', 'name': 'testy'}],
             'autorestart': 'always',
             'user': username,
         })
@@ -128,7 +128,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
     def test_user_option(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
-            '_command': 'echo',
+            'programs': [{'command': 'echo', 'name': 'testy'}],
             'user': 'someone',
         })
         s = sarge.Sarge(self.tmp)
@@ -156,7 +156,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         configure_deployment(self.tmp, {
             'name': 'testy',
             'user': username,
-            '_command': 'echo',
+            'programs': [{'command': 'echo', 'name': 'testy'}],
         })
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
