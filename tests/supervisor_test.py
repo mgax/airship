@@ -50,11 +50,6 @@ class SupervisorConfigurationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
 
-    def test_enumerate_deployments(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
-        self.assertEqual([d.name for d in s.deployments], ['testy'])
-
     def test_generate_supervisord_cfg_with_no_deployments(self):
         s = sarge.Sarge(self.tmp)
         s.generate_supervisord_configuration()
