@@ -93,10 +93,13 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
         eq_config('program:testy_tprog', 'command', "echo starting up")
         eq_config('program:testy_tprog', 'redirect_stderr', 'true')
-        eq_config('program:testy_tprog', 'stdout_logfile', run_folder/'stdout.log')
+        eq_config('program:testy_tprog', 'stdout_logfile',
+                  run_folder/'stdout.log')
         eq_config('program:testy_tprog', 'startsecs', '2')
         eq_config('program:testy_tprog', 'autostart', 'false')
         eq_config('program:testy_tprog', 'autorestart', MISSING)
+        eq_config('program:testy_tprog', 'environment',
+                  'SARGEAPP_CFG="%s"' % (cfg_folder/sarge.APP_CFG))
 
     def test_supervisor_cfg_is_empty_if_version_needs_no_programs(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})

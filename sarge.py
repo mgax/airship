@@ -161,6 +161,8 @@ class Deployment(object):
             program_name_list = []
             for program_cfg in share['programs']:
                 extra_program_stuff = ""
+                extra_program_stuff += \
+                    'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder/APP_CFG)
                 extra_program_stuff += "command = %s\n" % program_cfg['command']
                 if self.config.get('autorestart', None) == 'always':
                     # TODO this should be specified in 'program_cfg'
