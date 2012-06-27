@@ -208,7 +208,8 @@ class Sarge(object):
             deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
                 for depl_cfg_path in (deployment_config_folder).listdir():
-                    yield yaml.load(depl_cfg_path.bytes())
+                    if depl_cfg_path.ext == '.yaml':
+                        yield yaml.load(depl_cfg_path.bytes())
 
         for plugin_name in config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)

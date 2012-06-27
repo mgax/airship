@@ -26,3 +26,12 @@ class DeploymentTest(unittest.TestCase):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = sarge.Sarge(self.tmp)
         self.assertEqual([d.name for d in s.deployments], ['testy'])
+
+    def test_ignore_non_yaml_files(self):
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        cfgdir = self.tmp/sarge.DEPLOYMENT_CFG_DIR
+        (cfgdir/'garbage').write_text('{}')
+        self.assertItemsEqual([f.name for f in cfgdir.listdir()],
+                              ['testy.yaml', 'garbage'])
+        s = sarge.Sarge(self.tmp)
+        self.assertEqual([d.name for d in s.deployments], ['testy'])
