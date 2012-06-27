@@ -141,12 +141,6 @@ class Deployment(object):
                                       version_folder/'quickapp.py'),
             })
 
-        if '_command' in self.config:
-            share['programs'].append({
-                'name': self.name,
-                'command': self.config.pop('_command'),
-            })
-
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name])
