@@ -1,6 +1,7 @@
 import sys
 import subprocess
 import logging
+import json
 from importlib import import_module
 from path import path
 import blinker
@@ -14,6 +15,7 @@ DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 CFG_LINKS_FOLDER = 'active'
+APP_CFG = 'appcfg.json'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
@@ -140,6 +142,9 @@ class Deployment(object):
                 'command': "%s %s" % (sys.executable,
                                       version_folder/'quickapp.py'),
             })
+
+        with (cfg_folder/APP_CFG).open('wb') as f:
+            json.dump(self._appcfg, f, indent=2)
 
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.supervisorctl(['update'])
