@@ -146,7 +146,8 @@ class NginxConfigurationTest(unittest.TestCase):
         cfg_folder = path(version_folder + '.cfg')
 
         config_path = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
-        command = read_config(config_path).get('program:testy', 'command')
+        command = read_config(config_path).get(
+            'program:testy_fcgi_php', 'command')
 
         self.assertEqual(command, '/usr/bin/spawn-fcgi '
                                   '-s %(run_folder)s/php.sock -M 0777 '

@@ -136,7 +136,7 @@ class Deployment(object):
                 })
 
             share['programs'].append({
-                'name': self.name,
+                'name': 'fcgi_wsgi',
                 'command': "%s %s" % (sys.executable,
                                       version_folder/'quickapp.py'),
             })
@@ -161,7 +161,7 @@ class Deployment(object):
                     extra_program_stuff += "autorestart = true\n"
                 extra_program_stuff += "user = %s\n" % self.config['user']
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                    'name': program_cfg['name'],
+                    'name': self.name + '_' + program_cfg['name'],
                     'directory': version_folder,
                     'run': run_folder,
                     'extra_program_stuff': extra_program_stuff,
@@ -348,7 +348,7 @@ class NginxPlugin(object):
                                          fcgi_params_path=self.fcgi_params_path))
 
                     share['programs'].append({
-                        'name': depl.name,
+                        'name': 'fcgi_php',
                         'command': (
                             '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
                             '-f /usr/bin/php5-cgi -n'
