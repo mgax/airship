@@ -176,6 +176,27 @@ class NginxConfigurationTest(unittest.TestCase):
             '  } '
             '}' % {'version_folder': version_folder})
 
+    def test_process_with_hardcoded_unix_socket_is_configured_in_nginx(self):
+        version_folder = self.configure_and_activate({
+            'urlmap': [
+                {'url': '/',
+                 'type': 'fcgi',
+                 'socket': 'unix:///path/to/socket'},
+            ],
+        })
+        cfg_folder = path(version_folder + '.cfg')
+        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        self.assert_equivalent(nginx_conf,
+            'server { '
+            '  location / { '
+            '    include /etc/nginx/fastcgi_params; '
+            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '    fastcgi_param SCRIPT_NAME ""; '
+            '    fastcgi_pass unix:/path/to/socket; '
+            '  } '
+            '}' % {'version_folder': version_folder})
+
     def test_configure_nginx_arbitrary_options(self):
         version_folder = self.configure_and_activate({}, {
             'nginx_options': {

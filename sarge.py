@@ -365,8 +365,12 @@ class NginxPlugin(object):
 
                 elif entry['type'] == 'fcgi':
                     socket_uri = entry['socket']
-                    assert socket_uri.startswith('tcp://')
-                    socket = socket_uri[len('tcp://'):]
+                    if socket_uri.startswith('tcp://'):
+                        socket = socket_uri[len('tcp://'):]
+                    elif socket_uri.startswith('unix:///'):
+                        socket = 'unix:' + socket_uri[len('unix://'):]
+                    else:
+                        raise ValueError("Can't parse socket %r" % socket_uri)
                     f.write('location %(url)s {\n'
                             '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
