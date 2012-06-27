@@ -134,8 +134,12 @@ class Deployment(object):
                     'socket_path': str(run_folder/'wsgi-app.sock'),
                     'appcfg': self._appcfg,
                 })
-            self.config['_command'] = "%s %s" % (sys.executable,
-                                                 version_folder/'quickapp.py')
+
+            share['programs'].append({
+                'name': self.name,
+                'command': "%s %s" % (sys.executable,
+                                      version_folder/'quickapp.py'),
+            })
 
         if '_command' in self.config:
             share['programs'].append({
@@ -292,7 +296,7 @@ class NginxPlugin(object):
                            sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder, **extra):
+    def activate_deployment(self, depl, folder, share, **extra):
         version_folder = folder
         run_folder = path(folder + '.run')
         cfg_folder = path(folder + '.cfg')
@@ -349,10 +353,13 @@ class NginxPlugin(object):
                                          version_folder=version_folder,
                                          fcgi_params_path=self.fcgi_params_path))
 
-                    depl.config['_command'] = (
-                        '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
-                        '-f /usr/bin/php5-cgi -n'
-                        % {'socket_path': socket_path})
+                    share['programs'].append({
+                        'name': depl.name,
+                        'command': (
+                            '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
+                            '-f /usr/bin/php5-cgi -n'
+                            % {'socket_path': socket_path})
+                    })
 
                 else:
                     raise NotImplementedError
