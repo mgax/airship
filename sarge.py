@@ -115,7 +115,7 @@ class Deployment(object):
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
-        share = {}
+        share = {'programs': self.config.get('programs', [])}
         self._appcfg = {}
         self.sarge.on_activate_version.send(self,
                                             folder=version_folder,
@@ -134,13 +134,18 @@ class Deployment(object):
                     'socket_path': str(run_folder/'wsgi-app.sock'),
                     'appcfg': self._appcfg,
                 })
-            self.config['_command'] = "%s %s" % (sys.executable,
-                                                 version_folder/'quickapp.py')
-        self.write_supervisor_program_config(version_folder)
-        self.sarge.supervisorctl(['update'])
-        self.sarge.supervisorctl(['restart', self.name])
 
-    def write_supervisor_program_config(self, version_folder):
+            share['programs'].append({
+                'name': 'fcgi_wsgi',
+                'command': "%s %s" % (sys.executable,
+                                      version_folder/'quickapp.py'),
+            })
+
+        self.write_supervisor_program_config(version_folder, share)
+        self.sarge.supervisorctl(['update'])
+        self.sarge.supervisorctl(['restart', self.name + ':*'])
+
+    def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg_path = cfg_folder/SUPERVISOR_DEPLOY_CFG
@@ -148,28 +153,35 @@ class Deployment(object):
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
         with open(supervisor_deploy_cfg_path, 'wb') as f:
-            command = self.config.get('_command')
-            if command is None:
-                return
-            extra_program_stuff = ""
-            extra_program_stuff += "command = %s\n" % command
-            if self.config.get('autorestart', None) == 'always':
-                extra_program_stuff += "autorestart = true\n"
-            extra_program_stuff += "user = %s\n" % self.config['user']
-            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+            program_name_list = []
+            for program_cfg in share['programs']:
+                extra_program_stuff = ""
+                extra_program_stuff += "command = %s\n" % program_cfg['command']
+                if self.config.get('autorestart', None) == 'always':
+                    # TODO this should be specified in 'program_cfg'
+                    extra_program_stuff += "autorestart = true\n"
+                extra_program_stuff += "user = %s\n" % self.config['user']
+                program_name = self.name + '_' + program_cfg['name']
+                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                    'name': program_name,
+                    'directory': version_folder,
+                    'run': run_folder,
+                    'extra_program_stuff': extra_program_stuff,
+                })
+                program_name_list.append(program_name)
+
+            f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
                 'name': self.name,
-                'directory': version_folder,
-                'run': run_folder,
-                'extra_program_stuff': extra_program_stuff,
+                'programs': ','.join(program_name_list),
             })
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)
-        self.sarge.supervisorctl(['start', self.name])
+        self.sarge.supervisorctl(['start', self.name + ':*'])
 
     def stop(self):
         self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.supervisorctl(['stop', self.name])
+        self.sarge.supervisorctl(['stop', self.name + ':*'])
 
 
 def _get_named_object(name):
@@ -286,7 +298,7 @@ class NginxPlugin(object):
                            sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder, **extra):
+    def activate_deployment(self, depl, folder, share, **extra):
         version_folder = folder
         run_folder = path(folder + '.run')
         cfg_folder = path(folder + '.cfg')
@@ -343,10 +355,13 @@ class NginxPlugin(object):
                                          version_folder=version_folder,
                                          fcgi_params_path=self.fcgi_params_path))
 
-                    depl.config['_command'] = (
-                        '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
-                        '-f /usr/bin/php5-cgi -n'
-                        % {'socket_path': socket_path})
+                    share['programs'].append({
+                        'name': 'fcgi_php',
+                        'command': (
+                            '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
+                            '-f /usr/bin/php5-cgi -n'
+                            % {'socket_path': socket_path})
+                    })
 
                 else:
                     raise NotImplementedError

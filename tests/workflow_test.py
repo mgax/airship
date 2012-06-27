@@ -115,7 +115,7 @@ class WorkflowTest(unittest.TestCase):
 
         self.mock_supervisorctl.reset_mock()
         testy.activate_version(version_folder)
-        self.assertIn(call(['restart', 'testy']),
+        self.assertIn(call(['restart', 'testy:*']),
                       self.mock_supervisorctl.mock_calls)
 
     def test_start_deployment_invokes_supervisorctl_start(self):
@@ -126,7 +126,7 @@ class WorkflowTest(unittest.TestCase):
 
         self.mock_supervisorctl.reset_mock()
         testy.start()
-        self.assertIn(call(['start', 'testy']),
+        self.assertIn(call(['start', 'testy:*']),
                       self.mock_supervisorctl.mock_calls)
 
     def test_stop_deployment_invokes_supervisorctl_stop(self):
@@ -137,7 +137,7 @@ class WorkflowTest(unittest.TestCase):
 
         self.mock_supervisorctl.reset_mock()
         testy.stop()
-        self.assertIn(call(['stop', 'testy']),
+        self.assertIn(call(['stop', 'testy:*']),
                       self.mock_supervisorctl.mock_calls)
 
     def test_status_invokes_supervisorctl_status(self):

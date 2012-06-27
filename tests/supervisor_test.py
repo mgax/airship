@@ -77,9 +77,11 @@ class SupervisorConfigurationTest(unittest.TestCase):
                                'supervisord', 'supervisorctl', 'include'])
 
     def test_generate_supervisord_cfg_with_deployment_command(self):
-        configure_deployment(self.tmp, {'name': 'testy',
-                                        '_command': "echo starting up",
-                                        'user': username})
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'programs': [{'command': "echo starting up", 'name': 'tprog'}],
+            'user': username,
+        })
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -89,12 +91,12 @@ class SupervisorConfigurationTest(unittest.TestCase):
         cfg_folder = path(version_folder + '.cfg')
         eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
-        eq_config('program:testy', 'command', "echo starting up")
-        eq_config('program:testy', 'redirect_stderr', 'true')
-        eq_config('program:testy', 'stdout_logfile', run_folder/'stdout.log')
-        eq_config('program:testy', 'startsecs', '2')
-        eq_config('program:testy', 'autostart', 'false')
-        eq_config('program:testy', 'autorestart', MISSING)
+        eq_config('program:testy_tprog', 'command', "echo starting up")
+        eq_config('program:testy_tprog', 'redirect_stderr', 'true')
+        eq_config('program:testy_tprog', 'stdout_logfile', run_folder/'stdout.log')
+        eq_config('program:testy_tprog', 'startsecs', '2')
+        eq_config('program:testy_tprog', 'autostart', 'false')
+        eq_config('program:testy_tprog', 'autorestart', MISSING)
 
     def test_supervisor_cfg_is_empty_if_version_needs_no_programs(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -104,13 +106,35 @@ class SupervisorConfigurationTest(unittest.TestCase):
         testy.activate_version(version_folder)
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
-        self.assertEqual(supervisor_deploy_cfg.text().strip(), "")
+        self.assertEqual(supervisor_deploy_cfg.text().strip(),
+                         "[group:testy]\nprograms =")
+
+    def test_supervisor_cfg_defines_group(self):
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'programs': [
+                {'command': "echo 1", 'name': 'tprog1'},
+                {'command': "echo 2", 'name': 'tprog2'},
+            ],
+            'user': username,
+        })
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+
+        eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
 
     def test_autorestart_option(self):
-        configure_deployment(self.tmp, {'name': 'testy',
-                                        '_command': 'echo',
-                                        'autorestart': 'always',
-                                        'user': username})
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'programs': [{'command': 'echo', 'name': 'tprog'}],
+            'autorestart': 'always',
+            'user': username,
+        })
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -119,12 +143,14 @@ class SupervisorConfigurationTest(unittest.TestCase):
         cfg_folder = path(version_folder + '.cfg')
         eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
-        eq_config('program:testy', 'autorestart', 'true')
+        eq_config('program:testy_tprog', 'autorestart', 'true')
 
     def test_user_option(self):
-        configure_deployment(self.tmp, {'name': 'testy',
-                                        '_command': 'echo',
-                                        'user': 'someone'})
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'programs': [{'command': 'echo', 'name': 'tprog'}],
+            'user': 'someone',
+        })
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
@@ -133,7 +159,7 @@ class SupervisorConfigurationTest(unittest.TestCase):
         cfg_folder = path(version_folder + '.cfg')
         eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
 
-        eq_config('program:testy', 'user', 'someone')
+        eq_config('program:testy_tprog', 'user', 'someone')
 
     def test_get_deployment(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -147,9 +173,11 @@ class SupervisorConfigurationTest(unittest.TestCase):
             testy = s.get_deployment('testy')
 
     def test_directory_updated_after_activation(self):
-        configure_deployment(self.tmp, {'name': 'testy',
-                                        'user': username,
-                                        '_command': 'echo'})
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'user': username,
+            'programs': [{'command': 'echo', 'name': 'tprog'}],
+        })
         s = sarge.Sarge(self.tmp)
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
@@ -157,7 +185,25 @@ class SupervisorConfigurationTest(unittest.TestCase):
 
         cfg_folder = path(version_folder + '.cfg')
         eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
-        eq_config('program:testy', 'directory', version_folder)
+        eq_config('program:testy_tprog', 'directory', version_folder)
+
+    def test_shared_programs_list_generates_program_config_entry(self):
+        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        s = sarge.Sarge(self.tmp)
+        @s.on_activate_version.connect
+        def define_program(depl, share, **extra):
+            share['programs'].append({
+                'name': 'theone',
+                'command': 'echo',
+            })
+        testy = s.get_deployment('testy')
+        version_folder = path(testy.new_version())
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        eq_config('program:testy_theone', 'directory', version_folder)
+        eq_config('program:testy_theone', 'command', 'echo')
 
 
 class SupervisorInvocationTest(unittest.TestCase):

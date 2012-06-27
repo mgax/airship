@@ -74,7 +74,7 @@ class WsgiContainerTest(unittest.TestCase):
     def start_app(self):
         cfg_folder = path(self.version_folder + '.cfg')
         config = read_config(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
-        command = config.get('program:testy', 'command')
+        command = config.get('program:testy_fcgi_wsgi', 'command')
         self.popen_with_cleanup(command, cwd=self.version_folder, shell=True)
 
         run_folder = path(self.version_folder + '.run')
