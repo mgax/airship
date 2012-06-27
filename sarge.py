@@ -118,7 +118,7 @@ class Deployment(object):
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
-        self._appcfg = {}
+        self._appcfg = {'services': self.config.get('services', [])}
         self.sarge.on_activate_version.send(self,
                                             folder=version_folder,
                                             share=share,
