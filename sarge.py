@@ -143,7 +143,7 @@ class Deployment(object):
 
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.supervisorctl(['update'])
-        self.sarge.supervisorctl(['restart', self.name])
+        self.sarge.supervisorctl(['restart', self.name + ':*'])
 
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
@@ -178,11 +178,11 @@ class Deployment(object):
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)
-        self.sarge.supervisorctl(['start', self.name])
+        self.sarge.supervisorctl(['start', self.name + ':*'])
 
     def stop(self):
         self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.supervisorctl(['stop', self.name])
+        self.sarge.supervisorctl(['stop', self.name + ':*'])
 
 
 def _get_named_object(name):
