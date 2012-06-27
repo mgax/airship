@@ -170,11 +170,10 @@ class Deployment(object):
                 })
                 program_name_list.append(program_name)
 
-            if program_name_list:
-                f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
-                    'name': self.name,
-                    'programs': ','.join(program_name_list),
-                })
+            f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
+                'name': self.name,
+                'programs': ','.join(program_name_list),
+            })
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)

@@ -106,7 +106,8 @@ class SupervisorConfigurationTest(unittest.TestCase):
         testy.activate_version(version_folder)
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
-        self.assertEqual(supervisor_deploy_cfg.text().strip(), "")
+        self.assertEqual(supervisor_deploy_cfg.text().strip(),
+                         "[group:testy]\nprograms =")
 
     def test_supervisor_cfg_defines_group(self):
         configure_deployment(self.tmp, {
