@@ -363,6 +363,19 @@ class NginxPlugin(object):
                             % {'socket_path': socket_path})
                     })
 
+                elif entry['type'] == 'fcgi':
+                    socket_uri = entry['socket']
+                    assert socket_uri.startswith('tcp://')
+                    socket = socket_uri[len('tcp://'):]
+                    f.write('location %(url)s {\n'
+                            '    include %(fcgi_params_path)s;\n'
+                            '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
+                            '    fastcgi_param SCRIPT_NAME "";\n'
+                            '    fastcgi_pass %(socket)s;\n'
+                            '}\n' % dict(entry,
+                                         socket=socket,
+                                         fcgi_params_path=self.fcgi_params_path))
+
                 else:
                     raise NotImplementedError
 
