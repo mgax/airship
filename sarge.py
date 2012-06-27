@@ -153,6 +153,7 @@ class Deployment(object):
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
         with open(supervisor_deploy_cfg_path, 'wb') as f:
+            program_name_list = []
             for program_cfg in share['programs']:
                 extra_program_stuff = ""
                 extra_program_stuff += "command = %s\n" % program_cfg['command']
@@ -160,11 +161,19 @@ class Deployment(object):
                     # TODO this should be specified in 'program_cfg'
                     extra_program_stuff += "autorestart = true\n"
                 extra_program_stuff += "user = %s\n" % self.config['user']
+                program_name = self.name + '_' + program_cfg['name']
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                    'name': self.name + '_' + program_cfg['name'],
+                    'name': program_name,
                     'directory': version_folder,
                     'run': run_folder,
                     'extra_program_stuff': extra_program_stuff,
+                })
+                program_name_list.append(program_name)
+
+            if program_name_list:
+                f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
+                    'name': self.name,
+                    'programs': ','.join(program_name_list),
                 })
 
     def start(self):

@@ -108,6 +108,25 @@ class SupervisorConfigurationTest(unittest.TestCase):
         supervisor_deploy_cfg = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
         self.assertEqual(supervisor_deploy_cfg.text().strip(), "")
 
+    def test_supervisor_cfg_defines_group(self):
+        configure_deployment(self.tmp, {
+            'name': 'testy',
+            'programs': [
+                {'command': "echo 1", 'name': 'tprog1'},
+                {'command': "echo 2", 'name': 'tprog2'},
+            ],
+            'user': username,
+        })
+        s = sarge.Sarge(self.tmp)
+        testy = s.get_deployment('testy')
+        version_folder = testy.new_version()
+        testy.activate_version(version_folder)
+
+        cfg_folder = path(version_folder + '.cfg')
+        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+
+        eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
+
     def test_autorestart_option(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
