@@ -417,7 +417,10 @@ class VarFolderPlugin(object):
         for record in depl.config.get('require-services', []):
             if record['type'] == 'var-folder':
                 name = record['name']
-                appcfg['services'][name] = var / name
+                service_path = var / name
+                if not service_path.isdir():
+                    service_path.makedirs()
+                appcfg['services'][name] = service_path
 
 
 def init_cmd(sarge, args):

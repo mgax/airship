@@ -40,3 +40,8 @@ class VarFolderTest(unittest.TestCase):
             appcfg = json.load(f)
         db_path = self.tmp / 'var' / 'testy' / 'db'
         self.assertEqual(appcfg['services']['db'], db_path)
+
+    def test_deploy_creates_var_folder(self):
+        self.configure_and_deploy()
+        db_path = self.tmp / 'var' / 'testy' / 'db'
+        self.assertTrue(db_path.isdir())
