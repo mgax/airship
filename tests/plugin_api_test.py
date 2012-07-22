@@ -71,5 +71,9 @@ class PluginApiTest(unittest.TestCase):
 
         testy = s.get_deployment('testy')
         version_folder = testy.new_version()
+        cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
-        self.assertEqual(testy._appcfg['your-order'], "is here")
+
+        with (cfg_folder/sarge.APP_CFG).open() as f:
+            appcfg = json.load(f)
+        self.assertEqual(appcfg['your-order'], "is here")

@@ -1,6 +1,7 @@
 import sys
 import subprocess
 import logging
+import json
 from importlib import import_module
 from path import path
 import blinker
@@ -14,6 +15,7 @@ DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
 SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 CFG_LINKS_FOLDER = 'active'
+APP_CFG = 'appcfg.json'
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
@@ -116,7 +118,9 @@ class Deployment(object):
         symlink_path = self.sarge.cfg_links_folder/self.name
         force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
-        self._appcfg = {}
+        services = dict((s['name'], s)
+                        for s in self.config.get('services', []))
+        self._appcfg = {'services': services}
         self.sarge.on_activate_version.send(self,
                                             folder=version_folder,
                                             share=share,
@@ -141,6 +145,9 @@ class Deployment(object):
                                       version_folder/'quickapp.py'),
             })
 
+        with (cfg_folder/APP_CFG).open('wb') as f:
+            json.dump(self._appcfg, f, indent=2)
+
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.supervisorctl(['update'])
         self.sarge.supervisorctl(['restart', self.name + ':*'])
@@ -156,6 +163,8 @@ class Deployment(object):
             program_name_list = []
             for program_cfg in share['programs']:
                 extra_program_stuff = ""
+                extra_program_stuff += \
+                    'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder/APP_CFG)
                 extra_program_stuff += "command = %s\n" % program_cfg['command']
                 if self.config.get('autorestart', None) == 'always':
                     # TODO this should be specified in 'program_cfg'
@@ -392,6 +401,26 @@ class NginxPlugin(object):
     def reload_nginx(self):
         self.log.debug("Reloading configuration for nginx server.")
         subprocess.check_call(['service', 'nginx', 'reload'])
+
+
+class VarFolderPlugin(object):
+
+    log = logging.getLogger('sarge.VarFolderPlugin')
+    log.setLevel(logging.DEBUG)
+
+    def __init__(self, sarge):
+        self.sarge = sarge
+        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+
+    def activate_deployment(self, depl, appcfg, **extra):
+        var = depl.sarge.home_path / 'var' / depl.name
+        for record in depl.config.get('require-services', []):
+            if record['type'] == 'var-folder':
+                name = record['name']
+                service_path = var / name
+                if not service_path.isdir():
+                    service_path.makedirs()
+                appcfg['services'][name] = service_path
 
 
 def init_cmd(sarge, args):
