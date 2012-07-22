@@ -55,7 +55,7 @@ class DeploymentTest(unittest.TestCase):
         testy.activate_version(version_folder)
         with (cfg_folder/sarge.APP_CFG).open() as f:
             appcfg = json.load(f)
-        self.assertIn({'name': 'zefolder',
-                       'type': 'persistent-folder',
-                       'path': zefolder_path},
-                      appcfg['services'])
+        self.assertEqual(appcfg['services']['zefolder'], {
+            'name': 'zefolder',
+            'type': 'persistent-folder',
+            'path': zefolder_path})
