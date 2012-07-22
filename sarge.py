@@ -403,6 +403,23 @@ class NginxPlugin(object):
         subprocess.check_call(['service', 'nginx', 'reload'])
 
 
+class VarFolderPlugin(object):
+
+    log = logging.getLogger('sarge.VarFolderPlugin')
+    log.setLevel(logging.DEBUG)
+
+    def __init__(self, sarge):
+        self.sarge = sarge
+        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+
+    def activate_deployment(self, depl, appcfg, **extra):
+        var = depl.sarge.home_path / 'var' / depl.name
+        for record in depl.config.get('require-services', []):
+            if record['type'] == 'var-folder':
+                name = record['name']
+                appcfg['services'][name] = var / name
+
+
 def init_cmd(sarge, args):
     sarge.log.info("Initializing sarge folder at %r.", sarge.home_path)
     sarge.on_initialize.send(sarge)
