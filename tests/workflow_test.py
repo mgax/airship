@@ -1,10 +1,10 @@
-from utils import unittest
+from common import unittest
 import tempfile
 import json
 from StringIO import StringIO
 from path import path
 from mock import patch, call
-from utils import configure_deployment, configure_sarge, username
+from common import configure_deployment, configure_sarge, username
 
 
 def setUpModule(self):

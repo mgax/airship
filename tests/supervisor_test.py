@@ -1,11 +1,11 @@
-from utils import unittest
+from common import unittest
 import tempfile
 import json
 import sys
 import ConfigParser
 from path import path
 from mock import patch, call
-from utils import configure_sarge, configure_deployment, username
+from common import configure_sarge, configure_deployment, username
 
 
 def setUpModule(self):

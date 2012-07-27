@@ -1,10 +1,10 @@
-from utils import unittest
+from common import unittest
 import tempfile
 import json
 import re
 from path import path
 from mock import patch, call
-from utils import configure_sarge, configure_deployment, username
+from common import configure_sarge, configure_deployment, username
 
 
 def read_config(cfg_path):
