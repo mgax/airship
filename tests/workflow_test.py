@@ -28,17 +28,18 @@ class WorkflowTest(unittest.TestCase):
         configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
+
     def test_new_version(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         self.assertTrue(version_folder.isdir())
         self.assertEqual(version_folder.parent.parent, self.tmp)
 
     def test_new_version_with_user_option_calls_chown(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         mock_subprocess.reset_mock()
         version_folder = path(testy.new_version())
         self.assertIn(call(['chown', 'someone:', version_folder]),
@@ -46,8 +47,7 @@ class WorkflowTest(unittest.TestCase):
 
     def test_activation_with_user_option_calls_chown(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         mock_subprocess.reset_mock()
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
@@ -56,15 +56,13 @@ class WorkflowTest(unittest.TestCase):
                       mock_subprocess.mock_calls)
 
     def test_versions_have_different_paths(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_path_1 = path(testy.new_version())
         version_path_2 = path(testy.new_version())
         self.assertNotEqual(version_path_1, version_path_2)
 
     def test_activation_creates_configuration_folder(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
 
@@ -76,8 +74,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(symlink_path.readlink(), cfg_folder)
 
     def test_activation_creates_runtime_folder(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
 
@@ -85,8 +82,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(run_folder.isdir())
 
     def test_activation_next_version_overwrites_symlink(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder_1 = path(testy.new_version())
         testy.activate_version(version_folder_1)
         version_folder_2 = path(testy.new_version())
@@ -100,8 +96,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(symlink_path.readlink(), cfg_folder_2)
 
     def test_activation_triggers_supervisord_reread(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
 
         self.mock_supervisorctl.reset_mock()
@@ -109,8 +104,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(call(['update']), self.mock_supervisorctl.mock_calls)
 
     def test_activation_triggers_supervisord_restart_deployment(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
 
         self.mock_supervisorctl.reset_mock()
@@ -119,8 +113,7 @@ class WorkflowTest(unittest.TestCase):
                       self.mock_supervisorctl.mock_calls)
 
     def test_start_deployment_invokes_supervisorctl_start(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
 
@@ -130,8 +123,7 @@ class WorkflowTest(unittest.TestCase):
                       self.mock_supervisorctl.mock_calls)
 
     def test_stop_deployment_invokes_supervisorctl_stop(self):
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
 
@@ -141,9 +133,8 @@ class WorkflowTest(unittest.TestCase):
                       self.mock_supervisorctl.mock_calls)
 
     def test_status_invokes_supervisorctl_status(self):
-        s = sarge.Sarge(self.tmp)
         self.mock_supervisorctl.reset_mock()
-        s.status()
+        self.sarge().status()
         self.assertIn(call(['status']), self.mock_supervisorctl.mock_calls)
 
 
@@ -153,6 +144,9 @@ class ShellTest(unittest.TestCase):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
+
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
 
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
@@ -167,8 +161,7 @@ class ShellTest(unittest.TestCase):
     @patch('sarge.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
         sarge.main([str(self.tmp), 'activate_version',
                     'testy', str(version_folder)])

@@ -23,10 +23,12 @@ class DeploymentTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
 
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
+
     def test_enumerate_deployments(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
-        self.assertEqual([d.name for d in s.deployments], ['testy'])
+        self.assertEqual([d.name for d in self.sarge().deployments], ['testy'])
 
     def test_ignore_non_yaml_files(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -34,8 +36,7 @@ class DeploymentTest(unittest.TestCase):
         (cfgdir/'garbage').write_text('{}')
         self.assertItemsEqual([f.name for f in cfgdir.listdir()],
                               ['testy.yaml', 'garbage'])
-        s = sarge.Sarge(self.tmp)
-        self.assertEqual([d.name for d in s.deployments], ['testy'])
+        self.assertEqual([d.name for d in self.sarge().deployments], ['testy'])
 
     def test_hardcoded_service_is_passed_to_app(self):
         zefolder_path = self.tmp/'zefolder'
@@ -48,8 +49,7 @@ class DeploymentTest(unittest.TestCase):
                  'path': zefolder_path},
             ],
         })
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)

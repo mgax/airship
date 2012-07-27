@@ -31,12 +31,14 @@ class NginxConfigurationTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
+
     def configure_and_activate(self, app_config, deployment_config_extra={}):
         deployment_config = {'name': 'testy', 'user': username}
         deployment_config.update(deployment_config_extra)
         configure_deployment(self.tmp, deployment_config)
-        s = sarge.Sarge(self.tmp)
-        deployment = s.get_deployment('testy')
+        deployment = self.sarge().get_deployment('testy')
         version_folder = path(deployment.new_version())
         with open(version_folder/'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)

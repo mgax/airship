@@ -19,6 +19,9 @@ class VarFolderTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:VarFolderPlugin']})
 
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
+
     def configure_and_deploy(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
@@ -27,8 +30,7 @@ class VarFolderTest(unittest.TestCase):
                 {'type': 'var-folder', 'name': 'db'},
             ],
         })
-        s = sarge.Sarge(self.tmp)
-        testy = s.get_deployment('testy')
+        testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
         return version_folder

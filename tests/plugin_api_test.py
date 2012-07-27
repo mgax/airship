@@ -26,15 +26,18 @@ class PluginApiTest(unittest.TestCase):
         self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
 
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
+
     def test_plugin_named_in_config_file_gets_called(self):
         configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})
         mock_plugin.reset_mock()
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
 
     def test_subscribe_to_activation_event(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         mock_handler = Mock(im_self=None)
         s.on_activate_version.connect(mock_handler)
         testy = s.get_deployment('testy')
@@ -44,7 +47,7 @@ class PluginApiTest(unittest.TestCase):
 
     def test_activation_event_passes_shared_dict(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
 
         def handler1(depl, share, **extra):
             share['test-something'] = 123
@@ -66,7 +69,7 @@ class PluginApiTest(unittest.TestCase):
             appcfg['your-order'] = "is here"
 
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         s.on_activate_version.connect(handler)
 
         testy = s.get_deployment('testy')

@@ -60,9 +60,12 @@ class WsgiContainerTest(unittest.TestCase):
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
-        self.sarge = sarge.Sarge(self.tmp)
-        self.testy = self.sarge.get_deployment('testy')
+        self.s = self.sarge()
+        self.testy = self.s.get_deployment('testy')
         self.version_folder = path(self.testy.new_version())
+
+    def sarge(self):
+        return sarge.Sarge(self.tmp)
 
     def popen_with_cleanup(self, *args, **kwargs):
         import subprocess
@@ -124,7 +127,7 @@ class WsgiContainerTest(unittest.TestCase):
         with open(self.version_folder/'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
 
-        @self.sarge.on_activate_version.connect
+        @self.s.on_activate_version.connect
         def set_message(depl, appcfg, **extra):
             appcfg['hidden'] = "XKCD"
 
