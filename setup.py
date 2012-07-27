@@ -10,5 +10,5 @@ distutils.core.setup(
     version='0.1',
     packages=['sarge'],
     install_requires=dependencies,
-    entry_points = {'console_scripts': ['sarge = sarge.core:main']},
+    entry_points={'console_scripts': ['sarge = sarge.core:main']},
 )
