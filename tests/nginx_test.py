@@ -34,7 +34,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_nginx_common_config_created_on_init(self):
-        imp('sarge').init_cmd(self.sarge(), None)
+        imp('sarge.core').init_cmd(self.sarge(), None)
         nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
         nginx_sites = nginx_folder / 'sites'
         self.assertTrue(nginx_sites.isdir())
@@ -132,7 +132,7 @@ class NginxConfigurationTest(SargeTestCase):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
 
-        config_path = cfg_folder / imp('sarge').SUPERVISOR_DEPLOY_CFG
+        config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         command = read_config(config_path).get(
             'program:testy_fcgi_php', 'command')
 

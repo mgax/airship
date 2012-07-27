@@ -18,7 +18,7 @@ def provision():
 
 
 def setUpModule(self):
-    import sarge; self.sarge = sarge
+    import sarge, sarge.core; self.sarge = sarge
     env['key_filename'] = path(__file__).parent/'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
     if not exists(cfg['sarge-venv']):
@@ -36,8 +36,7 @@ def tearDownModule(self):
 
 
 def sarge_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/python "
-            "/sarge-src/sarge.py '%(sarge-home)s' " % cfg)
+    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % cfg)
     return sudo(base + cmd)
 
 def supervisorctl_cmd(cmd):
@@ -69,7 +68,7 @@ class VagrantDeploymentTest(unittest.TestCase):
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home']/sarge.SARGE_CFG,
+                 cfg['sarge-home']/sarge.core.SARGE_CFG,
                  use_sudo=True)
         sarge_cmd("init")
         sudo("'%(sarge-venv)s'/bin/supervisord "
@@ -86,7 +85,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'name': 'testy',
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 cfg['sarge-home']/sarge.core.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))
@@ -125,7 +124,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'name': 'testy',
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 cfg['sarge-home']/sarge.core.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         # deploy version one
@@ -152,7 +151,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'name': 'testy',
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 cfg['sarge-home']/sarge.core.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))
@@ -173,7 +172,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json({'name': 'testy',
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
-                 cfg['sarge-home']/sarge.DEPLOYMENT_CFG_DIR/'testy.yaml',
+                 cfg['sarge-home']/sarge.core.DEPLOYMENT_CFG_DIR/'testy.yaml',
                  use_sudo=True)
 
         version_folder = path(sarge_cmd("new_version testy"))

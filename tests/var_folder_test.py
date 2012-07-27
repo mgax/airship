@@ -25,7 +25,7 @@ class VarFolderTest(SargeTestCase):
     def test_deploy_passes_var_folder_to_deployment(self):
         version_folder = self.configure_and_deploy()
         cfg_folder = path(version_folder + '.cfg')
-        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
             appcfg = json.load(f)
         db_path = self.tmp / 'var' / 'testy' / 'db'
         self.assertEqual(appcfg['services']['db'], db_path)

@@ -51,7 +51,7 @@ class WorkflowTest(SargeTestCase):
         cfg_folder = path(version_folder + '.cfg')
         self.assertTrue(cfg_folder.isdir())
 
-        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER / 'testy'
+        symlink_path = self.tmp / imp('sarge.core').CFG_LINKS_FOLDER / 'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), cfg_folder)
 
@@ -73,7 +73,7 @@ class WorkflowTest(SargeTestCase):
         cfg_folder_2 = path(version_folder_2 + '.cfg')
         self.assertTrue(cfg_folder_2.isdir())
 
-        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER / 'testy'
+        symlink_path = self.tmp / imp('sarge.core').CFG_LINKS_FOLDER / 'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), cfg_folder_2)
 
@@ -125,43 +125,43 @@ class ShellTest(SargeTestCase):
     def setUp(self):
         configure_sarge(self.tmp, {})
 
-    @patch('sarge.Deployment.new_version')
+    @patch('sarge.core.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         mock_stdout = StringIO()
         with patch('sys.stdout', mock_stdout):
-            imp('sarge').main([str(self.tmp), 'new_version', 'testy'])
+            imp('sarge.core').main([str(self.tmp), 'new_version', 'testy'])
         self.assertEqual(mock_new_version.mock_calls, [call()])
         self.assertEqual(mock_stdout.getvalue().strip(), "path-to-new-version")
 
-    @patch('sarge.Deployment.activate_version')
+    @patch('sarge.core.Deployment.activate_version')
     def test_activate_version_calls_api_method(self, mock_activate_version):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         testy = self.sarge().get_deployment('testy')
         version_folder = path(testy.new_version())
-        imp('sarge').main([str(self.tmp), 'activate_version',
+        imp('sarge.core').main([str(self.tmp), 'activate_version',
                     'testy', str(version_folder)])
         self.assertEqual(mock_activate_version.mock_calls,
                          [call(version_folder)])
         path_arg = mock_activate_version.mock_calls[0][1][0]
         self.assertIsInstance(path_arg, path)
 
-    @patch('sarge.Deployment.start')
+    @patch('sarge.core.Deployment.start')
     def test_start_calls_api_method(self, mock_start):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        imp('sarge').main([str(self.tmp), 'start', 'testy'])
+        imp('sarge.core').main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
-    @patch('sarge.Deployment.stop')
+    @patch('sarge.core.Deployment.stop')
     def test_stop_calls_api_method(self, mock_stop):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        imp('sarge').main([str(self.tmp), 'stop', 'testy'])
+        imp('sarge.core').main([str(self.tmp), 'stop', 'testy'])
         self.assertEqual(mock_stop.mock_calls, [call()])
 
     @patch('sarge.Sarge.status')
     def test_status_calls_api_method(self, mock_status):
-        imp('sarge').main([str(self.tmp), 'status'])
+        imp('sarge.core').main([str(self.tmp), 'status'])
         self.assertEqual(mock_status.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
@@ -169,11 +169,11 @@ class ShellTest(SargeTestCase):
         self.addCleanup(other_tmp.rmtree)
         configure_sarge(other_tmp, {})
 
-        sarge = imp('sarge')
-        sarge.main([str(other_tmp), 'init'])
-        expected = [sarge.SUPERVISORD_CFG,
-                    sarge.DEPLOYMENT_CFG_DIR,
-                    sarge.SARGE_CFG,
+        core = imp('sarge.core')
+        core.main([str(other_tmp), 'init'])
+        expected = [core.SUPERVISORD_CFG,
+                    core.DEPLOYMENT_CFG_DIR,
+                    core.SARGE_CFG,
                     'sarge.log']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
-        self.assertTrue((other_tmp / sarge.DEPLOYMENT_CFG_DIR).isdir())
+        self.assertTrue((other_tmp / core.DEPLOYMENT_CFG_DIR).isdir())

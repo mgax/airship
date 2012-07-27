@@ -15,7 +15,7 @@ class DeploymentTest(SargeTestCase):
 
     def test_ignore_non_yaml_files(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        cfgdir = self.tmp / imp('sarge').DEPLOYMENT_CFG_DIR
+        cfgdir = self.tmp / imp('sarge.core').DEPLOYMENT_CFG_DIR
         (cfgdir / 'garbage').write_text('{}')
         self.assertItemsEqual([f.name for f in cfgdir.listdir()],
                               ['testy.yaml', 'garbage'])
@@ -36,7 +36,7 @@ class DeploymentTest(SargeTestCase):
         version_folder = testy.new_version()
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
-        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['services']['zefolder'], {
             'name': 'zefolder',
