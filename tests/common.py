@@ -7,6 +7,7 @@ try:
 except ImportError:
     import unittest
 from path import path
+from mock import patch
 
 
 def configure_sarge(sarge_home, config):
@@ -32,6 +33,12 @@ class SargeTestCase(unittest.TestCase):
     def sarge(self):
         import sarge
         return sarge.Sarge(self.tmp)
+
+    def patch(self, name):
+        p = patch(name)
+        mock_ob = p.start()
+        self.addCleanup(p.stop)
+        return mock_ob
 
     def _pre_setup(self):
         self.tmp = path(tempfile.mkdtemp())

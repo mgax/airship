@@ -20,9 +20,7 @@ def tearDownModule(self):
 class WorkflowTest(SargeTestCase):
 
     def setUp(self):
-        supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
-        self.mock_supervisorctl = supervisorctl_patch.start()
-        self.addCleanup(supervisorctl_patch.stop)
+        self.mock_supervisorctl = self.patch('sarge.Sarge.supervisorctl')
         configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
