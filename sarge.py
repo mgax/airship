@@ -23,7 +23,8 @@ file = %(home_path)s/supervisord.sock
 %(extra_server_stuff)s
 
 [rpcinterface:supervisor]
-supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+supervisor.rpcinterface_factory = \
+supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisord]
 logfile = %(home_path)s/supervisord.log
@@ -34,7 +35,7 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 
 [include]
-files = """ + path(CFG_LINKS_FOLDER)/'*'/SUPERVISOR_DEPLOY_CFG + """
+files = """ + path(CFG_LINKS_FOLDER) / '*' / SUPERVISOR_DEPLOY_CFG + """
 """
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
@@ -59,7 +60,7 @@ server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
 
-supervisorctl_path = str(path(sys.prefix).abspath()/'bin'/'supervisorctl')
+supervisorctl_path = str(path(sys.prefix).abspath() / 'bin' / 'supervisorctl')
 
 
 def force_symlink(target, link):
@@ -85,7 +86,7 @@ class Deployment(object):
 
     @property
     def folder(self):
-        return self.sarge.home_path/(self.DEPLOY_FOLDER_FMT % self.name)
+        return self.sarge.home_path / (self.DEPLOY_FOLDER_FMT % self.name)
 
     def new_version(self):
         """ Create a new version folder. Copy application code there and then
@@ -94,13 +95,13 @@ class Deployment(object):
         # save the counter to a file in `self.folder`.
         import itertools
         for c in itertools.count(1):
-            version_folder = self.folder/str(c)
+            version_folder = self.folder / str(c)
             if not version_folder.exists():
                 self.log.info("New version folder for deployment %r at %r.",
                               self.name, version_folder)
                 version_folder.makedirs()
                 # TODO test
-                subprocess.check_call(['chown', self.config['user']+':',
+                subprocess.check_call(['chown', self.config['user'] + ':',
                                        version_folder])
                 return version_folder
 
@@ -112,11 +113,11 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        subprocess.check_call(['chown', self.config['user']+':',
+        subprocess.check_call(['chown', self.config['user'] + ':',
                                run_folder])
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
-        symlink_path = self.sarge.cfg_links_folder/self.name
+        symlink_path = self.sarge.cfg_links_folder / self.name
         force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
         services = dict((s['name'], s)
@@ -128,7 +129,7 @@ class Deployment(object):
                                             appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
-            script_path = version_folder/'quickapp.py'
+            script_path = version_folder / 'quickapp.py'
             self.log.debug("Writing WSGI script for deployment %r at %r.",
                            self.name, script_path)
             with open(script_path, 'wb') as f:
@@ -136,17 +137,17 @@ class Deployment(object):
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
                     'module_name': module_name,
                     'attribute_name': attribute_name,
-                    'socket_path': str(run_folder/'wsgi-app.sock'),
+                    'socket_path': str(run_folder / 'wsgi-app.sock'),
                     'appcfg': self._appcfg,
                 })
 
             share['programs'].append({
                 'name': 'fcgi_wsgi',
                 'command': "%s %s" % (sys.executable,
-                                      version_folder/'quickapp.py'),
+                                      version_folder / 'quickapp.py'),
             })
 
-        with (cfg_folder/APP_CFG).open('wb') as f:
+        with (cfg_folder / APP_CFG).open('wb') as f:
             json.dump(self._appcfg, f, indent=2)
 
         self.write_supervisor_program_config(version_folder, share)
@@ -156,7 +157,7 @@ class Deployment(object):
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
-        supervisor_deploy_cfg_path = cfg_folder/SUPERVISOR_DEPLOY_CFG
+        supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
@@ -165,8 +166,9 @@ class Deployment(object):
             for program_cfg in share['programs']:
                 extra_program_stuff = ""
                 extra_program_stuff += \
-                    'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder/APP_CFG)
-                extra_program_stuff += "command = %s\n" % program_cfg['command']
+                    'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG)
+                extra_program_stuff += ("command = %s\n" %
+                                        program_cfg['command'])
                 if self.config.get('autorestart', None) == 'always':
                     # TODO this should be specified in 'program_cfg'
                     extra_program_stuff += "autorestart = true\n"
@@ -217,17 +219,17 @@ class Sarge(object):
 
     @property
     def cfg_links_folder(self):
-        folder = self.home_path/CFG_LINKS_FOLDER
+        folder = self.home_path / CFG_LINKS_FOLDER
         if not folder.isdir():
             folder.makedirs()
         return folder
 
     def _configure(self):
-        with open(self.home_path/SARGE_CFG, 'rb') as f:
+        with open(self.home_path / SARGE_CFG, 'rb') as f:
             config = yaml.load(f)
 
         def iter_deployments():
-            deployment_config_folder = self.home_path/DEPLOYMENT_CFG_DIR
+            deployment_config_folder = self.home_path / DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
                 for depl_cfg_path in (deployment_config_folder).listdir():
                     if depl_cfg_path.ext == '.yaml':
@@ -246,7 +248,7 @@ class Sarge(object):
         self.config = config
 
     def generate_supervisord_configuration(self):
-        supervisord_cfg_path = self.home_path/SUPERVISORD_CFG
+        supervisord_cfg_path = self.home_path / SUPERVISORD_CFG
         self.log.debug("Writing main supervisord configuration file at %r.",
                        supervisord_cfg_path)
         with open(supervisord_cfg_path, 'wb') as f:
@@ -267,7 +269,8 @@ class Sarge(object):
 
     def supervisorctl(self, cmd_args):
         self.log.debug("Invoking supervisorctl with arguments %r.", cmd_args)
-        base_args = [supervisorctl_path, '-c', self.home_path/SUPERVISORD_CFG]
+        base_args = [supervisorctl_path,
+                     '-c', self.home_path / SUPERVISORD_CFG]
         return subprocess.check_call(base_args + cmd_args)
 
     def status(self):
@@ -293,18 +296,19 @@ class NginxPlugin(object):
 
     @property
     def folder(self):
-        return self.sarge.home_path/self.FOLDER_NAME
+        return self.sarge.home_path / self.FOLDER_NAME
 
     @property
     def sites_folder(self):
-        return self.folder/'sites'
+        return self.folder / 'sites'
 
     def initialize(self, sarge):
         if not self.sites_folder.isdir():
             (self.sites_folder).makedirs()
-        sarge_sites_conf = self.folder/'sarge_sites.conf'
+        sarge_sites_conf = self.folder / 'sarge_sites.conf'
         if not sarge_sites_conf.isfile():
-            self.log.debug("Writing \"sarge_sites\" nginx configuration at %r.",
+            self.log.debug("Writing \"sarge_sites\" "
+                           "nginx configuration at %r.",
                            sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
@@ -313,14 +317,14 @@ class NginxPlugin(object):
         run_folder = path(folder + '.run')
         cfg_folder = path(folder + '.cfg')
 
-        app_config_path = version_folder/'sargeapp.yaml'
+        app_config_path = version_folder / 'sargeapp.yaml'
         if app_config_path.exists():
             with open(app_config_path, 'rb') as f:
                 app_config = yaml.load(f)
         else:
             app_config = {}
 
-        conf_path = cfg_folder/'nginx-site.conf'
+        conf_path = cfg_folder / 'nginx-site.conf'
 
         self.log.debug("Writing nginx configuration for deployment %r at %r.",
                        depl.name, conf_path)
@@ -340,7 +344,7 @@ class NginxPlugin(object):
                             '    alias %(version_folder)s/%(path)s;\n'
                             '}\n' % dict(entry, version_folder=version_folder))
                 elif entry['type'] == 'wsgi':
-                    socket_path = run_folder/'wsgi-app.sock'
+                    socket_path = run_folder / 'wsgi-app.sock'
                     f.write('location %(url)s {\n'
                             '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
@@ -352,7 +356,7 @@ class NginxPlugin(object):
                     depl.config['tmp-wsgi-app'] = entry['app_factory']
 
                 elif entry['type'] == 'php':
-                    socket_path = run_folder/'php.sock'
+                    socket_path = run_folder / 'php.sock'
                     f.write('location %(url)s {\n'
                             '    include %(fcgi_params_path)s;\n'
                             '    fastcgi_param SCRIPT_FILENAME '
@@ -396,7 +400,7 @@ class NginxPlugin(object):
             f.write('}\n')
 
         ensure_folder(self.sites_folder)
-        force_symlink(conf_path, self.sites_folder/depl.name)
+        force_symlink(conf_path, self.sites_folder / depl.name)
         self.reload_nginx()
 
     def reload_nginx(self):
@@ -427,7 +431,7 @@ class VarFolderPlugin(object):
 def init_cmd(sarge, args):
     sarge.log.info("Initializing sarge folder at %r.", sarge.home_path)
     sarge.on_initialize.send(sarge)
-    (sarge.home_path/DEPLOYMENT_CFG_DIR).mkdir()
+    (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
 
 
@@ -478,7 +482,7 @@ def build_args_parser():
 
 
 def set_up_logging(sarge_home_path):
-    handler = logging.FileHandler(sarge_home_path/'sarge.log')
+    handler = logging.FileHandler(sarge_home_path / 'sarge.log')
     log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
     handler.setLevel(logging.DEBUG)
