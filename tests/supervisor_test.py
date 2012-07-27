@@ -1,14 +1,12 @@
-import json
 import sys
 import ConfigParser
 from path import path
-from mock import patch, call
+from mock import call
 from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
 
 
 def read_config(cfg_path):
-    import ConfigParser
     config = ConfigParser.RawConfigParser()
     config.read([cfg_path])
     return config
@@ -43,14 +41,14 @@ class SupervisorConfigurationTest(SargeTestCase):
         config_path = self.tmp / imp('sarge').SUPERVISORD_CFG
         eq_config = config_file_checker(config_path)
 
-        eq_config('unix_http_server', 'file', self.tmp/'supervisord.sock')
+        eq_config('unix_http_server', 'file', self.tmp / 'supervisord.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
                   'supervisor.rpcinterface:make_main_rpcinterface')
-        eq_config('supervisord', 'logfile', self.tmp/'supervisord.log')
-        eq_config('supervisord', 'pidfile', self.tmp/'supervisord.pid')
+        eq_config('supervisord', 'logfile', self.tmp / 'supervisord.log')
+        eq_config('supervisord', 'pidfile', self.tmp / 'supervisord.pid')
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
-                  'unix://' + self.tmp/'supervisord.sock')
+                  'unix://' + self.tmp / 'supervisord.sock')
         eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
@@ -80,7 +78,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('program:testy_tprog', 'command', "echo starting up")
         eq_config('program:testy_tprog', 'redirect_stderr', 'true')
         eq_config('program:testy_tprog', 'stdout_logfile',
-                  run_folder/'stdout.log')
+                  run_folder / 'stdout.log')
         eq_config('program:testy_tprog', 'startsecs', '2')
         eq_config('program:testy_tprog', 'startretries', '0')
         eq_config('program:testy_tprog', 'autostart', 'false')
@@ -158,7 +156,7 @@ class SupervisorConfigurationTest(SargeTestCase):
 
     def test_get_deployment_invalid_name(self):
         with self.assertRaises(KeyError):
-            testy = self.sarge().get_deployment('testy')
+            self.sarge().get_deployment('testy')
 
     def test_directory_updated_after_activation(self):
         configure_deployment(self.tmp, {
@@ -178,12 +176,14 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_shared_programs_list_generates_program_config_entry(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         s = self.sarge()
+
         @s.on_activate_version.connect
         def define_program(depl, share, **extra):
             share['programs'].append({
                 'name': 'theone',
                 'command': 'echo',
             })
+
         testy = s.get_deployment('testy')
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
@@ -203,7 +203,8 @@ class SupervisorInvocationTest(SargeTestCase):
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
         self.sarge().supervisorctl(['hello', 'world!'])
-        supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
+        supervisorctl_path = (path(sys.prefix).abspath() /
+                              'bin' / 'supervisorctl')
         cfg_path = self.tmp / imp('sarge').SUPERVISORD_CFG
         self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,

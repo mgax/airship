@@ -1,6 +1,5 @@
 import json
 from path import path
-from mock import patch
 from common import configure_deployment, configure_sarge, username, imp
 from common import SargeTestCase
 

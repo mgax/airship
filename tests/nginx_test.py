@@ -1,7 +1,7 @@
 import json
 import re
 from path import path
-from mock import patch, call
+from mock import call
 from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
 
@@ -36,7 +36,7 @@ class NginxConfigurationTest(SargeTestCase):
     def test_nginx_common_config_created_on_init(self):
         imp('sarge').init_cmd(self.sarge(), None)
         nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
-        nginx_sites = nginx_folder/'sites'
+        nginx_sites = nginx_folder / 'sites'
         self.assertTrue(nginx_sites.isdir())
 
         nginx_common = nginx_folder / 'sarge_sites.conf'
@@ -71,8 +71,9 @@ class NginxConfigurationTest(SargeTestCase):
         cfg_folder = path(version_folder + '.cfg')
         with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf,
-            "server { location /media { alias %s/mymedia; } }" % version_folder)
+        conf_ok = ("server { location /media { alias %s/mymedia; } }" %
+                   version_folder)
+        self.assert_equivalent(nginx_conf, conf_ok)
 
     def test_wsgi_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -201,6 +202,6 @@ class NginxConfigurationTest(SargeTestCase):
 
     def test_activate_triggers_nginx_service_reload(self):
         self.mock_subprocess.reset_mock()
-        version_folder = self.configure_and_activate({})
+        self.configure_and_activate({})
         self.assertIn(call(['service', 'nginx', 'reload']),
                       self.mock_subprocess.check_call.mock_calls)

@@ -1,6 +1,6 @@
 import json
 from path import path
-from mock import Mock, patch, call
+from mock import Mock, call
 from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
 
@@ -14,7 +14,7 @@ class PluginApiTest(SargeTestCase):
         configure_sarge(self.tmp, {})
 
     def test_plugin_named_in_config_file_gets_called(self):
-        configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})
+        configure_sarge(self.tmp, {'plugins': [__name__ + ':mock_plugin']})
         mock_plugin.reset_mock()
         s = self.sarge()
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
@@ -37,6 +37,7 @@ class PluginApiTest(SargeTestCase):
             share['test-something'] = 123
 
         got = []
+
         def handler2(depl, share, **extra):
             got.append(share.get('test-something'))
 

@@ -1,5 +1,4 @@
 import tempfile
-import json
 from StringIO import StringIO
 from path import path
 from mock import patch, call
@@ -52,7 +51,7 @@ class WorkflowTest(SargeTestCase):
         cfg_folder = path(version_folder + '.cfg')
         self.assertTrue(cfg_folder.isdir())
 
-        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER/'testy'
+        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER / 'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), cfg_folder)
 
@@ -74,7 +73,7 @@ class WorkflowTest(SargeTestCase):
         cfg_folder_2 = path(version_folder_2 + '.cfg')
         self.assertTrue(cfg_folder_2.isdir())
 
-        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER/'testy'
+        symlink_path = self.tmp / imp('sarge').CFG_LINKS_FOLDER / 'testy'
         self.assertTrue(symlink_path.islink())
         self.assertEqual(symlink_path.readlink(), cfg_folder_2)
 
@@ -161,7 +160,7 @@ class ShellTest(SargeTestCase):
         self.assertEqual(mock_stop.mock_calls, [call()])
 
     @patch('sarge.Sarge.status')
-    def test_stop_calls_api_method(self, mock_status):
+    def test_status_calls_api_method(self, mock_status):
         imp('sarge').main([str(self.tmp), 'status'])
         self.assertEqual(mock_status.mock_calls, [call()])
 
@@ -177,4 +176,4 @@ class ShellTest(SargeTestCase):
                     sarge.SARGE_CFG,
                     'sarge.log']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
-        self.assertTrue((other_tmp/sarge.DEPLOYMENT_CFG_DIR).isdir())
+        self.assertTrue((other_tmp / sarge.DEPLOYMENT_CFG_DIR).isdir())

@@ -1,6 +1,5 @@
 import json
 from path import path
-from mock import patch
 from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
 
@@ -23,7 +22,7 @@ class DeploymentTest(SargeTestCase):
         self.assertEqual([d.name for d in self.sarge().deployments], ['testy'])
 
     def test_hardcoded_service_is_passed_to_app(self):
-        zefolder_path = self.tmp/'zefolder'
+        zefolder_path = self.tmp / 'zefolder'
         configure_deployment(self.tmp, {
             'name': 'testy',
             'user': username,

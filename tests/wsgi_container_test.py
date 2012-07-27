@@ -1,15 +1,16 @@
 import json
 from path import path
-from mock import patch, call
 from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
 
 
 def invoke_wsgi_app(app, environ):
     response = {}
+
     def start_response(status, headers):
         response['status'] = status
         response['headers'] = headers
+
     data = app(environ, start_response)
     response['data'] = ''.join(data)
     return response
@@ -64,14 +65,14 @@ class WsgiContainerTest(SargeTestCase):
         self.popen_with_cleanup(command, cwd=self.version_folder, shell=True)
 
         run_folder = path(self.version_folder + '.run')
-        socket_path = run_folder/'wsgi-app.sock'
+        socket_path = run_folder / 'wsgi-app.sock'
         if not wait_for(socket_path.exists, 0.01, 500):
             self.fail('No socket found after 5 seconds')
 
         return socket_path
 
     def test_wsgi_app_works_via_fcgi(self):
-        with (self.version_folder/'testyapp.py').open('wb') as f:
+        with (self.version_folder / 'testyapp.py').open('wb') as f:
             f.write("def testy_app_factory(appcfg):\n"
                     "  def app(environ, start_response):\n"
                     "    start_response('200 OK', [])\n"
@@ -84,7 +85,7 @@ class WsgiContainerTest(SargeTestCase):
                  'app_factory': 'testyapp:testy_app_factory'},
             ],
         }
-        with open(self.version_folder/'sargeapp.yaml', 'wb') as f:
+        with open(self.version_folder / 'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
 
         self.testy.activate_version(self.version_folder)
@@ -94,7 +95,7 @@ class WsgiContainerTest(SargeTestCase):
         self.assertIn('the matrix has you', response['data'])
 
     def test_app_receives_configuration(self):
-        with (self.version_folder/'testyapp.py').open('wb') as f:
+        with (self.version_folder / 'testyapp.py').open('wb') as f:
             f.write("def testy_app_factory(appcfg):\n"
                     "  def app(environ, start_response):\n"
                     "    start_response('200 OK', [])\n"
@@ -107,7 +108,7 @@ class WsgiContainerTest(SargeTestCase):
                  'app_factory': 'testyapp:testy_app_factory'},
             ],
         }
-        with open(self.version_folder/'sargeapp.yaml', 'wb') as f:
+        with open(self.version_folder / 'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
 
         @self.s.on_activate_version.connect
