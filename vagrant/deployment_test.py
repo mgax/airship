@@ -2,6 +2,7 @@ import unittest
 from StringIO import StringIO
 import json
 import urllib
+from importlib import import_module as imp
 from fabric.api import env, run, sudo, put, cd
 from fabric.contrib.files import exists
 from path import path
@@ -18,7 +19,6 @@ def provision():
 
 
 def setUpModule(self):
-    import sarge, sarge.core; self.sarge = sarge
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
     if not exists(cfg['sarge-venv']):
@@ -69,7 +69,7 @@ class VagrantDeploymentTest(unittest.TestCase):
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home'] / sarge.core.SARGE_CFG,
+                 cfg['sarge-home'] / imp('sarge.core').SARGE_CFG,
                  use_sudo=True)
         sarge_cmd("init")
         sudo("'%(sarge-venv)s'/bin/supervisord "
@@ -87,7 +87,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
-                    sarge.core.DEPLOYMENT_CFG_DIR /
+                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
                     'testy.yaml'),
                  use_sudo=True)
 
@@ -128,7 +128,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
-                    sarge.core.DEPLOYMENT_CFG_DIR /
+                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
                     'testy.yaml'),
                  use_sudo=True)
 
@@ -157,7 +157,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
-                    sarge.core.DEPLOYMENT_CFG_DIR /
+                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
                     'testy.yaml'),
                  use_sudo=True)
 
@@ -180,7 +180,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
-                    sarge.core.DEPLOYMENT_CFG_DIR /
+                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
                     'testy.yaml'),
                  use_sudo=True)
 
