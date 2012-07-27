@@ -1,9 +1,8 @@
-import tempfile
 import json
 from path import path
 from mock import patch
-from common import unittest
 from common import configure_deployment, configure_sarge, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -12,15 +11,10 @@ def setUpModule(self):
     self.mock_subprocess = self._subprocess_patch.start()
 
 
-class VarFolderTest(unittest.TestCase):
+class VarFolderTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:VarFolderPlugin']})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def configure_and_deploy(self):
         configure_deployment(self.tmp, {

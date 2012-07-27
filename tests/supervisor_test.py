@@ -1,11 +1,10 @@
-from common import unittest
-import tempfile
 import json
 import sys
 import ConfigParser
 from path import path
 from mock import patch, call
 from common import configure_sarge, configure_deployment, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -43,15 +42,10 @@ def config_file_checker(cfg_path):
     return eq_config
 
 
-class SupervisorConfigurationTest(unittest.TestCase):
+class SupervisorConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
@@ -203,15 +197,10 @@ class SupervisorConfigurationTest(unittest.TestCase):
         eq_config('program:testy_theone', 'command', 'echo')
 
 
-class SupervisorInvocationTest(unittest.TestCase):
+class SupervisorInvocationTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def test_invoke_supervisorctl(self):
         mock_subprocess.reset_mock()

@@ -1,10 +1,12 @@
 import os
 import pwd
 import json
+import tempfile
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+from path import path
 
 
 def configure_sarge(sarge_home, config):
@@ -21,4 +23,20 @@ def configure_deployment(sarge_home, config):
     with open(deployment_config_folder/filename, 'wb') as f:
         json.dump(config, f)
 
+
 username = pwd.getpwuid(os.getuid())[0]
+
+
+class SargeTestCase(unittest.TestCase):
+
+    def sarge(self):
+        import sarge
+        return sarge.Sarge(self.tmp)
+
+    def _pre_setup(self):
+        self.tmp = path(tempfile.mkdtemp())
+        self.addCleanup(self.tmp.rmtree)
+
+    def __call__(self, result=None):
+        self._pre_setup()
+        super(SargeTestCase, self).__call__(result)

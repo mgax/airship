@@ -1,10 +1,9 @@
-from common import unittest
-import tempfile
 import json
 import re
 from path import path
 from mock import patch, call
 from common import configure_sarge, configure_deployment, username
+from common import SargeTestCase
 
 
 def read_config(cfg_path):
@@ -24,15 +23,10 @@ def tearDownModule(self):
     self._subprocess_patch.stop()
 
 
-class NginxConfigurationTest(unittest.TestCase):
+class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
         deployment_config = {'name': 'testy', 'user': username}

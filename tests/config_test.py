@@ -1,9 +1,8 @@
-from common import unittest
-import tempfile
 import json
 from path import path
 from mock import patch
 from common import configure_sarge, configure_deployment, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -16,15 +15,10 @@ def tearDownModule(self):
     self._subprocess_patch.stop()
 
 
-class DeploymentTest(unittest.TestCase):
+class DeploymentTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def test_enumerate_deployments(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})

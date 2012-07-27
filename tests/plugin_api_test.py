@@ -1,9 +1,8 @@
-from common import unittest
-import tempfile
 import json
 from path import path
 from mock import Mock, patch, call
 from common import configure_sarge, configure_deployment, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -19,15 +18,10 @@ def tearDownModule(self):
 mock_plugin = Mock()
 
 
-class PluginApiTest(unittest.TestCase):
+class PluginApiTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def test_plugin_named_in_config_file_gets_called(self):
         configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})

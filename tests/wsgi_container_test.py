@@ -1,9 +1,8 @@
-from common import unittest
-import tempfile
 import json
 from path import path
 from mock import patch, call
 from common import configure_sarge, configure_deployment, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -51,21 +50,15 @@ def read_config(cfg_path):
     return config
 
 
-class WsgiContainerTest(unittest.TestCase):
+class WsgiContainerTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
-
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 
         self.s = self.sarge()
         self.testy = self.s.get_deployment('testy')
         self.version_folder = path(self.testy.new_version())
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def popen_with_cleanup(self, *args, **kwargs):
         import subprocess

@@ -1,10 +1,10 @@
-from common import unittest
 import tempfile
 import json
 from StringIO import StringIO
 from path import path
 from mock import patch, call
 from common import configure_deployment, configure_sarge, username
+from common import SargeTestCase
 
 
 def setUpModule(self):
@@ -17,19 +17,14 @@ def tearDownModule(self):
     self._subprocess_patch.stop()
 
 
-class WorkflowTest(unittest.TestCase):
+class WorkflowTest(SargeTestCase):
 
     def setUp(self):
         supervisorctl_patch = patch('sarge.Sarge.supervisorctl')
         self.mock_supervisorctl = supervisorctl_patch.start()
         self.addCleanup(supervisorctl_patch.stop)
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     def test_new_version(self):
         testy = self.sarge().get_deployment('testy')
@@ -138,15 +133,10 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(call(['status']), self.mock_supervisorctl.mock_calls)
 
 
-class ShellTest(unittest.TestCase):
+class ShellTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
-
-    def sarge(self):
-        return sarge.Sarge(self.tmp)
 
     @patch('sarge.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
