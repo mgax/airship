@@ -9,12 +9,6 @@ from common import SargeTestCase
 
 def setUpModule(self):
     import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
 
 
 def read_config(cfg_path):
@@ -203,10 +197,10 @@ class SupervisorInvocationTest(SargeTestCase):
         configure_sarge(self.tmp, {})
 
     def test_invoke_supervisorctl(self):
-        mock_subprocess.reset_mock()
+        self.mock_subprocess.reset_mock()
         self.sarge().supervisorctl(['hello', 'world!'])
         supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
-        self.assertEqual(mock_subprocess.check_call.mock_calls,
+        self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,
                                 '-c', self.tmp/sarge.SUPERVISORD_CFG,
                                 'hello', 'world!'])])

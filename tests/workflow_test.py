@@ -9,12 +9,6 @@ from common import SargeTestCase
 
 def setUpModule(self):
     import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
 
 
 class WorkflowTest(SargeTestCase):
@@ -33,20 +27,20 @@ class WorkflowTest(SargeTestCase):
     def test_new_version_with_user_option_calls_chown(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
         testy = self.sarge().get_deployment('testy')
-        mock_subprocess.reset_mock()
+        self.mock_subprocess.reset_mock()
         version_folder = path(testy.new_version())
         self.assertIn(call(['chown', 'someone:', version_folder]),
-                      mock_subprocess.mock_calls)
+                      self.mock_subprocess.mock_calls)
 
     def test_activation_with_user_option_calls_chown(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
         testy = self.sarge().get_deployment('testy')
-        mock_subprocess.reset_mock()
+        self.mock_subprocess.reset_mock()
         version_folder = path(testy.new_version())
         testy.activate_version(version_folder)
         run_folder = path(version_folder + '.run')
         self.assertIn(call(['chown', 'someone:', run_folder]),
-                      mock_subprocess.mock_calls)
+                      self.mock_subprocess.mock_calls)
 
     def test_versions_have_different_paths(self):
         testy = self.sarge().get_deployment('testy')

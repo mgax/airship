@@ -15,12 +15,6 @@ def read_config(cfg_path):
 
 def setUpModule(self):
     import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
 
 
 class NginxConfigurationTest(SargeTestCase):
@@ -210,7 +204,7 @@ class NginxConfigurationTest(SargeTestCase):
             '}')
 
     def test_activate_triggers_nginx_service_reload(self):
-        mock_subprocess.reset_mock()
+        self.mock_subprocess.reset_mock()
         version_folder = self.configure_and_activate({})
         self.assertIn(call(['service', 'nginx', 'reload']),
-                      mock_subprocess.check_call.mock_calls)
+                      self.mock_subprocess.check_call.mock_calls)

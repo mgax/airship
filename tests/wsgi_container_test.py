@@ -7,12 +7,6 @@ from common import SargeTestCase
 
 def setUpModule(self):
     import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
 
 
 def invoke_wsgi_app(app, environ):

@@ -7,8 +7,6 @@ from common import SargeTestCase
 
 def setUpModule(self):
     import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
 
 
 class VarFolderTest(SargeTestCase):
