@@ -1,40 +1,27 @@
-from utils import unittest
-import tempfile
 import json
 from path import path
-from mock import Mock, patch, call
-from utils import configure_sarge, configure_deployment, username
-
-
-def setUpModule(self):
-    import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
+from mock import Mock, call
+from common import configure_sarge, configure_deployment, username, imp
+from common import SargeTestCase
 
 
 mock_plugin = Mock()
 
 
-class PluginApiTest(unittest.TestCase):
+class PluginApiTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {})
 
     def test_plugin_named_in_config_file_gets_called(self):
-        configure_sarge(self.tmp, {'plugins': [__name__+':mock_plugin']})
+        configure_sarge(self.tmp, {'plugins': [__name__ + ':mock_plugin']})
         mock_plugin.reset_mock()
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
 
     def test_subscribe_to_activation_event(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         mock_handler = Mock(im_self=None)
         s.on_activate_version.connect(mock_handler)
         testy = s.get_deployment('testy')
@@ -44,12 +31,13 @@ class PluginApiTest(unittest.TestCase):
 
     def test_activation_event_passes_shared_dict(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
 
         def handler1(depl, share, **extra):
             share['test-something'] = 123
 
         got = []
+
         def handler2(depl, share, **extra):
             got.append(share.get('test-something'))
 
@@ -66,7 +54,7 @@ class PluginApiTest(unittest.TestCase):
             appcfg['your-order'] = "is here"
 
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        s = sarge.Sarge(self.tmp)
+        s = self.sarge()
         s.on_activate_version.connect(handler)
 
         testy = s.get_deployment('testy')
@@ -74,6 +62,6 @@ class PluginApiTest(unittest.TestCase):
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
 
-        with (cfg_folder/sarge.APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")

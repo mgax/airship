@@ -1,10 +1,9 @@
-from utils import unittest
-import tempfile
 import json
 import re
 from path import path
-from mock import patch, call
-from utils import configure_sarge, configure_deployment, username
+from mock import call
+from common import configure_sarge, configure_deployment, username, imp
+from common import SargeTestCase
 
 
 def read_config(cfg_path):
@@ -14,31 +13,18 @@ def read_config(cfg_path):
     return config
 
 
-def setUpModule(self):
-    import sarge; self.sarge = sarge
-    self._subprocess_patch = patch('sarge.subprocess')
-    self.mock_subprocess = self._subprocess_patch.start()
-
-
-def tearDownModule(self):
-    self._subprocess_patch.stop()
-
-
-class NginxConfigurationTest(unittest.TestCase):
+class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        self.tmp = path(tempfile.mkdtemp())
-        self.addCleanup(self.tmp.rmtree)
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
         deployment_config = {'name': 'testy', 'user': username}
         deployment_config.update(deployment_config_extra)
         configure_deployment(self.tmp, deployment_config)
-        s = sarge.Sarge(self.tmp)
-        deployment = s.get_deployment('testy')
+        deployment = self.sarge().get_deployment('testy')
         version_folder = path(deployment.new_version())
-        with open(version_folder/'sargeapp.yaml', 'wb') as f:
+        with open(version_folder / 'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
         deployment.activate_version(version_folder)
         return version_folder
@@ -48,12 +34,12 @@ class NginxConfigurationTest(unittest.TestCase):
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_nginx_common_config_created_on_init(self):
-        sarge.init_cmd(sarge.Sarge(self.tmp), None)
-        nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
-        nginx_sites = nginx_folder/'sites'
+        imp('sarge').init_cmd(self.sarge(), None)
+        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
+        nginx_sites = nginx_folder / 'sites'
         self.assertTrue(nginx_sites.isdir())
 
-        nginx_common = nginx_folder/'sarge_sites.conf'
+        nginx_common = nginx_folder / 'sarge_sites.conf'
         self.assertTrue(nginx_common.isfile())
         self.assertEqual(nginx_common.text(),
                          'include ' + nginx_folder + '/sites/*;\n')
@@ -61,16 +47,16 @@ class NginxConfigurationTest(unittest.TestCase):
     def test_no_web_services_yields_blank_configuration(self):
         version_folder = self.configure_and_activate({})
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "server { }")
 
     def test_activation_creates_symlink_in_sites_folder(self):
         version_folder = self.configure_and_activate({})
         cfg_folder = path(version_folder + '.cfg')
-        nginx_folder = self.tmp/sarge.NginxPlugin.FOLDER_NAME
-        link_path = nginx_folder/'sites'/'testy'
-        link_target = cfg_folder/'nginx-site.conf'
+        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
+        link_path = nginx_folder / 'sites' / 'testy'
+        link_target = cfg_folder / 'nginx-site.conf'
         self.assertTrue(link_path.islink())
         self.assertEqual(link_path.readlink(), link_target)
 
@@ -83,10 +69,11 @@ class NginxConfigurationTest(unittest.TestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf,
-            "server { location /media { alias %s/mymedia; } }" % version_folder)
+        conf_ok = ("server { location /media { alias %s/mymedia; } }" %
+                   version_folder)
+        self.assert_equivalent(nginx_conf, conf_ok)
 
     def test_wsgi_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -98,7 +85,7 @@ class NginxConfigurationTest(unittest.TestCase):
         })
         cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -108,7 +95,7 @@ class NginxConfigurationTest(unittest.TestCase):
             '    fastcgi_param SCRIPT_NAME ""; '
             '    fastcgi_pass unix:%(socket_path)s; '
             '  } '
-            '}' % {'socket_path': run_folder/'wsgi-app.sock'})
+            '}' % {'socket_path': run_folder / 'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
@@ -119,7 +106,7 @@ class NginxConfigurationTest(unittest.TestCase):
         })
         cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -145,7 +132,7 @@ class NginxConfigurationTest(unittest.TestCase):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
 
-        config_path = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
+        config_path = cfg_folder / imp('sarge').SUPERVISOR_DEPLOY_CFG
         command = read_config(config_path).get(
             'program:testy_fcgi_php', 'command')
 
@@ -164,7 +151,7 @@ class NginxConfigurationTest(unittest.TestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -185,7 +172,7 @@ class NginxConfigurationTest(unittest.TestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -205,7 +192,7 @@ class NginxConfigurationTest(unittest.TestCase):
             },
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder/'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
@@ -214,7 +201,7 @@ class NginxConfigurationTest(unittest.TestCase):
             '}')
 
     def test_activate_triggers_nginx_service_reload(self):
-        mock_subprocess.reset_mock()
-        version_folder = self.configure_and_activate({})
+        self.mock_subprocess.reset_mock()
+        self.configure_and_activate({})
         self.assertIn(call(['service', 'nginx', 'reload']),
-                      mock_subprocess.check_call.mock_calls)
+                      self.mock_subprocess.check_call.mock_calls)
