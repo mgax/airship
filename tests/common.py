@@ -17,9 +17,9 @@ def configure_sarge(sarge_home, config):
 
 
 def configure_deployment(sarge_home, config):
-    core = imp('sarge.core')
-    deployment_config_folder = sarge_home / core.DEPLOYMENT_CFG_DIR
-    core.ensure_folder(deployment_config_folder)
+    deployment_config_folder = (sarge_home /
+                                imp('sarge.core').DEPLOYMENT_CFG_DIR)
+    imp('sarge.util').ensure_folder(deployment_config_folder)
     filename = config['name'] + '.yaml'
     with open(deployment_config_folder / filename, 'wb') as f:
         json.dump(config, f)

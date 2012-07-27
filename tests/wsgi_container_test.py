@@ -44,6 +44,7 @@ def read_config(cfg_path):
 class WsgiContainerTest(SargeTestCase):
 
     def setUp(self):
+        self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
 

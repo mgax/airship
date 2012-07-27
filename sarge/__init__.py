@@ -1,1 +1,2 @@
-from .core import Sarge, NginxPlugin, VarFolderPlugin
+from .core import Sarge, VarFolderPlugin
+from .nginx import NginxPlugin
