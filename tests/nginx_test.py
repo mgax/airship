@@ -17,6 +17,7 @@ class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
+        self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
         deployment_config = {'name': 'testy', 'user': username}
@@ -34,7 +35,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_nginx_common_config_created_on_init(self):
-        imp('sarge').init_cmd(self.sarge(), None)
+        imp('sarge.core').init_cmd(self.sarge(), None)
         nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
         nginx_sites = nginx_folder / 'sites'
         self.assertTrue(nginx_sites.isdir())
@@ -132,7 +133,7 @@ class NginxConfigurationTest(SargeTestCase):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
 
-        config_path = cfg_folder / imp('sarge').SUPERVISOR_DEPLOY_CFG
+        config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         command = read_config(config_path).get(
             'program:testy_fcgi_php', 'command')
 
@@ -201,7 +202,7 @@ class NginxConfigurationTest(SargeTestCase):
             '}')
 
     def test_activate_triggers_nginx_service_reload(self):
-        self.mock_subprocess.reset_mock()
+        self.mock_nginx_subprocess.reset_mock()
         self.configure_and_activate({})
         self.assertIn(call(['service', 'nginx', 'reload']),
-                      self.mock_subprocess.check_call.mock_calls)
+                      self.mock_nginx_subprocess.check_call.mock_calls)

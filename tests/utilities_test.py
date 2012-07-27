@@ -13,7 +13,7 @@ class ForceSymlinkTest(unittest.TestCase):
         target = self.tmp / 'target'
         target.write_text('bla')
         link = self.tmp / 'link'
-        imp('sarge').force_symlink(target, link)
+        imp('sarge.util').force_symlink(target, link)
         self.assertTrue(link.islink())
         self.assertEqual(link.readlink(), target)
 
@@ -24,7 +24,7 @@ class ForceSymlinkTest(unittest.TestCase):
         target2.write_text('foo')
         link = self.tmp / 'link'
         target2.symlink(link)
-        imp('sarge').force_symlink(target, link)
+        imp('sarge.util').force_symlink(target, link)
         self.assertTrue(link.islink())
         self.assertEqual(link.readlink(), target)
 
@@ -34,7 +34,7 @@ class ForceSymlinkTest(unittest.TestCase):
         target2 = self.tmp / 'target2'
         link = self.tmp / 'link'
         target2.symlink(link)
-        imp('sarge').force_symlink(target, link)
+        imp('sarge.util').force_symlink(target, link)
         self.assertTrue(link.islink())
         self.assertEqual(link.readlink(), target)
 
@@ -47,16 +47,16 @@ class EnsureFolderTest(unittest.TestCase):
 
     def test_ensure_new_folder(self):
         folder = self.tmp / 'folder'
-        imp('sarge').ensure_folder(folder)
+        imp('sarge.util').ensure_folder(folder)
         self.assertTrue(folder.isdir())
 
     def test_ensure_existing_folder(self):
         folder = self.tmp / 'folder'
         folder.mkdir()
-        imp('sarge').ensure_folder(folder)
+        imp('sarge.util').ensure_folder(folder)
         self.assertTrue(folder.isdir())
 
     def test_ensure_deep_folder(self):
         folder = self.tmp / 'deep' / 'folder'
-        imp('sarge').ensure_folder(folder)
+        imp('sarge.util').ensure_folder(folder)
         self.assertTrue(folder.isdir())

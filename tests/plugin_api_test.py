@@ -62,6 +62,6 @@ class PluginApiTest(SargeTestCase):
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
 
-        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")

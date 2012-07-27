@@ -8,7 +8,7 @@ if sys.version_info < (2, 7):
 distutils.core.setup(
     name='Sarge',
     version='0.1',
-    py_modules=['sarge'],
+    packages=['sarge'],
     install_requires=dependencies,
-    entry_points = {'console_scripts': ['sarge = sarge:main']},
+    entry_points={'console_scripts': ['sarge = sarge.core:main']},
 )
