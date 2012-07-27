@@ -7,10 +7,6 @@ from common import configure_sarge, configure_deployment, username
 from common import SargeTestCase
 
 
-def setUpModule(self):
-    import sarge; self.sarge = sarge
-
-
 def read_config(cfg_path):
     import ConfigParser
     config = ConfigParser.RawConfigParser()
@@ -44,7 +40,8 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
 
-        eq_config = config_file_checker(self.tmp/sarge.SUPERVISORD_CFG)
+        config_path = self.tmp / self.imp('sarge').SUPERVISORD_CFG
+        eq_config = config_file_checker(config_path)
 
         eq_config('unix_http_server', 'file', self.tmp/'supervisord.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
@@ -60,7 +57,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         self.sarge().generate_supervisord_configuration()
 
-        config = read_config(self.tmp/sarge.SUPERVISORD_CFG)
+        config = read_config(self.tmp / self.imp('sarge').SUPERVISORD_CFG)
         self.assertItemsEqual(config.sections(),
                               ['unix_http_server', 'rpcinterface:supervisor',
                                'supervisord', 'supervisorctl', 'include'])
@@ -77,7 +74,8 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        config_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(config_path)
 
         eq_config('program:testy_tprog', 'command', "echo starting up")
         eq_config('program:testy_tprog', 'redirect_stderr', 'true')
@@ -88,7 +86,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('program:testy_tprog', 'autostart', 'false')
         eq_config('program:testy_tprog', 'autorestart', MISSING)
         eq_config('program:testy_tprog', 'environment',
-                  'SARGEAPP_CFG="%s"' % (cfg_folder/sarge.APP_CFG))
+                  'SARGEAPP_CFG="%s"' % (cfg_folder /
+                                         self.imp('sarge').APP_CFG))
 
     def test_supervisor_cfg_is_empty_if_version_needs_no_programs(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
@@ -96,8 +95,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
         cfg_folder = path(version_folder + '.cfg')
-        supervisor_deploy_cfg = cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG
-        self.assertEqual(supervisor_deploy_cfg.text().strip(),
+        deploy_cfg = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        self.assertEqual(deploy_cfg.text().strip(),
                          "[group:testy]\nprograms =")
 
     def test_supervisor_cfg_defines_group(self):
@@ -114,7 +113,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         testy.activate_version(version_folder)
 
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(cfg_path)
 
         eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
 
@@ -130,7 +130,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         testy.activate_version(version_folder)
 
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(cfg_path)
 
         eq_config('program:testy_tprog', 'autorestart', 'true')
 
@@ -145,7 +146,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         testy.activate_version(version_folder)
 
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(cfg_path)
 
         eq_config('program:testy_tprog', 'user', 'someone')
 
@@ -169,7 +171,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         testy.activate_version(version_folder)
 
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(cfg_path)
         eq_config('program:testy_tprog', 'directory', version_folder)
 
     def test_shared_programs_list_generates_program_config_entry(self):
@@ -186,7 +189,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         testy.activate_version(version_folder)
 
         cfg_folder = path(version_folder + '.cfg')
-        eq_config = config_file_checker(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        cfg_path = cfg_folder / self.imp('sarge').SUPERVISOR_DEPLOY_CFG
+        eq_config = config_file_checker(cfg_path)
         eq_config('program:testy_theone', 'directory', version_folder)
         eq_config('program:testy_theone', 'command', 'echo')
 
@@ -200,7 +204,8 @@ class SupervisorInvocationTest(SargeTestCase):
         self.mock_subprocess.reset_mock()
         self.sarge().supervisorctl(['hello', 'world!'])
         supervisorctl_path = path(sys.prefix).abspath()/'bin'/'supervisorctl'
+        cfg_path = self.tmp / self.imp('sarge').SUPERVISORD_CFG
         self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,
-                                '-c', self.tmp/sarge.SUPERVISORD_CFG,
+                                '-c', cfg_path,
                                 'hello', 'world!'])])
