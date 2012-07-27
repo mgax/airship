@@ -8,21 +8,19 @@ except ImportError:
     import unittest
 from path import path
 from mock import patch
-from importlib import import_module
+from importlib import import_module as imp
 
 
 def configure_sarge(sarge_home, config):
-    import sarge
-    with open(sarge_home/sarge.SARGE_CFG, 'wb') as f:
+    with open(sarge_home / imp('sarge').SARGE_CFG, 'wb') as f:
         json.dump(config, f)
 
 
 def configure_deployment(sarge_home, config):
-    import sarge
-    deployment_config_folder = sarge_home/sarge.DEPLOYMENT_CFG_DIR
-    sarge.ensure_folder(deployment_config_folder)
+    deployment_config_folder = sarge_home / imp('sarge').DEPLOYMENT_CFG_DIR
+    imp('sarge').ensure_folder(deployment_config_folder)
     filename = config['name'] + '.yaml'
-    with open(deployment_config_folder/filename, 'wb') as f:
+    with open(deployment_config_folder / filename, 'wb') as f:
         json.dump(config, f)
 
 
@@ -32,17 +30,13 @@ username = pwd.getpwuid(os.getuid())[0]
 class SargeTestCase(unittest.TestCase):
 
     def sarge(self):
-        import sarge
-        return sarge.Sarge(self.tmp)
+        return imp('sarge').Sarge(self.tmp)
 
     def patch(self, name):
         p = patch(name)
         mock_ob = p.start()
         self.addCleanup(p.stop)
         return mock_ob
-
-    def imp(self, name):
-        return import_module(name)
 
     def _pre_setup(self):
         self.tmp = path(tempfile.mkdtemp())

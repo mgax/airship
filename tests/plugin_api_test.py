@@ -1,12 +1,8 @@
 import json
 from path import path
 from mock import Mock, patch, call
-from common import configure_sarge, configure_deployment, username
+from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
-
-
-def setUpModule(self):
-    import sarge; self.sarge = sarge
 
 
 mock_plugin = Mock()
@@ -65,6 +61,6 @@ class PluginApiTest(SargeTestCase):
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
 
-        with (cfg_folder/sarge.APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")

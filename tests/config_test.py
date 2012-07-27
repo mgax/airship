@@ -1,12 +1,8 @@
 import json
 from path import path
 from mock import patch
-from common import configure_sarge, configure_deployment, username
+from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
-
-
-def setUpModule(self):
-    import sarge; self.sarge = sarge
 
 
 class DeploymentTest(SargeTestCase):
@@ -20,8 +16,8 @@ class DeploymentTest(SargeTestCase):
 
     def test_ignore_non_yaml_files(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
-        cfgdir = self.tmp/sarge.DEPLOYMENT_CFG_DIR
-        (cfgdir/'garbage').write_text('{}')
+        cfgdir = self.tmp / imp('sarge').DEPLOYMENT_CFG_DIR
+        (cfgdir / 'garbage').write_text('{}')
         self.assertItemsEqual([f.name for f in cfgdir.listdir()],
                               ['testy.yaml', 'garbage'])
         self.assertEqual([d.name for d in self.sarge().deployments], ['testy'])
@@ -41,7 +37,7 @@ class DeploymentTest(SargeTestCase):
         version_folder = testy.new_version()
         cfg_folder = path(version_folder + '.cfg')
         testy.activate_version(version_folder)
-        with (cfg_folder/sarge.APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['services']['zefolder'], {
             'name': 'zefolder',

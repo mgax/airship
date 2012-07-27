@@ -1,12 +1,8 @@
 import json
 from path import path
 from mock import patch
-from common import configure_deployment, configure_sarge, username
+from common import configure_deployment, configure_sarge, username, imp
 from common import SargeTestCase
-
-
-def setUpModule(self):
-    import sarge; self.sarge = sarge
 
 
 class VarFolderTest(SargeTestCase):
@@ -30,7 +26,7 @@ class VarFolderTest(SargeTestCase):
     def test_deploy_passes_var_folder_to_deployment(self):
         version_folder = self.configure_and_deploy()
         cfg_folder = path(version_folder + '.cfg')
-        with (cfg_folder / sarge.APP_CFG).open() as f:
+        with (cfg_folder / imp('sarge').APP_CFG).open() as f:
             appcfg = json.load(f)
         db_path = self.tmp / 'var' / 'testy' / 'db'
         self.assertEqual(appcfg['services']['db'], db_path)

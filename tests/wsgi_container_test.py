@@ -1,12 +1,8 @@
 import json
 from path import path
 from mock import patch, call
-from common import configure_sarge, configure_deployment, username
+from common import configure_sarge, configure_deployment, username, imp
 from common import SargeTestCase
-
-
-def setUpModule(self):
-    import sarge; self.sarge = sarge
 
 
 def invoke_wsgi_app(app, environ):
@@ -63,7 +59,7 @@ class WsgiContainerTest(SargeTestCase):
 
     def start_app(self):
         cfg_folder = path(self.version_folder + '.cfg')
-        config = read_config(cfg_folder/sarge.SUPERVISOR_DEPLOY_CFG)
+        config = read_config(cfg_folder / imp('sarge').SUPERVISOR_DEPLOY_CFG)
         command = config.get('program:testy_fcgi_wsgi', 'command')
         self.popen_with_cleanup(command, cwd=self.version_folder, shell=True)
 
