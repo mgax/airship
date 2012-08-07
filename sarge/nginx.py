@@ -44,6 +44,15 @@ class NginxPlugin(object):
         '    fastcgi_pass %(socket)s;\n'
         '}\n')
 
+    PROXY_TEMPLATE = (
+        'location %(url)s {\n'
+        '    proxy_pass %(upstream_url)s;\n'
+        '    proxy_redirect off;\n'
+        '    proxy_set_header Host $host;\n'
+        '    proxy_set_header X-Real-IP $remote_addr;\n'
+        '    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
+        '}\n')
+
     def __init__(self, sarge):
         self.sarge = sarge
         sarge.on_activate_version.connect(self.activate_deployment, weak=False)
@@ -134,6 +143,9 @@ class NginxPlugin(object):
                 conf_urlmap += self.FCGI_TEMPLATE % dict(entry,
                         socket=socket,
                         fcgi_params_path=self.fcgi_params_path)
+
+            elif entry['type'] == 'proxy':
+                conf_urlmap += self.PROXY_TEMPLATE % entry
 
             else:
                 raise NotImplementedError

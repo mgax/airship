@@ -143,6 +143,27 @@ class NginxConfigurationTest(SargeTestCase):
                                       'run_folder': run_folder,
                                   })
 
+    def test_proxy_is_configured_in_nginx(self):
+        version_folder = self.configure_and_activate({
+            'urlmap': [
+                {'url': '/stuff',
+                 'type': 'proxy',
+                 'upstream_url': 'http://backend:4912/some/path'},
+            ],
+        })
+        cfg_folder = path(version_folder + '.cfg')
+        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+            nginx_conf = f.read()
+        conf_ok = (
+            "server { location /stuff { "
+            "proxy_pass http://backend:4912/some/path; "
+            "proxy_redirect off; "
+            "proxy_set_header Host $host; "
+            "proxy_set_header X-Real-IP $remote_addr; "
+            "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; "
+            "} }")
+        self.assert_equivalent(nginx_conf, conf_ok)
+
     def test_process_with_hardcoded_tcp_socket_is_configured_in_nginx(self):
         version_folder = self.configure_and_activate({
             'urlmap': [
