@@ -133,22 +133,6 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         eq_config('program:testy_tprog', 'autorestart', 'true')
 
-    def test_user_option(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [{'command': 'echo', 'name': 'tprog'}],
-            'user': 'someone',
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
-
-        cfg_folder = path(version_folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(cfg_path)
-
-        eq_config('program:testy_tprog', 'user', 'someone')
-
     def test_get_deployment(self):
         configure_deployment(self.tmp, {'name': 'testy', 'user': username})
         testy = self.sarge().get_deployment('testy')

@@ -92,8 +92,6 @@ class Deployment(object):
                               self.name, version_folder)
                 version_folder.makedirs()
                 # TODO test
-                subprocess.check_call(['chown', self.config['user'] + ':',
-                                       version_folder])
                 return version_folder
 
     def activate_version(self, version_folder):
@@ -104,8 +102,6 @@ class Deployment(object):
                       version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
-        subprocess.check_call(['chown', self.config['user'] + ':',
-                               run_folder])
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder / self.name
@@ -163,7 +159,6 @@ class Deployment(object):
                 if self.config.get('autorestart', None) == 'always':
                     # TODO this should be specified in 'program_cfg'
                     extra_program_stuff += "autorestart = true\n"
-                extra_program_stuff += "user = %s\n" % self.config['user']
                 program_name = self.name + '_' + program_cfg['name']
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': program_name,

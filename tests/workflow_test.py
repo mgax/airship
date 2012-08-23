@@ -19,24 +19,6 @@ class WorkflowTest(SargeTestCase):
         self.assertTrue(version_folder.isdir())
         self.assertEqual(version_folder.parent.parent, self.tmp)
 
-    def test_new_version_with_user_option_calls_chown(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
-        testy = self.sarge().get_deployment('testy')
-        self.mock_subprocess.reset_mock()
-        version_folder = path(testy.new_version())
-        self.assertIn(call(['chown', 'someone:', version_folder]),
-                      self.mock_subprocess.mock_calls)
-
-    def test_activation_with_user_option_calls_chown(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': 'someone'})
-        testy = self.sarge().get_deployment('testy')
-        self.mock_subprocess.reset_mock()
-        version_folder = path(testy.new_version())
-        testy.activate_version(version_folder)
-        run_folder = path(version_folder + '.run')
-        self.assertIn(call(['chown', 'someone:', run_folder]),
-                      self.mock_subprocess.mock_calls)
-
     def test_versions_have_different_paths(self):
         testy = self.sarge().get_deployment('testy')
         version_path_1 = path(testy.new_version())
