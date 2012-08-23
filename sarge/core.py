@@ -155,8 +155,6 @@ class Sarge(object):
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.deployments = []
-        if config is None:
-            config = {}
         self.config = config
         self._load_deployments()
 
