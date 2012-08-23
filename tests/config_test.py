@@ -1,13 +1,10 @@
 import json
 from path import path
-from common import configure_sarge, configure_deployment, imp
+from common import configure_deployment, imp
 from common import SargeTestCase
 
 
 class DeploymentTest(SargeTestCase):
-
-    def setUp(self):
-        configure_sarge(self.tmp, {})
 
     def test_enumerate_deployments(self):
         configure_deployment(self.tmp, {'name': 'testy'})

@@ -1,13 +1,14 @@
 import json
 from path import path
-from common import configure_deployment, configure_sarge, imp
+from common import configure_deployment, imp
 from common import SargeTestCase
 
 
 class VarFolderTest(SargeTestCase):
 
-    def setUp(self):
-        configure_sarge(self.tmp, {'plugins': ['sarge:VarFolderPlugin']})
+    def sarge(self):
+        return imp('sarge').Sarge({'home': self.tmp,
+                                   'plugins': ['sarge:VarFolderPlugin']})
 
     def configure_and_deploy(self):
         configure_deployment(self.tmp, {

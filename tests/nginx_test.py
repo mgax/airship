@@ -2,7 +2,7 @@ import json
 import re
 from path import path
 from mock import call
-from common import configure_sarge, configure_deployment, imp
+from common import configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -13,17 +13,20 @@ def read_config(cfg_path):
     return config
 
 
+def sarge(home):
+    return imp('sarge').Sarge({'home': home, 'plugins': ['sarge:NginxPlugin']})
+
+
 class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
         deployment_config = {'name': 'testy'}
         deployment_config.update(deployment_config_extra)
         configure_deployment(self.tmp, deployment_config)
-        deployment = self.sarge().get_deployment('testy')
+        deployment = sarge(self.tmp).get_deployment('testy')
         version_folder = path(deployment.new_version())
         with open(version_folder / 'sargeapp.yaml', 'wb') as f:
             json.dump(app_config, f)
@@ -35,7 +38,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
     def test_nginx_common_config_created_on_init(self):
-        imp('sarge.core').init_cmd(self.sarge(), None)
+        imp('sarge.core').init_cmd(sarge(self.tmp), None)
         nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
         nginx_sites = nginx_folder / 'sites'
         self.assertTrue(nginx_sites.isdir())
