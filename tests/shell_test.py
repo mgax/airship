@@ -1,5 +1,6 @@
 import tempfile
 from StringIO import StringIO
+import json
 from path import path
 from mock import patch, call
 from common import SargeTestCase, configure_deployment, configure_sarge, imp
@@ -48,6 +49,14 @@ class ShellTest(SargeTestCase):
     def test_status_calls_api_method(self, mock_status):
         imp('sarge.core').main([str(self.tmp), 'status'])
         self.assertEqual(mock_status.mock_calls, [call()])
+
+    @patch('sarge.core.status_cmd')
+    def test_shell_invocation_loads_sarge_configuration(self, status_cmd):
+        with open(self.tmp / imp('sarge.core').SARGE_CFG, 'wb') as f:
+            json.dump({'hello': 'world'}, f)
+        imp('sarge.core').main([str(self.tmp), 'status'])
+        sarge = status_cmd.mock_calls[0][1][0]
+        self.assertEqual(sarge.config['hello'], 'world')
 
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
