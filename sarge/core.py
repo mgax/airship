@@ -175,7 +175,7 @@ class Deployment(object):
 
     def stop(self):
         self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.daemons.ctl(['stop', self.name + ':*'])
+        self.sarge.daemons.stop_deployment(self.name)
 
 
 def _get_named_object(name):

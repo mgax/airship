@@ -23,3 +23,6 @@ class Supervisor(object):
 
     def start_deployment(self, name):
         self.ctl(['start', name + ':*'])
+
+    def stop_deployment(self, name):
+        self.ctl(['stop', name + ':*'])
