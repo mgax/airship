@@ -1,7 +1,7 @@
 import sys
 import distutils.core
 
-dependencies = ['supervisor', 'flup', 'blinker', 'path.py', 'PyYAML']
+dependencies = ['supervisor', 'blinker', 'path.py', 'PyYAML']
 if sys.version_info < (2, 7):
     dependencies += ['importlib', 'argparse']
 
