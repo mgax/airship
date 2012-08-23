@@ -150,10 +150,10 @@ class Sarge(object):
     log = logging.getLogger('sarge.Sarge')
     log.setLevel(logging.DEBUG)
 
-    def __init__(self, home_path, config):
+    def __init__(self, config):
         self.on_activate_version = blinker.Signal()
         self.on_initialize = blinker.Signal()
-        self.home_path = home_path
+        self.home_path = config['home']
         self.deployments = []
         if config is None:
             config = {}
@@ -301,7 +301,8 @@ def main(raw_arguments=None):
     set_up_logging(sarge_home_path)
     with open(sarge_home_path / SARGE_CFG, 'rb') as f:
         config = yaml.load(f)
-    sarge = Sarge(sarge_home_path, config)
+    config['home'] = sarge_home_path
+    sarge = Sarge(config)
     args.func(sarge, args)
 
 

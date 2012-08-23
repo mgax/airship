@@ -30,7 +30,8 @@ class SargeTestCase(unittest.TestCase):
     def sarge(self, config=None):
         with open(self.tmp / imp('sarge.core').SARGE_CFG, 'rb') as f:
             config = json.load(f)
-        return imp('sarge').Sarge(self.tmp, config)
+        config['home'] = self.tmp
+        return imp('sarge').Sarge(config)
 
     def patch(self, name):
         p = patch(name)
