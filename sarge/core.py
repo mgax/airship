@@ -142,6 +142,17 @@ def _get_named_object(name):
     return getattr(module, attr_name)
 
 
+class Instance(object):
+
+    def __init__(self, deployment):
+        self.deployment = deployment
+        self.folder.makedirs_p()
+
+    @property
+    def folder(self):
+        return self.deployment.folder
+
+
 class Sarge(object):
     """ The sarge object implements most operations performed by sarge. It acts
     as container for deployments.
@@ -209,6 +220,19 @@ class Sarge(object):
 
     def status(self):
         self.daemons.print_status()
+
+    def new_instance(self):
+        instance_id = 'inst'  # TODO make it random and unique
+        deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
+        deploy_cfg_dir.mkdir_p()
+        instance_cfg_path = (self.home_path /
+                             DEPLOYMENT_CFG_DIR /
+                             instance_id+'.yaml')
+        with open(instance_cfg_path, 'wb') as f:
+            json.dump({'name': instance_id}, f)
+        self._load_deployments()
+        deployment = self.get_deployment(instance_id)
+        return Instance(deployment)
 
 
 class VarFolderPlugin(object):
