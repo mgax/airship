@@ -131,9 +131,6 @@ class Deployment(object):
                     'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG)
                 extra_program_stuff += ("command = %s\n" %
                                         program_cfg['command'])
-                if self.config.get('autorestart', None) == 'always':
-                    # TODO this should be specified in 'program_cfg'
-                    extra_program_stuff += "autorestart = true\n"
                 program_name = self.name + '_' + program_cfg['name']
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': program_name,
