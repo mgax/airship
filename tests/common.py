@@ -11,11 +11,6 @@ from mock import patch
 from importlib import import_module as imp
 
 
-def configure_sarge(sarge_home, config):
-    with open(sarge_home / imp('sarge.core').SARGE_CFG, 'wb') as f:
-        json.dump(config, f)
-
-
 def configure_deployment(sarge_home, config):
     deployment_config_folder = (sarge_home /
                                 imp('sarge.core').DEPLOYMENT_CFG_DIR)
@@ -28,8 +23,12 @@ def configure_deployment(sarge_home, config):
 class SargeTestCase(unittest.TestCase):
 
     def sarge(self, config=None):
-        with open(self.tmp / imp('sarge.core').SARGE_CFG, 'rb') as f:
-            config = json.load(f)
+        if config is None:
+            config = {}
+        cfg_path = self.tmp / imp('sarge.core').SARGE_CFG
+        if cfg_path.isfile():
+            with open(cfg_path, 'rb') as f:
+                config.update(json.load(f))
         config['home'] = self.tmp
         return imp('sarge').Sarge(config)
 

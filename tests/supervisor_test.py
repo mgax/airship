@@ -2,7 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call
-from common import configure_sarge, configure_deployment, imp
+from common import configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -31,9 +31,6 @@ def config_file_checker(cfg_path):
 
 
 class SupervisorConfigurationTest(SargeTestCase):
-
-    def setUp(self):
-        configure_sarge(self.tmp, {})
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
@@ -158,9 +155,6 @@ class SupervisorConfigurationTest(SargeTestCase):
 
 
 class SupervisorInvocationTest(SargeTestCase):
-
-    def setUp(self):
-        configure_sarge(self.tmp, {})
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()

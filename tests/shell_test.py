@@ -3,13 +3,13 @@ from StringIO import StringIO
 import json
 from path import path
 from mock import patch, call
-from common import SargeTestCase, configure_deployment, configure_sarge, imp
+from common import SargeTestCase, configure_deployment, imp
 
 
 class ShellTest(SargeTestCase):
 
     def setUp(self):
-        configure_sarge(self.tmp, {})
+        (self.tmp / imp('sarge.core').SARGE_CFG).write_text('{}')
 
     @patch('sarge.core.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
@@ -61,7 +61,7 @@ class ShellTest(SargeTestCase):
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)
-        configure_sarge(other_tmp, {})
+        (other_tmp / imp('sarge.core').SARGE_CFG).write_text('{}')
 
         core = imp('sarge.core')
         core.main([str(other_tmp), 'init'])

@@ -1,6 +1,6 @@
 from path import path
 from mock import call
-from common import configure_deployment, configure_sarge, imp
+from common import configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -8,7 +8,6 @@ class WorkflowTest(SargeTestCase):
 
     def setUp(self):
         self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
-        configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy'})
 
     def test_new_version(self):
