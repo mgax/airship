@@ -158,8 +158,3 @@ class NginxPlugin(object):
 
         ensure_folder(self.sites_folder)
         force_symlink(conf_path, self.sites_folder / depl.name)
-        self.reload_nginx()
-
-    def reload_nginx(self):
-        self.log.debug("Reloading configuration for nginx server.")
-        subprocess.check_call(['service', 'nginx', 'reload'])

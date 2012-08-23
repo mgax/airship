@@ -221,9 +221,3 @@ class NginxConfigurationTest(SargeTestCase):
             '    listen 8013; '
             '    server_name something.example.com; '
             '}')
-
-    def test_activate_triggers_nginx_service_reload(self):
-        self.mock_nginx_subprocess.reset_mock()
-        self.configure_and_activate({})
-        self.assertIn(call(['service', 'nginx', 'reload']),
-                      self.mock_nginx_subprocess.check_call.mock_calls)
