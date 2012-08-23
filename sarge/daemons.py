@@ -26,3 +26,6 @@ class Supervisor(object):
 
     def stop_deployment(self, name):
         self.ctl(['stop', name + ':*'])
+
+    def print_status(self):
+        self.ctl(['status'])

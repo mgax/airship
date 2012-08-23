@@ -255,7 +255,7 @@ class Sarge(object):
         return Supervisor(self.home_path / SUPERVISORD_CFG)
 
     def status(self):
-        self.daemons.ctl(['status'])
+        self.daemons.print_status()
 
 
 class VarFolderPlugin(object):
