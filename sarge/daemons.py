@@ -20,3 +20,6 @@ class Supervisor(object):
 
     def restart_deployment(self, name):
         self.ctl(['restart', name + ':*'])
+
+    def start_deployment(self, name):
+        self.ctl(['start', name + ':*'])

@@ -171,7 +171,7 @@ class Deployment(object):
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)
-        self.sarge.daemons.ctl(['start', self.name + ':*'])
+        self.sarge.daemons.start_deployment(self.name)
 
     def stop(self):
         self.log.info("Stopping deployment %r.", self.name)
