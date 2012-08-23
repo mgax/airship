@@ -223,7 +223,7 @@ class Sarge(object):
     def status(self):
         self.daemons.print_status()
 
-    def new_instance(self):
+    def new_instance(self, config={}):
         instance_id = 'inst'  # TODO make it random and unique
         deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
         deploy_cfg_dir.mkdir_p()
@@ -231,11 +231,13 @@ class Sarge(object):
                              DEPLOYMENT_CFG_DIR /
                              instance_id+'.yaml')
         with open(instance_cfg_path, 'wb') as f:
+            services = config.get('services')
             json.dump({
                 'name': instance_id,
                 'programs': [
                     {'name': 'daemon', 'command': 'run'},
                 ],
+                'require-services': services,
             }, f)
         self._load_deployments()
         deployment = self.get_deployment(instance_id)

@@ -48,3 +48,12 @@ class InstanceTest(SargeTestCase):
 
         self.assertEqual(sarge.daemons.configure_deployment.programs,
                          [{'name': ANY, 'command': 'run'}])
+
+    def test_service_is_configured_at_instance_creation(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance({'services': {
+            'something': {'foo': 'bar'},
+        }})
+
+        services = instance.deployment.config['require-services']
+        self.assertEqual(services['something'], {'foo': 'bar'})
