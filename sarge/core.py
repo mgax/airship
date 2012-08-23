@@ -35,7 +35,7 @@ directory = %(home_path)s
 serverurl = unix://%(home_path)s/supervisord.sock
 
 [include]
-files = """ + path(CFG_LINKS_FOLDER) / '*' / SUPERVISOR_DEPLOY_CFG + """
+files = %(include_files)s
 """
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
@@ -235,6 +235,9 @@ class Sarge(object):
         with open(supervisord_cfg_path, 'wb') as f:
             f.write(SUPERVISORD_CFG_TEMPLATE % {
                 'home_path': self.home_path,
+                'include_files': (path(CFG_LINKS_FOLDER) /
+                                  '*' /
+                                  SUPERVISOR_DEPLOY_CFG),
             })
 
     def get_deployment(self, name):
