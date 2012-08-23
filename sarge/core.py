@@ -27,7 +27,6 @@ startsecs = 2
 autostart = false
 environment = %(environment)s
 command = %(command)s
-%(extra_program_stuff)s
 """
 
 
@@ -128,7 +127,6 @@ class Deployment(object):
         with open(supervisor_deploy_cfg_path, 'wb') as f:
             program_name_list = []
             for program_cfg in share['programs']:
-                extra_program_stuff = ""
                 program_name = self.name + '_' + program_cfg['name']
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                     'name': program_name,
@@ -136,7 +134,6 @@ class Deployment(object):
                     'run': run_folder,
                     'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
                     'command': program_cfg['command'],
-                    'extra_program_stuff': extra_program_stuff,
                 })
                 program_name_list.append(program_name)
 
