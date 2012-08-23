@@ -93,6 +93,7 @@ class NginxPlugin(object):
             app_config = {}
 
         conf_path = cfg_folder / 'nginx-site.conf'
+        urlmap_path = cfg_folder / 'nginx-urlmap.conf'
 
         self.log.debug("Writing nginx configuration for deployment %r at %r.",
                        depl.name, conf_path)
@@ -153,8 +154,11 @@ class NginxPlugin(object):
         with open(conf_path, 'wb') as f:
             f.write('server {\n')
             f.write(conf_options)
-            f.write(conf_urlmap)
+            f.write('  include %s;\n' % urlmap_path)
             f.write('}\n')
+
+        with open(urlmap_path, 'wb') as f:
+            f.write(conf_urlmap)
 
         ensure_folder(self.sites_folder)
         force_symlink(conf_path, self.sites_folder / depl.name)

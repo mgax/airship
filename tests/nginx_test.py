@@ -51,9 +51,9 @@ class NginxConfigurationTest(SargeTestCase):
     def test_no_web_services_yields_blank_configuration(self):
         version_folder = self.configure_and_activate({})
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf, "server { }")
+        self.assert_equivalent(nginx_conf, "")
 
     def test_activation_creates_symlink_in_sites_folder(self):
         version_folder = self.configure_and_activate({})
@@ -73,9 +73,9 @@ class NginxConfigurationTest(SargeTestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
-        conf_ok = ("server { location /media { alias %s/mymedia; } }" %
+        conf_ok = ("location /media { alias %s/mymedia; }" %
                    version_folder)
         self.assert_equivalent(nginx_conf, conf_ok)
 
@@ -89,16 +89,14 @@ class NginxConfigurationTest(SargeTestCase):
         })
         cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            'server { '
-            '  location / { '
-            '    include /etc/nginx/fastcgi_params; '
-            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '    fastcgi_param SCRIPT_NAME ""; '
-            '    fastcgi_pass unix:%(socket_path)s; '
-            '  } '
+            'location / { '
+            '  include /etc/nginx/fastcgi_params; '
+            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '  fastcgi_param SCRIPT_NAME ""; '
+            '  fastcgi_pass unix:%(socket_path)s; '
             '}' % {'socket_path': run_folder / 'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
@@ -110,18 +108,16 @@ class NginxConfigurationTest(SargeTestCase):
         })
         cfg_folder = path(version_folder + '.cfg')
         run_folder = path(version_folder + '.run')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            'server { '
-            '  location / { '
-            '    include /etc/nginx/fastcgi_params; '
-            '    fastcgi_param SCRIPT_FILENAME '
-                            '%(version_folder)s$fastcgi_script_name; '
-            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '    fastcgi_param SCRIPT_NAME ""; '
-            '    fastcgi_pass unix:%(run_folder)s/php.sock; '
-            '  } '
+            'location / { '
+            '  include /etc/nginx/fastcgi_params; '
+            '  fastcgi_param SCRIPT_FILENAME '
+                          '%(version_folder)s$fastcgi_script_name; '
+            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '  fastcgi_param SCRIPT_NAME ""; '
+            '  fastcgi_pass unix:%(run_folder)s/php.sock; '
             '}' % {'version_folder': version_folder,
                    'run_folder': run_folder})
 
@@ -155,16 +151,16 @@ class NginxConfigurationTest(SargeTestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
         conf_ok = (
-            "server { location /stuff { "
+            "location /stuff { "
             "proxy_pass http://backend:4912/some/path; "
             "proxy_redirect off; "
             "proxy_set_header Host $host; "
             "proxy_set_header X-Real-IP $remote_addr; "
             "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; "
-            "} }")
+            "}")
         self.assert_equivalent(nginx_conf, conf_ok)
 
     def test_process_with_hardcoded_tcp_socket_is_configured_in_nginx(self):
@@ -176,16 +172,14 @@ class NginxConfigurationTest(SargeTestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            'server { '
-            '  location / { '
-            '    include /etc/nginx/fastcgi_params; '
-            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '    fastcgi_param SCRIPT_NAME ""; '
-            '    fastcgi_pass localhost:24637; '
-            '  } '
+            'location / { '
+            '  include /etc/nginx/fastcgi_params; '
+            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '  fastcgi_param SCRIPT_NAME ""; '
+            '  fastcgi_pass localhost:24637; '
             '}' % {'version_folder': version_folder})
 
     def test_process_with_hardcoded_unix_socket_is_configured_in_nginx(self):
@@ -197,16 +191,14 @@ class NginxConfigurationTest(SargeTestCase):
             ],
         })
         cfg_folder = path(version_folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
-            'server { '
-            '  location / { '
-            '    include /etc/nginx/fastcgi_params; '
-            '    fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '    fastcgi_param SCRIPT_NAME ""; '
-            '    fastcgi_pass unix:/path/to/socket; '
-            '  } '
+            'location / { '
+            '  include /etc/nginx/fastcgi_params; '
+            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
+            '  fastcgi_param SCRIPT_NAME ""; '
+            '  fastcgi_pass unix:/path/to/socket; '
             '}' % {'version_folder': version_folder})
 
     def test_configure_nginx_arbitrary_options(self):
@@ -223,4 +215,5 @@ class NginxConfigurationTest(SargeTestCase):
             'server { '
             '    listen 8013; '
             '    server_name something.example.com; '
-            '}')
+            '    include %(urlmap_path)s; '
+            '}' % {'urlmap_path': cfg_folder / 'nginx-urlmap.conf'})
