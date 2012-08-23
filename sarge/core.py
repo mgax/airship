@@ -231,7 +231,12 @@ class Sarge(object):
                              DEPLOYMENT_CFG_DIR /
                              instance_id+'.yaml')
         with open(instance_cfg_path, 'wb') as f:
-            json.dump({'name': instance_id}, f)
+            json.dump({
+                'name': instance_id,
+                'programs': [
+                    {'name': 'daemon', 'command': 'run'},
+                ],
+            }, f)
         self._load_deployments()
         deployment = self.get_deployment(instance_id)
         version_folder = deployment.new_version()
