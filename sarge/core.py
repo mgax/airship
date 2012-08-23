@@ -6,6 +6,7 @@ from path import path
 import blinker
 import yaml
 from .util import force_symlink
+from .daemons import SUPERVISOR_DEPLOY_CFG
 
 
 sarge_log = logging.getLogger('sarge')
@@ -14,21 +15,8 @@ sarge_log = logging.getLogger('sarge')
 SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
-SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 CFG_LINKS_FOLDER = 'active'
 APP_CFG = 'appcfg.json'
-
-SUPERVISORD_PROGRAM_TEMPLATE = """\
-[program:%(name)s]
-directory = %(directory)s
-redirect_stderr = true
-stdout_logfile = %(run)s/stdout.log
-startsecs = 2
-autostart = false
-environment = %(environment)s
-command = %(command)s
-"""
-
 
 QUICK_WSGI_APP_TEMPLATE = """\
 from flup.server.fcgi import WSGIServer
@@ -124,23 +112,20 @@ class Deployment(object):
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
-        with open(supervisor_deploy_cfg_path, 'wb') as f:
-            program_name_list = []
-            for program_cfg in share['programs']:
-                program_name = self.name + '_' + program_cfg['name']
-                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                    'name': program_name,
-                    'directory': version_folder,
-                    'run': run_folder,
-                    'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
-                    'command': program_cfg['command'],
-                })
-                program_name_list.append(program_name)
 
-            f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
-                'name': self.name,
-                'programs': ','.join(program_name_list),
-            })
+        programs = []
+        for program_cfg in share['programs']:
+            program_name = self.name + '_' + program_cfg['name']
+            program_config = {
+                'name': program_name,
+                'directory': version_folder,
+                'run': run_folder,
+                'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
+                'command': program_cfg['command'],
+            }
+            programs.append((program_name, program_config))
+
+        self.sarge.daemons.configure_deployment(self.name, cfg_folder, programs)
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)
