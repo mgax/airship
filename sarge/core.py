@@ -1,5 +1,4 @@
 import sys
-import subprocess
 import logging
 import json
 from importlib import import_module
@@ -7,6 +6,7 @@ from path import path
 import blinker
 import yaml
 from .util import force_symlink
+from .daemons import SUPERVISOR_DEPLOY_CFG
 
 
 sarge_log = logging.getLogger('sarge')
@@ -15,41 +15,8 @@ sarge_log = logging.getLogger('sarge')
 SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 SUPERVISORD_CFG = 'supervisord.conf'
-SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 CFG_LINKS_FOLDER = 'active'
 APP_CFG = 'appcfg.json'
-
-SUPERVISORD_CFG_TEMPLATE = """\
-[unix_http_server]
-file = %(home_path)s/supervisord.sock
-%(extra_server_stuff)s
-
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = \
-supervisor.rpcinterface:make_main_rpcinterface
-
-[supervisord]
-logfile = %(home_path)s/supervisord.log
-pidfile = %(home_path)s/supervisord.pid
-directory = %(home_path)s
-
-[supervisorctl]
-serverurl = unix://%(home_path)s/supervisord.sock
-
-[include]
-files = """ + path(CFG_LINKS_FOLDER) / '*' / SUPERVISOR_DEPLOY_CFG + """
-"""
-
-SUPERVISORD_PROGRAM_TEMPLATE = """\
-[program:%(name)s]
-directory = %(directory)s
-redirect_stderr = true
-stdout_logfile = %(run)s/stdout.log
-startsecs = 2
-autostart = false
-%(extra_program_stuff)s
-"""
-
 
 QUICK_WSGI_APP_TEMPLATE = """\
 from flup.server.fcgi import WSGIServer
@@ -60,8 +27,6 @@ app = app_factory(appcfg)
 server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
-
-supervisorctl_path = str(path(sys.prefix).abspath() / 'bin' / 'supervisorctl')
 
 
 class Deployment(object):
@@ -137,8 +102,8 @@ class Deployment(object):
             json.dump(self._appcfg, f, indent=2)
 
         self.write_supervisor_program_config(version_folder, share)
-        self.sarge.supervisorctl(['update'])
-        self.sarge.supervisorctl(['restart', self.name + ':*'])
+        self.sarge.daemons.update()
+        self.sarge.daemons.restart_deployment(self.name)
 
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
@@ -147,38 +112,28 @@ class Deployment(object):
         self.log.debug("Writing supervisor configuration fragment for "
                        "deployment %r at %r.",
                        self.name, supervisor_deploy_cfg_path)
-        with open(supervisor_deploy_cfg_path, 'wb') as f:
-            program_name_list = []
-            for program_cfg in share['programs']:
-                extra_program_stuff = ""
-                extra_program_stuff += \
-                    'environment=SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG)
-                extra_program_stuff += ("command = %s\n" %
-                                        program_cfg['command'])
-                if self.config.get('autorestart', None) == 'always':
-                    # TODO this should be specified in 'program_cfg'
-                    extra_program_stuff += "autorestart = true\n"
-                program_name = self.name + '_' + program_cfg['name']
-                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                    'name': program_name,
-                    'directory': version_folder,
-                    'run': run_folder,
-                    'extra_program_stuff': extra_program_stuff,
-                })
-                program_name_list.append(program_name)
 
-            f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
-                'name': self.name,
-                'programs': ','.join(program_name_list),
-            })
+        programs = []
+        for program_cfg in share['programs']:
+            program_name = self.name + '_' + program_cfg['name']
+            program_config = {
+                'name': program_name,
+                'directory': version_folder,
+                'run': run_folder,
+                'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
+                'command': program_cfg['command'],
+            }
+            programs.append((program_name, program_config))
+
+        self.sarge.daemons.configure_deployment(self.name, cfg_folder, programs)
 
     def start(self):
         self.log.info("Starting deployment %r.", self.name)
-        self.sarge.supervisorctl(['start', self.name + ':*'])
+        self.sarge.daemons.start_deployment(self.name)
 
     def stop(self):
         self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.supervisorctl(['stop', self.name + ':*'])
+        self.sarge.daemons.stop_deployment(self.name)
 
 
 def _get_named_object(name):
@@ -233,16 +188,14 @@ class Sarge(object):
         self.config = config
 
     def generate_supervisord_configuration(self):
-        supervisord_cfg_path = self.home_path / SUPERVISORD_CFG
         self.log.debug("Writing main supervisord configuration file at %r.",
-                       supervisord_cfg_path)
-        with open(supervisord_cfg_path, 'wb') as f:
-            extra_server_stuff = ""
-
-            f.write(SUPERVISORD_CFG_TEMPLATE % {
-                'home_path': self.home_path,
-                'extra_server_stuff': extra_server_stuff,
-            })
+                       self.home_path / SUPERVISORD_CFG)
+        self.daemons.configure(**{
+            'home_path': self.home_path,
+            'include_files': (path(CFG_LINKS_FOLDER) /
+                              '*' /
+                              SUPERVISOR_DEPLOY_CFG),
+        })
 
     def get_deployment(self, name):
         """ Retrieve a :class:`~sarge.Deployment` by name. """
@@ -252,14 +205,13 @@ class Sarge(object):
         else:
             raise KeyError
 
-    def supervisorctl(self, cmd_args):
-        self.log.debug("Invoking supervisorctl with arguments %r.", cmd_args)
-        base_args = [supervisorctl_path,
-                     '-c', self.home_path / SUPERVISORD_CFG]
-        return subprocess.check_call(base_args + cmd_args)
+    @property
+    def daemons(self):
+        from .daemons import Supervisor
+        return Supervisor(self.home_path / SUPERVISORD_CFG)
 
     def status(self):
-        self.supervisorctl(['status'])
+        self.daemons.print_status()
 
 
 class VarFolderPlugin(object):

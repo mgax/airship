@@ -80,7 +80,6 @@ class SupervisorConfigurationTest(SargeTestCase):
                   run_folder / 'stdout.log')
         eq_config('program:testy_tprog', 'startsecs', '2')
         eq_config('program:testy_tprog', 'autostart', 'false')
-        eq_config('program:testy_tprog', 'autorestart', MISSING)
         eq_config('program:testy_tprog', 'environment',
                   'SARGEAPP_CFG="%s"' % (cfg_folder /
                                          imp('sarge.core').APP_CFG))
@@ -112,22 +111,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config = config_file_checker(cfg_path)
 
         eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
-
-    def test_autorestart_option(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [{'command': 'echo', 'name': 'tprog'}],
-            'autorestart': 'always',
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
-
-        cfg_folder = path(version_folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(cfg_path)
-
-        eq_config('program:testy_tprog', 'autorestart', 'true')
 
     def test_get_deployment(self):
         configure_deployment(self.tmp, {'name': 'testy'})
@@ -181,7 +164,7 @@ class SupervisorInvocationTest(SargeTestCase):
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
-        self.sarge().supervisorctl(['hello', 'world!'])
+        self.sarge().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
         cfg_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
