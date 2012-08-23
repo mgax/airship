@@ -135,7 +135,7 @@ class Deployment(object):
 
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.daemons.update()
-        self.sarge.daemons.ctl(['restart', self.name + ':*'])
+        self.sarge.daemons.restart_deployment(self.name)
 
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')

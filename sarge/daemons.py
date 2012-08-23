@@ -17,3 +17,6 @@ class Supervisor(object):
 
     def update(self):
         self.ctl(['update'])
+
+    def restart_deployment(self, name):
+        self.ctl(['restart', name + ':*'])
