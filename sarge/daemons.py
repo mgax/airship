@@ -1,4 +1,5 @@
 import sys
+import subprocess
 from path import path
 
 
@@ -11,6 +12,5 @@ class Supervisor(object):
         self.config_path = config_path
 
     def ctl(self, cmd_args):
-        from .core import subprocess
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)

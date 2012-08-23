@@ -39,7 +39,7 @@ class SargeTestCase(unittest.TestCase):
     def _pre_setup(self):
         self.tmp = path(tempfile.mkdtemp())
         self.addCleanup(self.tmp.rmtree)
-        self.mock_subprocess = self.patch('sarge.core.subprocess')
+        self.mock_subprocess = self.patch('sarge.daemons.subprocess')
 
     def __call__(self, result=None):
         self._pre_setup()

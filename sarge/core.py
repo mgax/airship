@@ -1,5 +1,4 @@
 import sys
-import subprocess
 import logging
 import json
 from importlib import import_module
