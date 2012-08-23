@@ -146,11 +146,10 @@ class Instance(object):
 
     def __init__(self, deployment):
         self.deployment = deployment
-        self.folder.makedirs_p()
 
     @property
     def folder(self):
-        return self.deployment.folder
+        return self.deployment.folder / '1'
 
 
 class Sarge(object):
@@ -228,7 +227,10 @@ class Sarge(object):
             json.dump({'name': instance_id}, f)
         self._load_deployments()
         deployment = self.get_deployment(instance_id)
-        return Instance(deployment)
+        version_folder = deployment.new_version()
+        instance = Instance(deployment)
+        assert instance.folder == version_folder
+        return instance
 
 
 class VarFolderPlugin(object):
