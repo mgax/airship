@@ -6,7 +6,7 @@ from path import path
 import blinker
 import yaml
 from .util import force_symlink
-from .daemons import SUPERVISOR_DEPLOY_CFG
+from .daemons import SUPERVISOR_DEPLOY_CFG, Supervisor
 
 
 sarge_log = logging.getLogger('sarge')
@@ -168,6 +168,7 @@ class Sarge(object):
         self.deployments = []
         self.config = config
         self._load_deployments()
+        self.daemons = Supervisor(self.home_path / SUPERVISORD_CFG)
 
     @property
     def cfg_links_folder(self):
@@ -212,11 +213,6 @@ class Sarge(object):
                 return depl
         else:
             raise KeyError
-
-    @property
-    def daemons(self):
-        from .daemons import Supervisor
-        return Supervisor(self.home_path / SUPERVISORD_CFG)
 
     def status(self):
         self.daemons.print_status()
