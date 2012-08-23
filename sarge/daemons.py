@@ -14,3 +14,6 @@ class Supervisor(object):
     def ctl(self, cmd_args):
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)
+
+    def update(self):
+        self.ctl(['update'])

@@ -134,7 +134,7 @@ class Deployment(object):
             json.dump(self._appcfg, f, indent=2)
 
         self.write_supervisor_program_config(version_folder, share)
-        self.sarge.daemons.ctl(['update'])
+        self.sarge.daemons.update()
         self.sarge.daemons.ctl(['restart', self.name + ':*'])
 
     def write_supervisor_program_config(self, version_folder, share):
