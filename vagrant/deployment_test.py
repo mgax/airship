@@ -16,6 +16,7 @@ cfg['sarge-venv'] = path('/var/local/sarge-sandbox')
 def provision():
     sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
     sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % cfg)
+    sudo("'%(sarge-venv)s'/bin/pip install flup" % cfg)
 
 
 def setUpModule(self):
