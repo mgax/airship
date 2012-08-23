@@ -166,8 +166,11 @@ class Sarge(object):
 
     def _configure(self):
         with open(self.home_path / SARGE_CFG, 'rb') as f:
-            config = yaml.load(f)
+            self.config = yaml.load(f)
 
+        self._load_deployments()
+
+    def _load_deployments(self):
         def iter_deployments():
             deployment_config_folder = self.home_path / DEPLOYMENT_CFG_DIR
             if deployment_config_folder.isdir():
@@ -175,17 +178,16 @@ class Sarge(object):
                     if depl_cfg_path.ext == '.yaml':
                         yield yaml.load(depl_cfg_path.bytes())
 
-        for plugin_name in config.get('plugins', []):
+        for plugin_name in self.config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
             plugin_factory(self)
+        self.deployments[:] = []
         for deployment_config in iter_deployments():
             depl = Deployment()
             depl.name = deployment_config['name']
             depl.config = deployment_config
             depl.sarge = self
             self.deployments.append(depl)
-
-        self.config = config
 
     def generate_supervisord_configuration(self):
         self.log.debug("Writing main supervisord configuration file at %r.",
