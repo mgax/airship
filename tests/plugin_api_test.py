@@ -1,7 +1,7 @@
 import json
 from path import path
 from mock import Mock, call
-from common import configure_sarge, configure_deployment, username, imp
+from common import configure_sarge, configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -20,7 +20,7 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(mock_plugin.mock_calls, [call(s)])
 
     def test_subscribe_to_activation_event(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = self.sarge()
         mock_handler = Mock(im_self=None)
         s.on_activate_version.connect(mock_handler)
@@ -30,7 +30,7 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
     def test_activation_event_passes_shared_dict(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = self.sarge()
 
         def handler1(depl, share, **extra):
@@ -53,7 +53,7 @@ class PluginApiTest(SargeTestCase):
         def handler(depl, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = self.sarge()
         s.on_activate_version.connect(handler)
 

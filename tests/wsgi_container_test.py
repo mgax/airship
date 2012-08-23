@@ -1,6 +1,6 @@
 import json
 from path import path
-from common import configure_sarge, configure_deployment, username, imp
+from common import configure_sarge, configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -46,7 +46,7 @@ class WsgiContainerTest(SargeTestCase):
     def setUp(self):
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
         configure_sarge(self.tmp, {'plugins': ['sarge:NginxPlugin']})
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
 
         self.s = self.sarge()
         self.testy = self.s.get_deployment('testy')

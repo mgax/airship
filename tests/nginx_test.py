@@ -2,7 +2,7 @@ import json
 import re
 from path import path
 from mock import call
-from common import configure_sarge, configure_deployment, username, imp
+from common import configure_sarge, configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -20,7 +20,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
 
     def configure_and_activate(self, app_config, deployment_config_extra={}):
-        deployment_config = {'name': 'testy', 'user': username}
+        deployment_config = {'name': 'testy'}
         deployment_config.update(deployment_config_extra)
         configure_deployment(self.tmp, deployment_config)
         deployment = self.sarge().get_deployment('testy')

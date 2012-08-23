@@ -25,9 +25,6 @@ def configure_deployment(sarge_home, config):
         json.dump(config, f)
 
 
-username = pwd.getpwuid(os.getuid())[0]
-
-
 class SargeTestCase(unittest.TestCase):
 
     def sarge(self):
