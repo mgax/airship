@@ -46,7 +46,6 @@ directory = %(directory)s
 redirect_stderr = true
 stdout_logfile = %(run)s/stdout.log
 startsecs = 2
-startretries = 0
 autostart = false
 %(extra_program_stuff)s
 """

@@ -79,7 +79,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('program:testy_tprog', 'stdout_logfile',
                   run_folder / 'stdout.log')
         eq_config('program:testy_tprog', 'startsecs', '2')
-        eq_config('program:testy_tprog', 'startretries', '0')
         eq_config('program:testy_tprog', 'autostart', 'false')
         eq_config('program:testy_tprog', 'autorestart', MISSING)
         eq_config('program:testy_tprog', 'environment',
