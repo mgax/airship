@@ -151,6 +151,13 @@ class Instance(object):
     def folder(self):
         return self.deployment.folder / '1'
 
+    @property
+    def id_(self):
+        return self.deployment.name
+
+    def start(self):
+        self.deployment.activate_version(self.folder)
+
 
 class Sarge(object):
     """ The sarge object implements most operations performed by sarge. It acts
