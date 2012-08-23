@@ -9,7 +9,7 @@ from common import SargeTestCase
 class WorkflowTest(SargeTestCase):
 
     def setUp(self):
-        self.mock_supervisorctl = self.patch('sarge.Sarge.supervisorctl')
+        self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
         configure_sarge(self.tmp, {})
         configure_deployment(self.tmp, {'name': 'testy'})
 

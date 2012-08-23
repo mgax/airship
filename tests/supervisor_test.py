@@ -181,7 +181,7 @@ class SupervisorInvocationTest(SargeTestCase):
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
-        self.sarge().supervisorctl(['hello', 'world!'])
+        self.sarge().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
         cfg_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
