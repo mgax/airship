@@ -18,26 +18,6 @@ SUPERVISOR_DEPLOY_CFG = 'supervisor_deploy.conf'
 CFG_LINKS_FOLDER = 'active'
 APP_CFG = 'appcfg.json'
 
-SUPERVISORD_CFG_TEMPLATE = """\
-[unix_http_server]
-file = %(home_path)s/supervisord.sock
-
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = \
-supervisor.rpcinterface:make_main_rpcinterface
-
-[supervisord]
-logfile = %(home_path)s/supervisord.log
-pidfile = %(home_path)s/supervisord.pid
-directory = %(home_path)s
-
-[supervisorctl]
-serverurl = unix://%(home_path)s/supervisord.sock
-
-[include]
-files = %(include_files)s
-"""
-
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
 directory = %(directory)s
@@ -229,16 +209,14 @@ class Sarge(object):
         self.config = config
 
     def generate_supervisord_configuration(self):
-        supervisord_cfg_path = self.home_path / SUPERVISORD_CFG
         self.log.debug("Writing main supervisord configuration file at %r.",
-                       supervisord_cfg_path)
-        with open(supervisord_cfg_path, 'wb') as f:
-            f.write(SUPERVISORD_CFG_TEMPLATE % {
-                'home_path': self.home_path,
-                'include_files': (path(CFG_LINKS_FOLDER) /
-                                  '*' /
-                                  SUPERVISOR_DEPLOY_CFG),
-            })
+                       self.home_path / SUPERVISORD_CFG)
+        self.daemons.configure(**{
+            'home_path': self.home_path,
+            'include_files': (path(CFG_LINKS_FOLDER) /
+                              '*' /
+                              SUPERVISOR_DEPLOY_CFG),
+        })
 
     def get_deployment(self, name):
         """ Retrieve a :class:`~sarge.Deployment` by name. """
