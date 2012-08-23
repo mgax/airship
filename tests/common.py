@@ -27,8 +27,10 @@ def configure_deployment(sarge_home, config):
 
 class SargeTestCase(unittest.TestCase):
 
-    def sarge(self):
-        return imp('sarge').Sarge(self.tmp)
+    def sarge(self, config=None):
+        with open(self.tmp / imp('sarge.core').SARGE_CFG, 'rb') as f:
+            config = json.load(f)
+        return imp('sarge').Sarge(self.tmp, config)
 
     def patch(self, name):
         p = patch(name)

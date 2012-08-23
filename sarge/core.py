@@ -150,12 +150,15 @@ class Sarge(object):
     log = logging.getLogger('sarge.Sarge')
     log.setLevel(logging.DEBUG)
 
-    def __init__(self, home_path):
+    def __init__(self, home_path, config):
         self.on_activate_version = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = home_path
         self.deployments = []
-        self._configure()
+        if config is None:
+            config = {}
+        self.config = config
+        self._load_deployments()
 
     @property
     def cfg_links_folder(self):
@@ -163,12 +166,6 @@ class Sarge(object):
         if not folder.isdir():
             folder.makedirs()
         return folder
-
-    def _configure(self):
-        with open(self.home_path / SARGE_CFG, 'rb') as f:
-            self.config = yaml.load(f)
-
-        self._load_deployments()
 
     def _load_deployments(self):
         def iter_deployments():
@@ -302,7 +299,9 @@ def main(raw_arguments=None):
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home_path = path(args.sarge_home).abspath()
     set_up_logging(sarge_home_path)
-    sarge = Sarge(sarge_home_path)
+    with open(sarge_home_path / SARGE_CFG, 'rb') as f:
+        config = yaml.load(f)
+    sarge = Sarge(sarge_home_path, config)
     args.func(sarge, args)
 
 
