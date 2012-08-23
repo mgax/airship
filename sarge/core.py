@@ -61,8 +61,6 @@ server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
 server.run()
 """
 
-supervisorctl_path = str(path(sys.prefix).abspath() / 'bin' / 'supervisorctl')
-
 
 class Deployment(object):
     """ Web application that is deployed using sarge. It has a configuration
@@ -253,10 +251,8 @@ class Sarge(object):
             raise KeyError
 
     def supervisorctl(self, cmd_args):
-        self.log.debug("Invoking supervisorctl with arguments %r.", cmd_args)
-        base_args = [supervisorctl_path,
-                     '-c', self.home_path / SUPERVISORD_CFG]
-        return subprocess.check_call(base_args + cmd_args)
+        from .daemons import Supervisor
+        Supervisor(self.home_path / SUPERVISORD_CFG).ctl(cmd_args)
 
     def status(self):
         self.supervisorctl(['status'])
