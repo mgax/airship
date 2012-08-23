@@ -21,7 +21,6 @@ APP_CFG = 'appcfg.json'
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
 file = %(home_path)s/supervisord.sock
-%(extra_server_stuff)s
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = \
@@ -234,11 +233,8 @@ class Sarge(object):
         self.log.debug("Writing main supervisord configuration file at %r.",
                        supervisord_cfg_path)
         with open(supervisord_cfg_path, 'wb') as f:
-            extra_server_stuff = ""
-
             f.write(SUPERVISORD_CFG_TEMPLATE % {
                 'home_path': self.home_path,
-                'extra_server_stuff': extra_server_stuff,
             })
 
     def get_deployment(self, name):
