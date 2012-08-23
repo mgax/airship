@@ -1,6 +1,6 @@
 import json
 from path import path
-from common import configure_deployment, configure_sarge, username, imp
+from common import configure_deployment, configure_sarge, imp
 from common import SargeTestCase
 
 
@@ -12,7 +12,6 @@ class VarFolderTest(SargeTestCase):
     def configure_and_deploy(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
-            'user': username,
             'require-services': [
                 {'type': 'var-folder', 'name': 'db'},
             ],

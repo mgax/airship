@@ -38,13 +38,13 @@ def tearDownModule(self):
 
 def sarge_cmd(cmd):
     base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % cfg)
-    return sudo(base + cmd)
+    return run(base + cmd)
 
 
 def supervisorctl_cmd(cmd):
     base = ("'%(sarge-venv)s'/bin/supervisorctl "
             "-c '%(sarge-home)s'/supervisord.conf " % cfg)
-    return sudo(base + cmd)
+    return run(base + cmd)
 
 
 def remote_listdir(name):
@@ -69,12 +69,13 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
+        sudo("chown vagrant: '%(sarge-home)s'" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
                  cfg['sarge-home'] / imp('sarge.core').SARGE_CFG,
                  use_sudo=True)
         sarge_cmd("init")
-        sudo("'%(sarge-venv)s'/bin/supervisord "
-             "-c '%(sarge-home)s'/supervisord.conf" % cfg)
+        run("'%(sarge-venv)s'/bin/supervisord "
+            "-c '%(sarge-home)s'/supervisord.conf" % cfg)
 
     def tearDown(self):
         supervisorctl_cmd("shutdown")
@@ -85,12 +86,10 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_deploy_simple_wsgi_app(self):
         put_json({'name': 'testy',
-                  'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
                     imp('sarge.core').DEPLOYMENT_CFG_DIR /
-                    'testy.yaml'),
-                 use_sudo=True)
+                    'testy.yaml'))
 
         version_folder = path(sarge_cmd("new_version testy"))
 
@@ -107,6 +106,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    return theapp\n')
         put(StringIO(app_py), str(version_folder / 'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder)
+        sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
@@ -126,7 +126,6 @@ class VagrantDeploymentTest(unittest.TestCase):
                        '    return theapp\n')
 
         put_json({'name': 'testy',
-                  'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
                     imp('sarge.core').DEPLOYMENT_CFG_DIR /
@@ -139,6 +138,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         put(StringIO(app_py_tmpl % 'one'),
             str(version_folder_1 / 'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder_1)
+        sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge one!\n")
@@ -149,13 +149,13 @@ class VagrantDeploymentTest(unittest.TestCase):
         put(StringIO(app_py_tmpl % 'two'),
             str(version_folder_2 / 'mytinyapp.py'))
         sarge_cmd("activate_version testy '%s'" % version_folder_2)
+        sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge two!\n")
 
     def test_deploy_php(self):
         put_json({'name': 'testy',
-                  'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
                     imp('sarge.core').DEPLOYMENT_CFG_DIR /
@@ -172,13 +172,13 @@ class VagrantDeploymentTest(unittest.TestCase):
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
         put(StringIO(app_php), str(version_folder / 'someapp.php'))
         sarge_cmd("activate_version testy '%s'" % version_folder)
+        sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
                          "hello from PHP!\n")
 
     def test_deploy_static_site(self):
         put_json({'name': 'testy',
-                  'user': 'vagrant',
                   'nginx_options': {'listen': '8013'}},
                  (cfg['sarge-home'] /
                     imp('sarge.core').DEPLOYMENT_CFG_DIR /
@@ -198,6 +198,7 @@ class VagrantDeploymentTest(unittest.TestCase):
             run("echo 'submarine' > sub/marine.txt")
 
         sarge_cmd("activate_version testy '%s'" % version_folder)
+        sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
                          "hello static!\n")

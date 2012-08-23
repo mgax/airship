@@ -2,7 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call
-from common import configure_sarge, configure_deployment, username, imp
+from common import configure_sarge, configure_deployment, imp
 from common import SargeTestCase
 
 
@@ -52,7 +52,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
     def test_generated_cfg_ignores_deployments_with_no_versions(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         self.sarge().generate_supervisord_configuration()
 
         config = read_config(self.tmp / imp('sarge.core').SUPERVISORD_CFG)
@@ -64,7 +64,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         configure_deployment(self.tmp, {
             'name': 'testy',
             'programs': [{'command': "echo starting up", 'name': 'tprog'}],
-            'user': username,
         })
         testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
@@ -88,7 +87,7 @@ class SupervisorConfigurationTest(SargeTestCase):
                                          imp('sarge.core').APP_CFG))
 
     def test_supervisor_cfg_is_empty_if_version_needs_no_programs(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
         testy.activate_version(version_folder)
@@ -104,7 +103,6 @@ class SupervisorConfigurationTest(SargeTestCase):
                 {'command': "echo 1", 'name': 'tprog1'},
                 {'command': "echo 2", 'name': 'tprog2'},
             ],
-            'user': username,
         })
         testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
@@ -121,7 +119,6 @@ class SupervisorConfigurationTest(SargeTestCase):
             'name': 'testy',
             'programs': [{'command': 'echo', 'name': 'tprog'}],
             'autorestart': 'always',
-            'user': username,
         })
         testy = self.sarge().get_deployment('testy')
         version_folder = testy.new_version()
@@ -133,24 +130,8 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         eq_config('program:testy_tprog', 'autorestart', 'true')
 
-    def test_user_option(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [{'command': 'echo', 'name': 'tprog'}],
-            'user': 'someone',
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
-
-        cfg_folder = path(version_folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(cfg_path)
-
-        eq_config('program:testy_tprog', 'user', 'someone')
-
     def test_get_deployment(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         testy = self.sarge().get_deployment('testy')
         self.assertEqual(testy.name, 'testy')
 
@@ -161,7 +142,6 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_directory_updated_after_activation(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
-            'user': username,
             'programs': [{'command': 'echo', 'name': 'tprog'}],
         })
         testy = self.sarge().get_deployment('testy')
@@ -174,7 +154,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('program:testy_tprog', 'directory', version_folder)
 
     def test_shared_programs_list_generates_program_config_entry(self):
-        configure_deployment(self.tmp, {'name': 'testy', 'user': username})
+        configure_deployment(self.tmp, {'name': 'testy'})
         s = self.sarge()
 
         @s.on_activate_version.connect
