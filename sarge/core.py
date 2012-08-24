@@ -36,22 +36,47 @@ class Deployment(object):
     file and a number of version folders. Only one version is "active" and
     running. """
 
-    def activate_version(self, version_folder):
-        """ Activate a version folder. Creates a runtime folder, generates
-        various configuration files, then notifies supervisor to restart any
-        processes for this deployment. """
-        log.info("Activating instance %r", self.name)
+
+def _get_named_object(name):
+    module_name, attr_name = name.split(':')
+    module = import_module(module_name)
+    return getattr(module, attr_name)
+
+
+class Instance(object):
+
+    def __init__(self, deployment):
+        self.deployment = deployment
+        self.folder = (self.deployment.sarge.home_path /
+                       (self.deployment.name + '.deploy') /
+                       '1')
+
+    @property
+    def id_(self):
+        return self.deployment.name
+
+    @property
+    def config(self):
+        return self.deployment.config
+
+    @property
+    def sarge(self):
+        return self.deployment.sarge
+
+    def start(self):
+        version_folder = self.folder
+        log.info("Activating instance %r", self.id_)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
-        symlink_path = self.sarge.cfg_links_folder / self.name
+        symlink_path = self.sarge.cfg_links_folder / self.id_
         force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
         self._appcfg = {'services': services}
-        self.sarge.on_activate_version.send(self,
+        self.sarge.on_activate_version.send(self.deployment,
                                             folder=version_folder,
                                             share=share,
                                             appcfg=self._appcfg)
@@ -59,7 +84,7 @@ class Deployment(object):
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder / 'quickapp.py'
             log.debug("Writing WSGI script for instance %r at %r.",
-                      self.name, script_path)
+                      self.id_, script_path)
             with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
@@ -80,7 +105,7 @@ class Deployment(object):
 
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.daemons.update()
-        self.sarge.daemons.restart_deployment(self.name)
+        self.sarge.daemons.restart_deployment(self.id_)
 
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
@@ -88,11 +113,11 @@ class Deployment(object):
         supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
         log.debug("Writing supervisor configuration fragment for "
                   "instance %r at %r.",
-                  self.name, supervisor_deploy_cfg_path)
+                  self.id_, supervisor_deploy_cfg_path)
 
         programs = []
         for program_cfg in share['programs']:
-            program_name = self.name + '_' + program_cfg['name']
+            program_name = self.id_ + '_' + program_cfg['name']
             program_config = {
                 'name': program_name,
                 'directory': version_folder,
@@ -102,29 +127,7 @@ class Deployment(object):
             }
             programs.append((program_name, program_config))
 
-        self.sarge.daemons.configure_deployment(self.name, cfg_folder, programs)
-
-
-def _get_named_object(name):
-    module_name, attr_name = name.split(':')
-    module = import_module(module_name)
-    return getattr(module, attr_name)
-
-
-class Instance(object):
-
-    def __init__(self, deployment):
-        self.deployment = deployment
-        self.folder = (self.deployment.sarge.home_path /
-                       (self.deployment.name + '.deploy') /
-                       '1')
-
-    @property
-    def id_(self):
-        return self.deployment.name
-
-    def start(self):
-        self.deployment.activate_version(self.folder)
+        self.sarge.daemons.configure_deployment(self.id_, cfg_folder, programs)
 
 
 class Sarge(object):
