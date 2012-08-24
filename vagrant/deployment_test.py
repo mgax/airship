@@ -76,7 +76,8 @@ def instance_id(instance_folder):
 
 
 def link_in_nginx(instance_folder):
-    urlmap_path = path(instance_folder + '.cfg') / 'nginx-urlmap.conf'
+    id_ = instance_id(instance_folder)
+    urlmap_path = cfg['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
     nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
     put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
 
