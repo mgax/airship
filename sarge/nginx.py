@@ -95,7 +95,7 @@ class NginxPlugin(object):
         conf_path = cfg_folder / 'nginx-site.conf'
         urlmap_path = cfg_folder / 'nginx-urlmap.conf'
 
-        log.debug("Writing nginx configuration for deployment %r at %r.",
+        log.debug("Writing nginx configuration for instance %r at %r.",
                   depl.name, conf_path)
 
         conf_options = ""

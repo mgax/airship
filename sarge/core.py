@@ -40,8 +40,7 @@ class Deployment(object):
         """ Activate a version folder. Creates a runtime folder, generates
         various configuration files, then notifies supervisor to restart any
         processes for this deployment. """
-        log.info("Activating version at %r for deployment %r",
-                 version_folder, self.name)
+        log.info("Activating instance %r", self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         cfg_folder = path(version_folder + '.cfg')
@@ -59,7 +58,7 @@ class Deployment(object):
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder / 'quickapp.py'
-            log.debug("Writing WSGI script for deployment %r at %r.",
+            log.debug("Writing WSGI script for instance %r at %r.",
                       self.name, script_path)
             with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
@@ -88,7 +87,7 @@ class Deployment(object):
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
         log.debug("Writing supervisor configuration fragment for "
-                  "deployment %r at %r.",
+                  "instance %r at %r.",
                   self.name, supervisor_deploy_cfg_path)
 
         programs = []
