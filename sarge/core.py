@@ -223,6 +223,10 @@ class Sarge(object):
     def status(self):
         self.daemons.print_status()
 
+    def get_instance(self, instance_id):
+        deployment = self.get_deployment(instance_id)
+        return Instance(deployment)
+
     def new_instance(self, config={}):
         instance_id = 'inst'  # TODO make it random and unique
         deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
@@ -240,9 +244,8 @@ class Sarge(object):
                 'require-services': services,
             }, f)
         self._load_deployments()
-        deployment = self.get_deployment(instance_id)
-        version_folder = deployment.new_version()
-        instance = Instance(deployment)
+        instance = self.get_instance(instance_id)
+        version_folder = instance.deployment.new_version()
         assert instance.folder == version_folder
         return instance
 

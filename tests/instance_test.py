@@ -19,6 +19,12 @@ class InstanceTest(SargeTestCase):
         instance = sarge.new_instance()
         self.assertTrue(instance.folder.isdir())
 
+    def test_get_instance_returns_instance_with_correct_folder(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance()
+        same_instance = sarge.get_instance(instance.id_)
+        self.assertEqual(instance.folder, same_instance.folder)
+
     def test_start_instance_calls_restart_deployment(self):
         sarge = self.sarge()
         sarge.daemons = Mock()
