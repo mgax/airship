@@ -5,13 +5,13 @@ from .util import ensure_folder, force_symlink
 import subprocess
 
 
+log = logging.getLogger(__name__)
+
+
 class NginxPlugin(object):
     """ Generates a configuration file for each deployment based on its urlmap.
     Upon activation of a new deployment version, the new nginx configuration is
     written, and nginx is reloaded. """
-
-    log = logging.getLogger('sarge.NginxPlugin')
-    log.setLevel(logging.DEBUG)
 
     WSGI_TEMPLATE = (
         'location %(url)s {\n'
@@ -75,9 +75,9 @@ class NginxPlugin(object):
             (self.sites_folder).makedirs()
         sarge_sites_conf = self.folder / 'sarge_sites.conf'
         if not sarge_sites_conf.isfile():
-            self.log.debug("Writing \"sarge_sites\" "
-                           "nginx configuration at %r.",
-                           sarge_sites_conf)
+            log.debug("Writing \"sarge_sites\" "
+                      "nginx configuration at %r.",
+                      sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
     def activate_deployment(self, depl, folder, share, **extra):
@@ -95,8 +95,8 @@ class NginxPlugin(object):
         conf_path = cfg_folder / 'nginx-site.conf'
         urlmap_path = cfg_folder / 'nginx-urlmap.conf'
 
-        self.log.debug("Writing nginx configuration for deployment %r at %r.",
-                       depl.name, conf_path)
+        log.debug("Writing nginx configuration for deployment %r at %r.",
+                  depl.name, conf_path)
 
         conf_options = ""
         nginx_options = depl.config.get('nginx_options', {})
@@ -106,7 +106,7 @@ class NginxPlugin(object):
         conf_urlmap = ""
 
         for entry in app_config.get('urlmap', []):
-            self.log.debug("urlmap entry: %r", entry)
+            log.debug("urlmap entry: %r", entry)
 
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,

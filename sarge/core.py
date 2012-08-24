@@ -11,7 +11,7 @@ from .util import force_symlink
 from .daemons import SUPERVISOR_DEPLOY_CFG, Supervisor
 
 
-sarge_log = logging.getLogger('sarge')
+log = logging.getLogger(__name__)
 
 
 SARGE_CFG = 'sargecfg.yaml'
@@ -36,15 +36,12 @@ class Deployment(object):
     file and a number of version folders. Only one version is "active" and
     running. """
 
-    log = logging.getLogger('sarge.Deployment')
-    log.setLevel(logging.DEBUG)
-
     def activate_version(self, version_folder):
         """ Activate a version folder. Creates a runtime folder, generates
         various configuration files, then notifies supervisor to restart any
         processes for this deployment. """
-        self.log.info("Activating version at %r for deployment %r",
-                      version_folder, self.name)
+        log.info("Activating version at %r for deployment %r",
+                 version_folder, self.name)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         cfg_folder = path(version_folder + '.cfg')
@@ -62,8 +59,8 @@ class Deployment(object):
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder / 'quickapp.py'
-            self.log.debug("Writing WSGI script for deployment %r at %r.",
-                           self.name, script_path)
+            log.debug("Writing WSGI script for deployment %r at %r.",
+                      self.name, script_path)
             with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
@@ -90,9 +87,9 @@ class Deployment(object):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
-        self.log.debug("Writing supervisor configuration fragment for "
-                       "deployment %r at %r.",
-                       self.name, supervisor_deploy_cfg_path)
+        log.debug("Writing supervisor configuration fragment for "
+                  "deployment %r at %r.",
+                  self.name, supervisor_deploy_cfg_path)
 
         programs = []
         for program_cfg in share['programs']:
@@ -136,9 +133,6 @@ class Sarge(object):
     as container for deployments.
     """
 
-    log = logging.getLogger('sarge.Sarge')
-    log.setLevel(logging.DEBUG)
-
     def __init__(self, config):
         self.on_activate_version = blinker.Signal()
         self.on_initialize = blinker.Signal()
@@ -175,8 +169,8 @@ class Sarge(object):
             self.deployments.append(depl)
 
     def generate_supervisord_configuration(self):
-        self.log.debug("Writing main supervisord configuration file at %r.",
-                       self.home_path / SUPERVISORD_CFG)
+        log.debug("Writing main supervisord configuration file at %r.",
+                  self.home_path / SUPERVISORD_CFG)
         self.daemons.configure(**{
             'home_path': self.home_path,
             'include_files': (path(CFG_LINKS_FOLDER) /
@@ -225,9 +219,6 @@ class Sarge(object):
 
 class VarFolderPlugin(object):
 
-    log = logging.getLogger('sarge.VarFolderPlugin')
-    log.setLevel(logging.DEBUG)
-
     def __init__(self, sarge):
         self.sarge = sarge
         sarge.on_activate_version.connect(self.activate_deployment, weak=False)
@@ -252,7 +243,7 @@ class VarFolderPlugin(object):
 
 
 def init_cmd(sarge, args):
-    sarge.log.info("Initializing sarge folder at %r.", sarge.home_path)
+    log.info("Initializing sarge folder at %r.", sarge.home_path)
     sarge.on_initialize.send(sarge)
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
@@ -287,7 +278,7 @@ def set_up_logging(sarge_home_path):
     log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
     handler.setLevel(logging.DEBUG)
-    sarge_log.addHandler(handler)
+    logging.getLogger().addHandler(handler)
 
 
 def main(raw_arguments=None):
