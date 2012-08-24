@@ -19,6 +19,12 @@ class ShellTest(SargeTestCase):
         self.assertEqual(new_instance.mock_calls, [call()])
         self.assertEqual(stdout.getvalue().strip(), "path-to-new-version")
 
+    @patch('sarge.core.Instance.start')
+    def test_start_instance_calls_api_method(self, start):
+        instance = self.sarge().new_instance()
+        imp('sarge.core').main([str(self.tmp), 'start_instance', instance.id_])
+        self.assertEqual(start.mock_calls, [call()])
+
     @patch('sarge.core.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
         mock_new_version.return_value = "path-to-new-version"
