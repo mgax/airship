@@ -11,9 +11,9 @@ class VarFolderTest(SargeTestCase):
 
     def configure_and_deploy(self):
         instance = self.sarge().new_instance({
-            'services': [
-                {'type': 'var-folder', 'name': 'db'},
-            ],
+            'services': {
+                'db': {'type': 'var-folder'},
+            },
         })
         instance.start()
         return instance
