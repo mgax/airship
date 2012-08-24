@@ -53,12 +53,6 @@ class ShellTest(SargeTestCase):
         imp('sarge.core').main([str(self.tmp), 'start', 'testy'])
         self.assertEqual(mock_start.mock_calls, [call()])
 
-    @patch('sarge.core.Deployment.stop')
-    def test_stop_calls_api_method(self, mock_stop):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        imp('sarge.core').main([str(self.tmp), 'stop', 'testy'])
-        self.assertEqual(mock_stop.mock_calls, [call()])
-
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)

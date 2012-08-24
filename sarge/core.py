@@ -131,10 +131,6 @@ class Deployment(object):
         self.log.info("Starting deployment %r.", self.name)
         self.sarge.daemons.start_deployment(self.name)
 
-    def stop(self):
-        self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.daemons.stop_deployment(self.name)
-
 
 def _get_named_object(name):
     module_name, attr_name = name.split(':')
@@ -299,10 +295,6 @@ def start_instance_cmd(sarge, args):
     sarge.get_instance(args.id).start()
 
 
-def stop_cmd(sarge, args):
-    sarge.get_deployment(args.name).stop()
-
-
 def start_cmd(sarge, args):
     sarge.get_deployment(args.name).start()
 
@@ -329,9 +321,6 @@ def build_args_parser():
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('name')
-    stop_parser = subparsers.add_parser('stop')
-    stop_parser.set_defaults(func=stop_cmd)
-    stop_parser.add_argument('name')
     return parser
 
 
