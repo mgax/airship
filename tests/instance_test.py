@@ -25,6 +25,10 @@ class InstanceTest(SargeTestCase):
         same_instance = sarge.get_instance(instance.id_)
         self.assertEqual(instance.folder, same_instance.folder)
 
+    def test_get_instance_with_invalid_name_raises_keyerror(self):
+        with self.assertRaises(KeyError):
+            self.sarge().get_instance('nonesuch')
+
     def test_start_instance_calls_restart_deployment(self):
         sarge = self.sarge()
         sarge.daemons = Mock()

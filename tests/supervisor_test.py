@@ -77,10 +77,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('group:%s' % instance.id_, 'programs',
                   "%s_daemon" % instance.id_)
 
-    def test_get_deployment_invalid_name(self):
-        with self.assertRaises(KeyError):
-            self.sarge().get_deployment('testy')
-
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()
         instance.start()

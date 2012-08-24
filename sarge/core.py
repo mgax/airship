@@ -189,6 +189,8 @@ class Sarge(object):
         config_path = (self.home_path /
                        DEPLOYMENT_CFG_DIR /
                        (instance_id + '.yaml'))
+        if not config_path.isfile():
+            raise KeyError
 
         deployment = Deployment()
         deployment.name = instance_id
