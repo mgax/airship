@@ -295,6 +295,10 @@ def new_version_cmd(sarge, args):
     print sarge.get_deployment(args.name).new_version()
 
 
+def new_instance_cmd(sarge, args):
+    print sarge.new_instance().folder
+
+
 def stop_cmd(sarge, args):
     sarge.get_deployment(args.name).stop()
 
@@ -312,6 +316,8 @@ def build_args_parser():
     init_parser.set_defaults(func=init_cmd)
     status_parser = subparsers.add_parser('status')
     status_parser.set_defaults(func=status_cmd)
+    new_instance_parser = subparsers.add_parser('new_instance')
+    new_instance_parser.set_defaults(func=new_instance_cmd)
     new_version_parser = subparsers.add_parser('new_version')
     new_version_parser.set_defaults(func=new_version_cmd)
     new_version_parser.add_argument('name')

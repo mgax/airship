@@ -2,7 +2,7 @@ import tempfile
 from StringIO import StringIO
 import json
 from path import path
-from mock import patch, call
+from mock import Mock, patch, call
 from common import SargeTestCase, configure_deployment, imp
 
 
@@ -10,6 +10,14 @@ class ShellTest(SargeTestCase):
 
     def setUp(self):
         (self.tmp / imp('sarge.core').SARGE_CFG).write_text('{}')
+
+    @patch('sarge.core.Sarge.new_instance')
+    def test_new_instance_calls_api_and_returns_path(self, new_instance):
+        new_instance.return_value = Mock(folder="path-to-new-version")
+        with patch('sys.stdout', StringIO()) as stdout:
+            imp('sarge.core').main([str(self.tmp), 'new_instance'])
+        self.assertEqual(new_instance.mock_calls, [call()])
+        self.assertEqual(stdout.getvalue().strip(), "path-to-new-version")
 
     @patch('sarge.core.Deployment.new_version')
     def test_new_version_calls_api_method(self, mock_new_version):
