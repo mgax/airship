@@ -153,6 +153,3 @@ class NginxPlugin(object):
 
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
-
-        ensure_folder(self.sites_folder)
-        force_symlink(conf_path, self.sites_folder / instance.id_)

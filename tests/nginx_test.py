@@ -41,15 +41,6 @@ class NginxConfigurationTest(SargeTestCase):
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "")
 
-    def test_activation_creates_symlink_in_sites_folder(self):
-        instance = self.configure_and_activate({})
-        cfg_folder = path(instance.folder + '.cfg')
-        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
-        link_path = nginx_folder / 'sites' / self._instance.id_
-        link_target = cfg_folder / 'nginx-site.conf'
-        self.assertTrue(link_path.islink())
-        self.assertEqual(link_path.readlink(), link_target)
-
     def test_static_folder_is_configured_in_nginx(self):
         instance = self.configure_and_activate({
             'urlmap': [
