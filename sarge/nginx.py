@@ -73,12 +73,6 @@ class NginxPlugin(object):
     def initialize(self, sarge):
         if not self.sites_folder.isdir():
             (self.sites_folder).makedirs()
-        sarge_sites_conf = self.folder / 'sarge_sites.conf'
-        if not sarge_sites_conf.isfile():
-            log.debug("Writing \"sarge_sites\" "
-                      "nginx configuration at %r.",
-                      sarge_sites_conf)
-            sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
     def activate_deployment(self, instance, share, **extra):
         version_folder = instance.folder

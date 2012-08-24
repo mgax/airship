@@ -34,17 +34,6 @@ class NginxConfigurationTest(SargeTestCase):
         collapse = lambda s: re.sub('\s+', ' ', s).strip()
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
-    def test_nginx_common_config_created_on_init(self):
-        imp('sarge.core').init_cmd(sarge(self.tmp), None)
-        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
-        nginx_sites = nginx_folder / 'sites'
-        self.assertTrue(nginx_sites.isdir())
-
-        nginx_common = nginx_folder / 'sarge_sites.conf'
-        self.assertTrue(nginx_common.isfile())
-        self.assertEqual(nginx_common.text(),
-                         'include ' + nginx_folder + '/sites/*;\n')
-
     def test_no_web_services_yields_blank_configuration(self):
         instance = self.configure_and_activate({})
         cfg_folder = path(instance.folder + '.cfg')
