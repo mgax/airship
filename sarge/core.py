@@ -186,7 +186,14 @@ class Sarge(object):
             raise KeyError
 
     def get_instance(self, instance_id):
-        deployment = self.get_deployment(instance_id)
+        config_path = (self.home_path /
+                       DEPLOYMENT_CFG_DIR /
+                       (instance_id + '.yaml'))
+
+        deployment = Deployment()
+        deployment.name = instance_id
+        deployment.config = yaml.load(config_path.bytes())
+        deployment.sarge = self
         return Instance(deployment)
 
     def _generate_instance_id(self):
