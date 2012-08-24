@@ -1,12 +1,14 @@
 import sys
 import logging
 import json
+import random
+import string
 from importlib import import_module
 from path import path
 import blinker
 import yaml
 from .util import force_symlink
-from .daemons import SUPERVISOR_DEPLOY_CFG
+from .daemons import SUPERVISOR_DEPLOY_CFG, Supervisor
 
 
 sarge_log = logging.getLogger('sarge')
@@ -131,15 +133,28 @@ class Deployment(object):
         self.log.info("Starting deployment %r.", self.name)
         self.sarge.daemons.start_deployment(self.name)
 
-    def stop(self):
-        self.log.info("Stopping deployment %r.", self.name)
-        self.sarge.daemons.stop_deployment(self.name)
-
 
 def _get_named_object(name):
     module_name, attr_name = name.split(':')
     module = import_module(module_name)
     return getattr(module, attr_name)
+
+
+class Instance(object):
+
+    def __init__(self, deployment):
+        self.deployment = deployment
+
+    @property
+    def folder(self):
+        return self.deployment.folder / '1'
+
+    @property
+    def id_(self):
+        return self.deployment.name
+
+    def start(self):
+        self.deployment.activate_version(self.folder)
 
 
 class Sarge(object):
@@ -157,6 +172,7 @@ class Sarge(object):
         self.deployments = []
         self.config = config
         self._load_deployments()
+        self.daemons = Supervisor(self.home_path / SUPERVISORD_CFG)
 
     @property
     def cfg_links_folder(self):
@@ -202,13 +218,36 @@ class Sarge(object):
         else:
             raise KeyError
 
-    @property
-    def daemons(self):
-        from .daemons import Supervisor
-        return Supervisor(self.home_path / SUPERVISORD_CFG)
+    def get_instance(self, instance_id):
+        deployment = self.get_deployment(instance_id)
+        return Instance(deployment)
 
-    def status(self):
-        self.daemons.print_status()
+    def _generate_instance_id(self):
+        def random_id(size=6, vocabulary=string.letters + string.digits):
+            return ''.join(random.choice(vocabulary) for c in range(size))
+        return random_id()  # TODO check for uniqueness
+
+    def new_instance(self, config={}):
+        instance_id = self._generate_instance_id()
+        deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
+        deploy_cfg_dir.mkdir_p()
+        instance_cfg_path = (self.home_path /
+                             DEPLOYMENT_CFG_DIR /
+                             instance_id+'.yaml')
+        with open(instance_cfg_path, 'wb') as f:
+            services = config.get('services')
+            json.dump({
+                'name': instance_id,
+                'programs': [
+                    {'name': 'daemon', 'command': 'run'},
+                ],
+                'require-services': services,
+            }, f)
+        self._load_deployments()
+        instance = self.get_instance(instance_id)
+        version_folder = instance.deployment.new_version()
+        assert instance.folder == version_folder
+        return instance
 
 
 class VarFolderPlugin(object):
@@ -221,10 +260,18 @@ class VarFolderPlugin(object):
         sarge.on_activate_version.connect(self.activate_deployment, weak=False)
 
     def activate_deployment(self, depl, appcfg, **extra):
-        var = depl.sarge.home_path / 'var' / depl.name
-        for record in depl.config.get('require-services', []):
+        var = depl.sarge.home_path / 'var'
+        var_instance = var / depl.name
+        services = depl.config.get('require-services', {})
+
+        for name, record in services.iteritems():
             if record['type'] == 'var-folder':
-                name = record['name']
+                service_path = var_instance / name
+                if not service_path.isdir():
+                    service_path.makedirs()
+                appcfg['services'][name] = service_path
+
+            elif record['type'] == 'persistent-folder':
                 service_path = var / name
                 if not service_path.isdir():
                     service_path.makedirs()
@@ -238,25 +285,12 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
-def status_cmd(sarge, args):
-    sarge.status()
+def new_instance_cmd(sarge, args):
+    print sarge.new_instance(json.loads(args.config)).folder
 
 
-def activate_version_cmd(sarge, args):
-    version_folder = path(args.version_folder).abspath()
-    sarge.get_deployment(args.name).activate_version(version_folder)
-
-
-def new_version_cmd(sarge, args):
-    print sarge.get_deployment(args.name).new_version()
-
-
-def stop_cmd(sarge, args):
-    sarge.get_deployment(args.name).stop()
-
-
-def start_cmd(sarge, args):
-    sarge.get_deployment(args.name).start()
+def start_instance_cmd(sarge, args):
+    sarge.get_instance(args.id).start()
 
 
 def build_args_parser():
@@ -266,21 +300,12 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
-    status_parser = subparsers.add_parser('status')
-    status_parser.set_defaults(func=status_cmd)
-    new_version_parser = subparsers.add_parser('new_version')
-    new_version_parser.set_defaults(func=new_version_cmd)
-    new_version_parser.add_argument('name')
-    activate_version_parser = subparsers.add_parser('activate_version')
-    activate_version_parser.set_defaults(func=activate_version_cmd)
-    activate_version_parser.add_argument('name')
-    activate_version_parser.add_argument('version_folder')
-    start_parser = subparsers.add_parser('start')
-    start_parser.set_defaults(func=start_cmd)
-    start_parser.add_argument('name')
-    stop_parser = subparsers.add_parser('stop')
-    stop_parser.set_defaults(func=stop_cmd)
-    stop_parser.add_argument('name')
+    new_instance_parser = subparsers.add_parser('new_instance')
+    new_instance_parser.set_defaults(func=new_instance_cmd)
+    new_instance_parser.add_argument('config')
+    start_instance_parser = subparsers.add_parser('start_instance')
+    start_instance_parser.set_defaults(func=start_instance_cmd)
+    start_instance_parser.add_argument('id')
     return parser
 
 

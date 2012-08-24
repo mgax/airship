@@ -27,12 +27,10 @@ def setUpModule(self):
 
     sudo("rm -rf '%(sarge-home)s'" % cfg)
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
-    nginx_all_sites = cfg['sarge-home'] / 'nginx.plugin' / 'sarge_sites.conf'
-    sudo("ln -s '%s' '%s'" % (nginx_all_sites, self._nginx_symlink))
 
 
 def tearDownModule(self):
-    sudo("rm %s" % self._nginx_symlink)
+    sudo("rm -f %s" % self._nginx_symlink)
     from fabric.network import disconnect_all
     disconnect_all()
 
@@ -66,6 +64,23 @@ def get_url(url):
         f.close()
 
 
+def quote_config(config):
+    data = json.dumps(config)
+    for ch in ['\\', '"', '$', '`']:
+        data = data.replace(ch, '\\\\' + ch)
+    return '"' + data + '"'
+
+
+def instance_id(instance_folder):
+    return instance_folder.split('/')[-2].split('.')[0]
+
+
+def link_in_nginx(instance_folder):
+    urlmap_path = path(instance_folder + '.cfg') / 'nginx-urlmap.conf'
+    nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
+    put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
+
+
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -86,33 +101,28 @@ class VagrantDeploymentTest(unittest.TestCase):
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        put_json({'name': 'testy',
-                  'nginx_options': {'listen': '8013'}},
-                 (cfg['sarge-home'] /
-                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
-                    'testy.yaml'))
-
-        version_folder = path(sarge_cmd("new_version testy"))
+        instance_folder = path(sarge_cmd("new_instance '{}'"))
 
         put_json({'urlmap': [
                     {'type': 'wsgi',
                      'url': '/',
                      'app_factory': 'mytinyapp:gettheapp'},
                  ]},
-                 version_folder / 'sargeapp.yaml')
+                 instance_folder / 'sargeapp.yaml')
         app_py = ('def gettheapp(appcfg):\n'
                   '    def theapp(environ, start_response):\n'
                   '        start_response("200 OK", [])\n'
                   '        return ["hello sarge!\\n"]\n'
                   '    return theapp\n')
-        put(StringIO(app_py), str(version_folder / 'mytinyapp.py'))
-        sarge_cmd("activate_version testy '%s'" % version_folder)
+        put(StringIO(app_py), str(instance_folder / 'mytinyapp.py'))
+        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
+        link_in_nginx(instance_folder)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
 
-    def test_deploy_new_app_version(self):
+    def test_deploy_new_instance(self):
         app_cfg = {
             'urlmap': [
                 {'type': 'wsgi',
@@ -126,79 +136,61 @@ class VagrantDeploymentTest(unittest.TestCase):
                        '        return ["hello sarge %s!\\n"]\n'
                        '    return theapp\n')
 
-        put_json({'name': 'testy',
-                  'nginx_options': {'listen': '8013'}},
-                 (cfg['sarge-home'] /
-                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
-                    'testy.yaml'),
-                 use_sudo=True)
-
-        # deploy version one
-        version_folder_1 = path(sarge_cmd("new_version testy"))
-        put_json(app_cfg, version_folder_1 / 'sargeapp.yaml')
+        # deploy instance one
+        instance_folder_1 = path(sarge_cmd("new_instance '{}'"))
+        put_json(app_cfg, instance_folder_1 / 'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'one'),
-            str(version_folder_1 / 'mytinyapp.py'))
-        sarge_cmd("activate_version testy '%s'" % version_folder_1)
+            str(instance_folder_1 / 'mytinyapp.py'))
+        sarge_cmd("start_instance '%s'" % instance_id(instance_folder_1))
+        link_in_nginx(instance_folder_1)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge one!\n")
 
-        # deploy version two
-        version_folder_2 = path(sarge_cmd("new_version testy"))
-        put_json(app_cfg, version_folder_2 / 'sargeapp.yaml')
+        # deploy instance two
+        instance_folder_2 = path(sarge_cmd("new_instance '{}'"))
+        put_json(app_cfg, instance_folder_2 / 'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'two'),
-            str(version_folder_2 / 'mytinyapp.py'))
-        sarge_cmd("activate_version testy '%s'" % version_folder_2)
+            str(instance_folder_2 / 'mytinyapp.py'))
+        sarge_cmd("start_instance '%s'" % instance_id(instance_folder_2))
+        link_in_nginx(instance_folder_2)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge two!\n")
 
     def test_deploy_php(self):
-        put_json({'name': 'testy',
-                  'nginx_options': {'listen': '8013'}},
-                 (cfg['sarge-home'] /
-                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
-                    'testy.yaml'),
-                 use_sudo=True)
-
-        version_folder = path(sarge_cmd("new_version testy"))
+        instance_folder = path(sarge_cmd("new_instance '{}'"))
 
         put_json({'urlmap': [
                     {'type': 'php', 'url': '/'},
                  ]},
-                 version_folder / 'sargeapp.yaml')
+                 instance_folder / 'sargeapp.yaml')
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
-        put(StringIO(app_php), str(version_folder / 'someapp.php'))
-        sarge_cmd("activate_version testy '%s'" % version_folder)
+        put(StringIO(app_php), str(instance_folder / 'someapp.php'))
+        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
+        link_in_nginx(instance_folder)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
                          "hello from PHP!\n")
 
     def test_deploy_static_site(self):
-        put_json({'name': 'testy',
-                  'nginx_options': {'listen': '8013'}},
-                 (cfg['sarge-home'] /
-                    imp('sarge.core').DEPLOYMENT_CFG_DIR /
-                    'testy.yaml'),
-                 use_sudo=True)
-
-        version_folder = path(sarge_cmd("new_version testy"))
-
+        instance_folder = path(sarge_cmd("new_instance '{}'"))
         put_json({'urlmap': [
                     {'type': 'static', 'url': '/', 'path': ''},
                  ]},
-                 version_folder / 'sargeapp.yaml')
+                 instance_folder / 'sargeapp.yaml')
 
-        with cd(str(version_folder)):
+        with cd(str(instance_folder)):
             run("echo 'hello static!' > hello.html")
             run("mkdir sub")
             run("echo 'submarine' > sub/marine.txt")
 
-        sarge_cmd("activate_version testy '%s'" % version_folder)
+        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
+        link_in_nginx(instance_folder)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
