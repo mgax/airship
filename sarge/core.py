@@ -45,21 +45,6 @@ class Deployment(object):
     def folder(self):
         return self.sarge.home_path / (self.DEPLOY_FOLDER_FMT % self.name)
 
-    def new_version(self):
-        """ Create a new version folder. Copy application code there and then
-        call :meth:`activate_version`. """
-        # TODO make sure we don't reuse version IDs. we probably need to
-        # save the counter to a file in `self.folder`.
-        import itertools
-        for c in itertools.count(1):
-            version_folder = self.folder / str(c)
-            if not version_folder.exists():
-                self.log.info("New version folder for deployment %r at %r.",
-                              self.name, version_folder)
-                version_folder.makedirs()
-                # TODO test
-                return version_folder
-
     def activate_version(self, version_folder):
         """ Activate a version folder. Creates a runtime folder, generates
         various configuration files, then notifies supervisor to restart any
@@ -245,7 +230,8 @@ class Sarge(object):
             }, f)
         self._load_deployments()
         instance = self.get_instance(instance_id)
-        version_folder = instance.deployment.new_version()
+        version_folder = instance.deployment.folder / '1'
+        version_folder.makedirs()
         assert instance.folder == version_folder
         return instance
 
