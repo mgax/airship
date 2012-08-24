@@ -32,9 +32,10 @@ def config_file_checker(cfg_path):
 class SupervisorConfigurationTest(SargeTestCase):
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
+        (self.tmp / 'etc').mkdir()
         self.sarge().generate_supervisord_configuration()
 
-        config_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
+        config_path = self.tmp / 'etc' / 'supervisor.conf'
         eq_config = config_file_checker(config_path)
 
         eq_config('unix_http_server', 'file', self.tmp / 'supervisord.sock')
@@ -45,7 +46,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
                   'unix://' + self.tmp / 'supervisord.sock')
-        eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
+        eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
     def test_generate_supervisord_cfg_with_run_command(self):
         instance = self.sarge().new_instance()
@@ -53,8 +54,8 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         run_folder = path(instance.folder + '.run')
         cfg_folder = path(instance.folder + '.cfg')
-        config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(config_path)
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
+        eq_config = config_file_checker(cfg_path)
         section = 'program:%s_daemon' % instance.id_
 
         eq_config(section, 'command', 'run')
@@ -71,7 +72,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance.start()
 
         cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
 
         eq_config('group:%s' % instance.id_, 'programs',
@@ -82,7 +83,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance.start()
 
         cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
         eq_config('program:%s_daemon' % instance.id_, 'directory',
                   instance.folder)
@@ -95,7 +96,7 @@ class SupervisorInvocationTest(SargeTestCase):
         self.sarge().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
-        cfg_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.conf'
         self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,
                                 '-c', cfg_path,

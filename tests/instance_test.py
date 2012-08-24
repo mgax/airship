@@ -7,7 +7,7 @@ class ProgramsRecorder(object):
     def __init__(self):
         self.programs = []
 
-    def __call__(self, deployment_name, cfg_folder, programs):
+    def __call__(self, instance_id, programs):
         self.programs.extend([{'name': name, 'command': p['command']}
                               for name, p in programs])
 

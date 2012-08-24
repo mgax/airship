@@ -42,7 +42,7 @@ def sarge_cmd(cmd):
 
 def supervisorctl_cmd(cmd):
     base = ("'%(sarge-venv)s'/bin/supervisorctl "
-            "-c '%(sarge-home)s'/supervisord.conf " % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf " % cfg)
     return run(base + cmd)
 
 
@@ -91,7 +91,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                  use_sudo=True)
         sarge_cmd("init")
         run("'%(sarge-venv)s'/bin/supervisord "
-            "-c '%(sarge-home)s'/supervisord.conf" % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf" % cfg)
 
     def tearDown(self):
         supervisorctl_cmd("shutdown")

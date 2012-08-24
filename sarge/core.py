@@ -8,7 +8,7 @@ from path import path
 import blinker
 import yaml
 from .util import force_symlink
-from .daemons import SUPERVISOR_DEPLOY_CFG, Supervisor
+from .daemons import Supervisor
 
 
 log = logging.getLogger(__name__)
@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 
 SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
-SUPERVISORD_CFG = 'supervisord.conf'
 CFG_LINKS_FOLDER = 'active'
 APP_CFG = 'appcfg.json'
 
@@ -89,10 +88,6 @@ class Instance(object):
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
-        supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
-        log.debug("Writing supervisor configuration fragment for "
-                  "instance %r at %r.",
-                  self.id_, supervisor_deploy_cfg_path)
 
         programs = []
         for program_cfg in share['programs']:
@@ -106,7 +101,7 @@ class Instance(object):
             }
             programs.append((program_name, program_config))
 
-        self.sarge.daemons.configure_deployment(self.id_, cfg_folder, programs)
+        self.sarge.daemons.configure_deployment(self.id_, programs)
 
 
 class Sarge(object):
@@ -119,7 +114,7 @@ class Sarge(object):
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.config = config
-        self.daemons = Supervisor(self.home_path / SUPERVISORD_CFG)
+        self.daemons = Supervisor(self.home_path / 'etc')
         for plugin_name in self.config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
             plugin_factory(self)
@@ -132,14 +127,7 @@ class Sarge(object):
         return folder
 
     def generate_supervisord_configuration(self):
-        log.debug("Writing main supervisord configuration file at %r.",
-                  self.home_path / SUPERVISORD_CFG)
-        self.daemons.configure(**{
-            'home_path': self.home_path,
-            'include_files': (path(CFG_LINKS_FOLDER) /
-                              '*' /
-                              SUPERVISOR_DEPLOY_CFG),
-        })
+        self.daemons.configure(self.home_path)
 
     def get_instance(self, instance_id):
         config_path = (self.home_path /
@@ -215,8 +203,9 @@ class VarFolderPlugin(object):
 
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
+    (sarge.home_path / 'etc').mkdir_p()
+    (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     sarge.on_initialize.send(sarge)
-    (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
 
 
