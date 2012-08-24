@@ -15,8 +15,9 @@ class ShellTest(SargeTestCase):
     def test_new_instance_calls_api_and_returns_path(self, new_instance):
         new_instance.return_value = Mock(folder="path-to-new-version")
         with patch('sys.stdout', StringIO()) as stdout:
-            imp('sarge.core').main([str(self.tmp), 'new_instance'])
-        self.assertEqual(new_instance.mock_calls, [call()])
+            config = json.dumps({'hello': "world"})
+            imp('sarge.core').main([str(self.tmp), 'new_instance', config])
+        self.assertEqual(new_instance.mock_calls, [call({'hello': "world"})])
         self.assertEqual(stdout.getvalue().strip(), "path-to-new-version")
 
     @patch('sarge.core.Instance.start')
