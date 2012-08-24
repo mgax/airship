@@ -39,12 +39,6 @@ class Deployment(object):
     log = logging.getLogger('sarge.Deployment')
     log.setLevel(logging.DEBUG)
 
-    DEPLOY_FOLDER_FMT = '%s.deploy'
-
-    @property
-    def folder(self):
-        return self.sarge.home_path / (self.DEPLOY_FOLDER_FMT % self.name)
-
     def activate_version(self, version_folder):
         """ Activate a version folder. Creates a runtime folder, generates
         various configuration files, then notifies supervisor to restart any
@@ -129,10 +123,9 @@ class Instance(object):
 
     def __init__(self, deployment):
         self.deployment = deployment
-
-    @property
-    def folder(self):
-        return self.deployment.folder / '1'
+        self.folder = (self.deployment.sarge.home_path /
+                       (self.deployment.name + '.deploy') /
+                       '1')
 
     @property
     def id_(self):
@@ -230,9 +223,7 @@ class Sarge(object):
             }, f)
         self._load_deployments()
         instance = self.get_instance(instance_id)
-        version_folder = instance.deployment.folder / '1'
-        version_folder.makedirs()
-        assert instance.folder == version_folder
+        instance.folder.makedirs()
         return instance
 
 
