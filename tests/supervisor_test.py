@@ -48,15 +48,6 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'unix://' + self.tmp / 'supervisord.sock')
         eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
-    def test_generated_cfg_ignores_deployments_with_no_versions(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        self.sarge().generate_supervisord_configuration()
-
-        config = read_config(self.tmp / imp('sarge.core').SUPERVISORD_CFG)
-        self.assertItemsEqual(config.sections(),
-                              ['unix_http_server', 'rpcinterface:supervisor',
-                               'supervisord', 'supervisorctl', 'include'])
-
     def test_generate_supervisord_cfg_with_deployment_command(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
@@ -81,16 +72,6 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'SARGEAPP_CFG="%s"' % (cfg_folder /
                                          imp('sarge.core').APP_CFG))
 
-    def test_supervisor_cfg_is_empty_if_version_needs_no_programs(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
-        cfg_folder = path(version_folder + '.cfg')
-        deploy_cfg = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        self.assertEqual(deploy_cfg.text().strip(),
-                         "[group:testy]\nprograms =")
-
     def test_supervisor_cfg_defines_group(self):
         configure_deployment(self.tmp, {
             'name': 'testy',
@@ -109,11 +90,6 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
 
-    def test_get_deployment(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        testy = self.sarge().get_deployment('testy')
-        self.assertEqual(testy.name, 'testy')
-
     def test_get_deployment_invalid_name(self):
         with self.assertRaises(KeyError):
             self.sarge().get_deployment('testy')
@@ -131,27 +107,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         eq_config = config_file_checker(cfg_path)
         eq_config('program:testy_tprog', 'directory', version_folder)
-
-    def test_shared_programs_list_generates_program_config_entry(self):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        s = self.sarge()
-
-        @s.on_activate_version.connect
-        def define_program(depl, share, **extra):
-            share['programs'].append({
-                'name': 'theone',
-                'command': 'echo',
-            })
-
-        testy = s.get_deployment('testy')
-        version_folder = path(testy.new_version())
-        testy.activate_version(version_folder)
-
-        cfg_folder = path(version_folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(cfg_path)
-        eq_config('program:testy_theone', 'directory', version_folder)
-        eq_config('program:testy_theone', 'command', 'echo')
 
 
 class SupervisorInvocationTest(SargeTestCase):
