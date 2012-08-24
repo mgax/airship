@@ -7,7 +7,6 @@ from importlib import import_module
 from path import path
 import blinker
 import yaml
-from .util import force_symlink
 from .daemons import Supervisor
 
 
@@ -49,10 +48,6 @@ class Instance(object):
         version_folder = self.folder
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
-        cfg_folder = path(version_folder + '.cfg')
-        cfg_folder.mkdir()
-        symlink_path = self.sarge.cfg_links_folder / self.id_
-        force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
