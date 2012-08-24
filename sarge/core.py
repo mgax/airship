@@ -11,7 +11,7 @@ from .util import force_symlink
 from .daemons import SUPERVISOR_DEPLOY_CFG, Supervisor
 
 
-sarge_log = logging.getLogger('sarge')
+log = logging.getLogger(__name__)
 
 
 SARGE_CFG = 'sargecfg.yaml'
@@ -31,60 +31,41 @@ server.run()
 """
 
 
-class Deployment(object):
-    """ Web application that is deployed using sarge. It has a configuration
-    file and a number of version folders. Only one version is "active" and
-    running. """
+def _get_named_object(name):
+    module_name, attr_name = name.split(':')
+    module = import_module(module_name)
+    return getattr(module, attr_name)
 
-    log = logging.getLogger('sarge.Deployment')
-    log.setLevel(logging.DEBUG)
 
-    DEPLOY_FOLDER_FMT = '%s.deploy'
+class Instance(object):
 
-    @property
-    def folder(self):
-        return self.sarge.home_path / (self.DEPLOY_FOLDER_FMT % self.name)
+    def __init__(self, id_, sarge, config):
+        self.id_ = id_
+        self.sarge = sarge
+        self.config = config
+        self.folder = (self.sarge.home_path /
+                       (self.id_ + '.deploy') /
+                       '1')
 
-    def new_version(self):
-        """ Create a new version folder. Copy application code there and then
-        call :meth:`activate_version`. """
-        # TODO make sure we don't reuse version IDs. we probably need to
-        # save the counter to a file in `self.folder`.
-        import itertools
-        for c in itertools.count(1):
-            version_folder = self.folder / str(c)
-            if not version_folder.exists():
-                self.log.info("New version folder for deployment %r at %r.",
-                              self.name, version_folder)
-                version_folder.makedirs()
-                # TODO test
-                return version_folder
-
-    def activate_version(self, version_folder):
-        """ Activate a version folder. Creates a runtime folder, generates
-        various configuration files, then notifies supervisor to restart any
-        processes for this deployment. """
-        self.log.info("Activating version at %r for deployment %r",
-                      version_folder, self.name)
+    def start(self):
+        version_folder = self.folder
+        log.info("Activating instance %r", self.id_)
         run_folder = path(version_folder + '.run')
         run_folder.mkdir()
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
-        symlink_path = self.sarge.cfg_links_folder / self.name
+        symlink_path = self.sarge.cfg_links_folder / self.id_
         force_symlink(cfg_folder, symlink_path)
         share = {'programs': self.config.get('programs', [])}
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
         self._appcfg = {'services': services}
-        self.sarge.on_activate_version.send(self,
-                                            folder=version_folder,
-                                            share=share,
-                                            appcfg=self._appcfg)
+        self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder / 'quickapp.py'
-            self.log.debug("Writing WSGI script for deployment %r at %r.",
-                           self.name, script_path)
+            log.debug("Writing WSGI script for instance %r at %r.",
+                      self.id_, script_path)
             with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
@@ -105,19 +86,19 @@ class Deployment(object):
 
         self.write_supervisor_program_config(version_folder, share)
         self.sarge.daemons.update()
-        self.sarge.daemons.restart_deployment(self.name)
+        self.sarge.daemons.restart_deployment(self.id_)
 
     def write_supervisor_program_config(self, version_folder, share):
         run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
         supervisor_deploy_cfg_path = cfg_folder / SUPERVISOR_DEPLOY_CFG
-        self.log.debug("Writing supervisor configuration fragment for "
-                       "deployment %r at %r.",
-                       self.name, supervisor_deploy_cfg_path)
+        log.debug("Writing supervisor configuration fragment for "
+                  "instance %r at %r.",
+                  self.id_, supervisor_deploy_cfg_path)
 
         programs = []
         for program_cfg in share['programs']:
-            program_name = self.name + '_' + program_cfg['name']
+            program_name = self.id_ + '_' + program_cfg['name']
             program_config = {
                 'name': program_name,
                 'directory': version_folder,
@@ -127,34 +108,7 @@ class Deployment(object):
             }
             programs.append((program_name, program_config))
 
-        self.sarge.daemons.configure_deployment(self.name, cfg_folder, programs)
-
-    def start(self):
-        self.log.info("Starting deployment %r.", self.name)
-        self.sarge.daemons.start_deployment(self.name)
-
-
-def _get_named_object(name):
-    module_name, attr_name = name.split(':')
-    module = import_module(module_name)
-    return getattr(module, attr_name)
-
-
-class Instance(object):
-
-    def __init__(self, deployment):
-        self.deployment = deployment
-
-    @property
-    def folder(self):
-        return self.deployment.folder / '1'
-
-    @property
-    def id_(self):
-        return self.deployment.name
-
-    def start(self):
-        self.deployment.activate_version(self.folder)
+        self.sarge.daemons.configure_deployment(self.id_, cfg_folder, programs)
 
 
 class Sarge(object):
@@ -162,17 +116,15 @@ class Sarge(object):
     as container for deployments.
     """
 
-    log = logging.getLogger('sarge.Sarge')
-    log.setLevel(logging.DEBUG)
-
     def __init__(self, config):
-        self.on_activate_version = blinker.Signal()
+        self.on_instance_start = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
-        self.deployments = []
         self.config = config
-        self._load_deployments()
         self.daemons = Supervisor(self.home_path / SUPERVISORD_CFG)
+        for plugin_name in self.config.get('plugins', []):
+            plugin_factory = _get_named_object(plugin_name)
+            plugin_factory(self)
 
     @property
     def cfg_links_folder(self):
@@ -181,28 +133,9 @@ class Sarge(object):
             folder.makedirs()
         return folder
 
-    def _load_deployments(self):
-        def iter_deployments():
-            deployment_config_folder = self.home_path / DEPLOYMENT_CFG_DIR
-            if deployment_config_folder.isdir():
-                for depl_cfg_path in (deployment_config_folder).listdir():
-                    if depl_cfg_path.ext == '.yaml':
-                        yield yaml.load(depl_cfg_path.bytes())
-
-        for plugin_name in self.config.get('plugins', []):
-            plugin_factory = _get_named_object(plugin_name)
-            plugin_factory(self)
-        self.deployments[:] = []
-        for deployment_config in iter_deployments():
-            depl = Deployment()
-            depl.name = deployment_config['name']
-            depl.config = deployment_config
-            depl.sarge = self
-            self.deployments.append(depl)
-
     def generate_supervisord_configuration(self):
-        self.log.debug("Writing main supervisord configuration file at %r.",
-                       self.home_path / SUPERVISORD_CFG)
+        log.debug("Writing main supervisord configuration file at %r.",
+                  self.home_path / SUPERVISORD_CFG)
         self.daemons.configure(**{
             'home_path': self.home_path,
             'include_files': (path(CFG_LINKS_FOLDER) /
@@ -210,17 +143,14 @@ class Sarge(object):
                               SUPERVISOR_DEPLOY_CFG),
         })
 
-    def get_deployment(self, name):
-        """ Retrieve a :class:`~sarge.Deployment` by name. """
-        for depl in self.deployments:
-            if depl.name == name:
-                return depl
-        else:
+    def get_instance(self, instance_id):
+        config_path = (self.home_path /
+                       DEPLOYMENT_CFG_DIR /
+                       (instance_id + '.yaml'))
+        if not config_path.isfile():
             raise KeyError
 
-    def get_instance(self, instance_id):
-        deployment = self.get_deployment(instance_id)
-        return Instance(deployment)
+        return Instance(instance_id, self, yaml.load(config_path.bytes()))
 
     def _generate_instance_id(self):
         def random_id(size=6, vocabulary=string.letters + string.digits):
@@ -243,26 +173,21 @@ class Sarge(object):
                 ],
                 'require-services': services,
             }, f)
-        self._load_deployments()
         instance = self.get_instance(instance_id)
-        version_folder = instance.deployment.new_version()
-        assert instance.folder == version_folder
+        instance.folder.makedirs()
         return instance
 
 
 class VarFolderPlugin(object):
 
-    log = logging.getLogger('sarge.VarFolderPlugin')
-    log.setLevel(logging.DEBUG)
-
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
 
-    def activate_deployment(self, depl, appcfg, **extra):
-        var = depl.sarge.home_path / 'var'
-        var_instance = var / depl.name
-        services = depl.config.get('require-services', {})
+    def activate_deployment(self, instance, appcfg, **extra):
+        var = instance.sarge.home_path / 'var'
+        var_instance = var / instance.id_
+        services = instance.config.get('require-services', {})
 
         for name, record in services.iteritems():
             if record['type'] == 'var-folder':
@@ -279,7 +204,7 @@ class VarFolderPlugin(object):
 
 
 def init_cmd(sarge, args):
-    sarge.log.info("Initializing sarge folder at %r.", sarge.home_path)
+    log.info("Initializing sarge folder at %r.", sarge.home_path)
     sarge.on_initialize.send(sarge)
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir()
     sarge.generate_supervisord_configuration()
@@ -314,7 +239,7 @@ def set_up_logging(sarge_home_path):
     log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
     handler.setLevel(logging.DEBUG)
-    sarge_log.addHandler(handler)
+    logging.getLogger().addHandler(handler)
 
 
 def main(raw_arguments=None):

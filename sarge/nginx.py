@@ -5,13 +5,13 @@ from .util import ensure_folder, force_symlink
 import subprocess
 
 
+log = logging.getLogger(__name__)
+
+
 class NginxPlugin(object):
     """ Generates a configuration file for each deployment based on its urlmap.
     Upon activation of a new deployment version, the new nginx configuration is
     written, and nginx is reloaded. """
-
-    log = logging.getLogger('sarge.NginxPlugin')
-    log.setLevel(logging.DEBUG)
 
     WSGI_TEMPLATE = (
         'location %(url)s {\n'
@@ -55,7 +55,7 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
         sarge.on_initialize.connect(self.initialize, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
@@ -75,15 +75,15 @@ class NginxPlugin(object):
             (self.sites_folder).makedirs()
         sarge_sites_conf = self.folder / 'sarge_sites.conf'
         if not sarge_sites_conf.isfile():
-            self.log.debug("Writing \"sarge_sites\" "
-                           "nginx configuration at %r.",
-                           sarge_sites_conf)
+            log.debug("Writing \"sarge_sites\" "
+                      "nginx configuration at %r.",
+                      sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder, share, **extra):
-        version_folder = folder
-        run_folder = path(folder + '.run')
-        cfg_folder = path(folder + '.cfg')
+    def activate_deployment(self, instance, share, **extra):
+        version_folder = instance.folder
+        run_folder = path(instance.folder + '.run')
+        cfg_folder = path(instance.folder + '.cfg')
 
         app_config_path = version_folder / 'sargeapp.yaml'
         if app_config_path.exists():
@@ -95,18 +95,18 @@ class NginxPlugin(object):
         conf_path = cfg_folder / 'nginx-site.conf'
         urlmap_path = cfg_folder / 'nginx-urlmap.conf'
 
-        self.log.debug("Writing nginx configuration for deployment %r at %r.",
-                       depl.name, conf_path)
+        log.debug("Writing nginx configuration for instance %r at %r.",
+                  instance.id_, conf_path)
 
         conf_options = ""
-        nginx_options = depl.config.get('nginx_options', {})
+        nginx_options = instance.config.get('nginx_options', {})
         for key, value in sorted(nginx_options.items()):
             conf_options += '  %s %s;\n' % (key, value)
 
         conf_urlmap = ""
 
         for entry in app_config.get('urlmap', []):
-            self.log.debug("urlmap entry: %r", entry)
+            log.debug("urlmap entry: %r", entry)
 
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
@@ -116,7 +116,7 @@ class NginxPlugin(object):
                 conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         fcgi_params_path=self.fcgi_params_path)
-                depl.config['tmp-wsgi-app'] = entry['app_factory']
+                instance.config['tmp-wsgi-app'] = entry['app_factory']
 
             elif entry['type'] == 'php':
                 socket_path = run_folder / 'php.sock'
@@ -161,4 +161,4 @@ class NginxPlugin(object):
             f.write(conf_urlmap)
 
         ensure_folder(self.sites_folder)
-        force_symlink(conf_path, self.sites_folder / depl.name)
+        force_symlink(conf_path, self.sites_folder / instance.id_)
