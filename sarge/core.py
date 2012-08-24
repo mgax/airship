@@ -278,11 +278,6 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
-def activate_version_cmd(sarge, args):
-    version_folder = path(args.version_folder).abspath()
-    sarge.get_deployment(args.name).activate_version(version_folder)
-
-
 def new_version_cmd(sarge, args):
     print sarge.get_deployment(args.name).new_version()
 
@@ -314,10 +309,6 @@ def build_args_parser():
     new_version_parser = subparsers.add_parser('new_version')
     new_version_parser.set_defaults(func=new_version_cmd)
     new_version_parser.add_argument('name')
-    activate_version_parser = subparsers.add_parser('activate_version')
-    activate_version_parser.set_defaults(func=activate_version_cmd)
-    activate_version_parser.add_argument('name')
-    activate_version_parser.add_argument('version_folder')
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('name')
