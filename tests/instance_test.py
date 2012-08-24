@@ -65,7 +65,7 @@ class InstanceTest(SargeTestCase):
             'something': {'foo': 'bar'},
         }})
 
-        services = instance.deployment.config['require-services']
+        services = instance.config['require-services']
         self.assertEqual(services['something'], {'foo': 'bar'})
 
     def test_two_instances_have_different_paths_and_ids(self):

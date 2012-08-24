@@ -31,12 +31,6 @@ server.run()
 """
 
 
-class Deployment(object):
-    """ Web application that is deployed using sarge. It has a configuration
-    file and a number of version folders. Only one version is "active" and
-    running. """
-
-
 def _get_named_object(name):
     module_name, attr_name = name.split(':')
     module = import_module(module_name)
@@ -45,23 +39,13 @@ def _get_named_object(name):
 
 class Instance(object):
 
-    def __init__(self, deployment):
-        self.deployment = deployment
-        self.folder = (self.deployment.sarge.home_path /
-                       (self.deployment.name + '.deploy') /
+    def __init__(self, id_, sarge, config):
+        self.id_ = id_
+        self.sarge = sarge
+        self.config = config
+        self.folder = (self.sarge.home_path /
+                       (self.id_ + '.deploy') /
                        '1')
-
-    @property
-    def id_(self):
-        return self.deployment.name
-
-    @property
-    def config(self):
-        return self.deployment.config
-
-    @property
-    def sarge(self):
-        return self.deployment.sarge
 
     def start(self):
         version_folder = self.folder
@@ -166,11 +150,7 @@ class Sarge(object):
         if not config_path.isfile():
             raise KeyError
 
-        deployment = Deployment()
-        deployment.name = instance_id
-        deployment.config = yaml.load(config_path.bytes())
-        deployment.sarge = self
-        return Instance(deployment)
+        return Instance(instance_id, self, yaml.load(config_path.bytes()))
 
     def _generate_instance_id(self):
         def random_id(size=6, vocabulary=string.letters + string.digits):
