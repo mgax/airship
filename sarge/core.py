@@ -3,6 +3,7 @@ import logging
 import json
 import random
 import string
+import tempfile
 from importlib import import_module
 from path import path
 import blinker
@@ -176,18 +177,19 @@ class VarFolderPlugin(object):
 
     def activate_deployment(self, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
-        var_instance = var / instance.id_
+        var_tmp = var / 'tmp'
         services = instance.config.get('require-services', {})
 
         for name, record in services.iteritems():
             if record['type'] == 'var-folder':
-                service_path = var_instance / name
+                var_tmp.makedirs_p()
+                service_path = tempfile.mkdtemp(dir=var_tmp)
                 if not service_path.isdir():
                     service_path.makedirs()
                 appcfg['services'][name] = service_path
 
             elif record['type'] == 'persistent-folder':
-                service_path = var / name
+                service_path = var / 'data' / name
                 if not service_path.isdir():
                     service_path.makedirs()
                 appcfg['services'][name] = service_path
