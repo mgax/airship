@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
-APP_CFG = 'appcfg.json'
 
 QUICK_WSGI_APP_TEMPLATE = """\
 from flup.server.fcgi import WSGIServer
@@ -44,6 +43,7 @@ class Instance(object):
         self.config = config
         self.folder = self.sarge._instance_folder(id_) / '1'
         self.run_folder = self.sarge.home_path / 'var' / 'run' / id_
+        self.appcfg_path = self.run_folder / 'appcfg.json'
 
     def start(self):
         version_folder = self.folder
@@ -78,7 +78,7 @@ class Instance(object):
                                       version_folder / 'quickapp.py'),
             })
 
-        with (cfg_folder / APP_CFG).open('wb') as f:
+        with self.appcfg_path.open('wb') as f:
             json.dump(self._appcfg, f, indent=2)
 
         self.write_supervisor_program_config(version_folder, share)
@@ -86,8 +86,6 @@ class Instance(object):
         self.sarge.daemons.restart_deployment(self.id_)
 
     def write_supervisor_program_config(self, version_folder, share):
-        cfg_folder = path(version_folder + '.cfg')
-
         programs = []
         for program_cfg in share['programs']:
             program_name = self.id_ + '_' + program_cfg['name']
@@ -95,7 +93,7 @@ class Instance(object):
                 'name': program_name,
                 'directory': version_folder,
                 'run': self.run_folder,
-                'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
+                'environment': 'SARGEAPP_CFG="%s"\n' % self.appcfg_path,
                 'command': program_cfg['command'],
             }
             programs.append((program_name, program_config))

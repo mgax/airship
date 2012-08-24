@@ -64,8 +64,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'environment',
-                  'SARGEAPP_CFG="%s"' % (cfg_folder /
-                                         imp('sarge.core').APP_CFG))
+                  'SARGEAPP_CFG="%s"' % instance.appcfg_path)
 
     def test_supervisor_cfg_defines_group(self):
         instance = self.sarge().new_instance()

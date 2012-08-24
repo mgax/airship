@@ -21,8 +21,7 @@ class VarFolderTest(SargeTestCase):
 
     def test_deploy_passes_var_folder_to_deployment(self):
         instance = self.configure_and_deploy()
-        cfg_folder = path(instance.folder + '.cfg')
-        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
+        with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         volatile_path = self.tmp / 'var' / instance.id_ / 'volatile'
         self.assertEqual(appcfg['services']['volatile'], volatile_path)
@@ -34,8 +33,7 @@ class VarFolderTest(SargeTestCase):
 
     def test_deploy_passes_persistent_folder_to_deployment(self):
         instance = self.configure_and_deploy()
-        cfg_folder = path(instance.folder + '.cfg')
-        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
+        with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         db_path = self.tmp / 'var' / 'db'
         self.assertEqual(appcfg['services']['db'], db_path)

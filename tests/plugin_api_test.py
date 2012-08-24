@@ -53,7 +53,6 @@ class PluginApiTest(SargeTestCase):
         instance = sarge.new_instance()
         instance.start()
 
-        cfg_folder = path(instance.folder + '.cfg')
-        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
+        with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")
