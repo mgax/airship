@@ -43,12 +43,12 @@ class Instance(object):
         self.sarge = sarge
         self.config = config
         self.folder = self.sarge._instance_folder(id_) / '1'
+        self.run_folder = self.sarge.home_path / 'var' / 'run' / id_
 
     def start(self):
         version_folder = self.folder
         log.info("Activating instance %r", self.id_)
-        run_folder = path(version_folder + '.run')
-        run_folder.mkdir()
+        self.run_folder.makedirs_p()
         cfg_folder = path(version_folder + '.cfg')
         cfg_folder.mkdir()
         symlink_path = self.sarge.cfg_links_folder / self.id_
@@ -68,7 +68,7 @@ class Instance(object):
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
                     'module_name': module_name,
                     'attribute_name': attribute_name,
-                    'socket_path': str(run_folder / 'wsgi-app.sock'),
+                    'socket_path': str(self.run_folder / 'wsgi-app.sock'),
                     'appcfg': self._appcfg,
                 })
 
@@ -86,7 +86,6 @@ class Instance(object):
         self.sarge.daemons.restart_deployment(self.id_)
 
     def write_supervisor_program_config(self, version_folder, share):
-        run_folder = path(version_folder + '.run')
         cfg_folder = path(version_folder + '.cfg')
 
         programs = []
@@ -95,7 +94,7 @@ class Instance(object):
             program_config = {
                 'name': program_name,
                 'directory': version_folder,
-                'run': run_folder,
+                'run': self.run_folder,
                 'environment': 'SARGEAPP_CFG="%s"\n' % (cfg_folder / APP_CFG),
                 'command': program_cfg['command'],
             }

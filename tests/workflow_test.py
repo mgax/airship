@@ -23,9 +23,7 @@ class WorkflowTest(SargeTestCase):
 
     def test_new_instance_creates_runtime_folder(self):
         self.instance.start()
-
-        run_folder = path(self.instance.folder + '.run')
-        self.assertTrue(run_folder.isdir())
+        self.assertTrue(self.instance.run_folder.isdir())
 
     def test_instance_start_triggers_supervisord_reread_and_restart(self):
         self.mock_supervisorctl.reset_mock()

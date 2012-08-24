@@ -77,7 +77,6 @@ class NginxPlugin(object):
 
     def activate_deployment(self, instance, share, **extra):
         version_folder = instance.folder
-        run_folder = path(instance.folder + '.run')
 
         app_config_path = version_folder / 'sargeapp.yaml'
         if app_config_path.exists():
@@ -106,14 +105,14 @@ class NginxPlugin(object):
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
                         version_folder=version_folder)
             elif entry['type'] == 'wsgi':
-                socket_path = run_folder / 'wsgi-app.sock'
+                socket_path = instance.run_folder / 'wsgi-app.sock'
                 conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         fcgi_params_path=self.fcgi_params_path)
                 instance.config['tmp-wsgi-app'] = entry['app_factory']
 
             elif entry['type'] == 'php':
-                socket_path = run_folder / 'php.sock'
+                socket_path = instance.run_folder / 'php.sock'
                 conf_urlmap += self.PHP_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         version_folder=version_folder,

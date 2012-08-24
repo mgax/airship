@@ -52,7 +52,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance = self.sarge().new_instance()
         instance.start()
 
-        run_folder = path(instance.folder + '.run')
         cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
@@ -60,7 +59,8 @@ class SupervisorConfigurationTest(SargeTestCase):
 
         eq_config(section, 'command', 'run')
         eq_config(section, 'redirect_stderr', 'true')
-        eq_config(section, 'stdout_logfile', run_folder / 'stdout.log')
+        eq_config(section, 'stdout_logfile',
+                  instance.run_folder / 'stdout.log')
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'environment',

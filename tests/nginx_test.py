@@ -65,7 +65,6 @@ class NginxConfigurationTest(SargeTestCase):
                  'app_factory': 'wsgiref.simple_server:demo_app'},
             ],
         })
-        run_folder = path(instance.folder + '.run')
         cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
         with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
@@ -75,7 +74,7 @@ class NginxConfigurationTest(SargeTestCase):
             '  fastcgi_param PATH_INFO $fastcgi_script_name; '
             '  fastcgi_param SCRIPT_NAME ""; '
             '  fastcgi_pass unix:%(socket_path)s; '
-            '}' % {'socket_path': run_folder / 'wsgi-app.sock'})
+            '}' % {'socket_path': instance.run_folder / 'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
         instance = self.configure_and_activate({
@@ -84,7 +83,6 @@ class NginxConfigurationTest(SargeTestCase):
                  'type': 'php'},
             ],
         })
-        run_folder = path(instance.folder + '.run')
         cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
         with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
@@ -97,7 +95,7 @@ class NginxConfigurationTest(SargeTestCase):
             '  fastcgi_param SCRIPT_NAME ""; '
             '  fastcgi_pass unix:%(run_folder)s/php.sock; '
             '}' % {'instance.folder': instance.folder,
-                   'run_folder': run_folder})
+                   'run_folder': instance.run_folder})
 
     @skip('PHP setup broken when using instance api')
     def test_php_fcgi_startup_command_is_generated(self):
@@ -107,7 +105,6 @@ class NginxConfigurationTest(SargeTestCase):
                  'type': 'php'},
             ],
         })
-        run_folder = path(instance.folder + '.run')
         cfg_folder = path(instance.folder + '.cfg')
 
         config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
@@ -117,7 +114,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.assertEqual(command, '/usr/bin/spawn-fcgi '
                                   '-s %(run_folder)s/php.sock -M 0777 '
                                   '-f /usr/bin/php5-cgi -n' % {
-                                      'run_folder': run_folder,
+                                      'run_folder': instance.run_folder,
                                   })
 
     def test_proxy_is_configured_in_nginx(self):
