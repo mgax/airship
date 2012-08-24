@@ -136,10 +136,11 @@ class Sarge(object):
         self.on_instance_start = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
-        self.deployments = []
         self.config = config
-        self._load_deployments()
         self.daemons = Supervisor(self.home_path / SUPERVISORD_CFG)
+        for plugin_name in self.config.get('plugins', []):
+            plugin_factory = _get_named_object(plugin_name)
+            plugin_factory(self)
 
     @property
     def cfg_links_folder(self):
@@ -147,25 +148,6 @@ class Sarge(object):
         if not folder.isdir():
             folder.makedirs()
         return folder
-
-    def _load_deployments(self):
-        def iter_deployments():
-            deployment_config_folder = self.home_path / DEPLOYMENT_CFG_DIR
-            if deployment_config_folder.isdir():
-                for depl_cfg_path in (deployment_config_folder).listdir():
-                    if depl_cfg_path.ext == '.yaml':
-                        yield yaml.load(depl_cfg_path.bytes())
-
-        for plugin_name in self.config.get('plugins', []):
-            plugin_factory = _get_named_object(plugin_name)
-            plugin_factory(self)
-        self.deployments[:] = []
-        for deployment_config in iter_deployments():
-            depl = Deployment()
-            depl.name = deployment_config['name']
-            depl.config = deployment_config
-            depl.sarge = self
-            self.deployments.append(depl)
 
     def generate_supervisord_configuration(self):
         log.debug("Writing main supervisord configuration file at %r.",
@@ -176,14 +158,6 @@ class Sarge(object):
                               '*' /
                               SUPERVISOR_DEPLOY_CFG),
         })
-
-    def get_deployment(self, name):
-        """ Retrieve a :class:`~sarge.Deployment` by name. """
-        for depl in self.deployments:
-            if depl.name == name:
-                return depl
-        else:
-            raise KeyError
 
     def get_instance(self, instance_id):
         config_path = (self.home_path /
@@ -219,7 +193,6 @@ class Sarge(object):
                 ],
                 'require-services': services,
             }, f)
-        self._load_deployments()
         instance = self.get_instance(instance_id)
         instance.folder.makedirs()
         return instance
