@@ -2,8 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call
-from common import configure_deployment, imp
-from common import SargeTestCase
+from common import SargeTestCase, imp
 
 
 def read_config(cfg_path):
@@ -48,65 +47,49 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'unix://' + self.tmp / 'supervisord.sock')
         eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
 
-    def test_generate_supervisord_cfg_with_deployment_command(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [{'command': "echo starting up", 'name': 'tprog'}],
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
+    def test_generate_supervisord_cfg_with_run_command(self):
+        instance = self.sarge().new_instance()
+        instance.start()
 
-        run_folder = path(version_folder + '.run')
-        cfg_folder = path(version_folder + '.cfg')
+        run_folder = path(instance.folder + '.run')
+        cfg_folder = path(instance.folder + '.cfg')
         config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         eq_config = config_file_checker(config_path)
+        section = 'program:%s_daemon' % instance.id_
 
-        eq_config('program:testy_tprog', 'command', "echo starting up")
-        eq_config('program:testy_tprog', 'redirect_stderr', 'true')
-        eq_config('program:testy_tprog', 'stdout_logfile',
-                  run_folder / 'stdout.log')
-        eq_config('program:testy_tprog', 'startsecs', '2')
-        eq_config('program:testy_tprog', 'autostart', 'false')
-        eq_config('program:testy_tprog', 'environment',
+        eq_config(section, 'command', 'run')
+        eq_config(section, 'redirect_stderr', 'true')
+        eq_config(section, 'stdout_logfile', run_folder / 'stdout.log')
+        eq_config(section, 'startsecs', '2')
+        eq_config(section, 'autostart', 'false')
+        eq_config(section, 'environment',
                   'SARGEAPP_CFG="%s"' % (cfg_folder /
                                          imp('sarge.core').APP_CFG))
 
     def test_supervisor_cfg_defines_group(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [
-                {'command': "echo 1", 'name': 'tprog1'},
-                {'command': "echo 2", 'name': 'tprog2'},
-            ],
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = testy.new_version()
-        testy.activate_version(version_folder)
+        instance = self.sarge().new_instance()
+        instance.start()
 
-        cfg_folder = path(version_folder + '.cfg')
+        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         eq_config = config_file_checker(cfg_path)
 
-        eq_config('group:testy', 'programs', "testy_tprog1,testy_tprog2")
+        eq_config('group:%s' % instance.id_, 'programs',
+                  "%s_daemon" % instance.id_)
 
     def test_get_deployment_invalid_name(self):
         with self.assertRaises(KeyError):
             self.sarge().get_deployment('testy')
 
-    def test_directory_updated_after_activation(self):
-        configure_deployment(self.tmp, {
-            'name': 'testy',
-            'programs': [{'command': 'echo', 'name': 'tprog'}],
-        })
-        testy = self.sarge().get_deployment('testy')
-        version_folder = path(testy.new_version())
-        testy.activate_version(version_folder)
+    def test_working_directory_is_instance_home(self):
+        instance = self.sarge().new_instance()
+        instance.start()
 
-        cfg_folder = path(version_folder + '.cfg')
+        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         eq_config = config_file_checker(cfg_path)
-        eq_config('program:testy_tprog', 'directory', version_folder)
+        eq_config('program:%s_daemon' % instance.id_, 'directory',
+                  instance.folder)
 
 
 class SupervisorInvocationTest(SargeTestCase):
