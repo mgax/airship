@@ -41,7 +41,7 @@ class Instance(object):
         self.id_ = id_
         self.sarge = sarge
         self.config = config
-        self.folder = self.sarge._instance_folder(id_) / '1'
+        self.folder = self.sarge._instance_folder(id_)
         self.run_folder = self.sarge.home_path / 'var' / 'run' / id_
         self.appcfg_path = self.run_folder / 'appcfg.json'
 
@@ -132,7 +132,7 @@ class Sarge(object):
         return Instance(instance_id, self, yaml.load(config_path.bytes()))
 
     def _instance_folder(self, id_):
-        return self.home_path / (id_ + '.deploy')
+        return self.home_path / id_
 
     def _generate_instance_id(self):
         def random_id(size=6, vocabulary=string.letters + string.digits):
@@ -165,7 +165,6 @@ class Sarge(object):
                 'require-services': services,
             }, f)
         instance = self.get_instance(instance_id)
-        instance.folder.mkdir()
         return instance
 
 

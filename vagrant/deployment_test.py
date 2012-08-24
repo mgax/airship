@@ -71,12 +71,7 @@ def quote_config(config):
     return '"' + data + '"'
 
 
-def instance_id(instance_folder):
-    return instance_folder.split('/')[-2].split('.')[0]
-
-
-def link_in_nginx(instance_folder):
-    id_ = instance_id(instance_folder)
+def link_in_nginx(id_):
     urlmap_path = cfg['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
     nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
     put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
@@ -116,8 +111,8 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '        return ["hello sarge!\\n"]\n'
                   '    return theapp\n')
         put(StringIO(app_py), str(instance_folder / 'mytinyapp.py'))
-        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
-        link_in_nginx(instance_folder)
+        sarge_cmd("start_instance '%s'" % instance_folder.name)
+        link_in_nginx(instance_folder.name)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
@@ -142,8 +137,8 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json(app_cfg, instance_folder_1 / 'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'one'),
             str(instance_folder_1 / 'mytinyapp.py'))
-        sarge_cmd("start_instance '%s'" % instance_id(instance_folder_1))
-        link_in_nginx(instance_folder_1)
+        sarge_cmd("start_instance '%s'" % instance_folder_1.name)
+        link_in_nginx(instance_folder_1.name)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
@@ -154,8 +149,8 @@ class VagrantDeploymentTest(unittest.TestCase):
         put_json(app_cfg, instance_folder_2 / 'sargeapp.yaml')
         put(StringIO(app_py_tmpl % 'two'),
             str(instance_folder_2 / 'mytinyapp.py'))
-        sarge_cmd("start_instance '%s'" % instance_id(instance_folder_2))
-        link_in_nginx(instance_folder_2)
+        sarge_cmd("start_instance '%s'" % instance_folder_2.name)
+        link_in_nginx(instance_folder_2.name)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
@@ -171,8 +166,8 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
         put(StringIO(app_php), str(instance_folder / 'someapp.php'))
-        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
-        link_in_nginx(instance_folder)
+        sarge_cmd("start_instance '%s'" % instance_folder.name)
+        link_in_nginx(instance_folder.name)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
@@ -190,8 +185,8 @@ class VagrantDeploymentTest(unittest.TestCase):
             run("mkdir sub")
             run("echo 'submarine' > sub/marine.txt")
 
-        sarge_cmd("start_instance '%s'" % instance_id(instance_folder))
-        link_in_nginx(instance_folder)
+        sarge_cmd("start_instance '%s'" % instance_folder.name)
+        link_in_nginx(instance_folder.name)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
