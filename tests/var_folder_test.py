@@ -12,7 +12,8 @@ class VarFolderTest(SargeTestCase):
     def configure_and_deploy(self):
         instance = self.sarge().new_instance({
             'services': {
-                'db': {'type': 'var-folder'},
+                'volatile': {'type': 'var-folder'},
+                'db': {'type': 'persistent-folder'},
             },
         })
         instance.start()
@@ -23,10 +24,23 @@ class VarFolderTest(SargeTestCase):
         cfg_folder = path(instance.folder + '.cfg')
         with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
             appcfg = json.load(f)
-        db_path = self.tmp / 'var' / instance.id_ / 'db'
-        self.assertEqual(appcfg['services']['db'], db_path)
+        volatile_path = self.tmp / 'var' / instance.id_ / 'volatile'
+        self.assertEqual(appcfg['services']['volatile'], volatile_path)
 
     def test_deploy_creates_var_folder(self):
         instance = self.configure_and_deploy()
-        db_path = self.tmp / 'var' / instance.id_ / 'db'
+        volatile_path = self.tmp / 'var' / instance.id_ / 'volatile'
+        self.assertTrue(volatile_path.isdir())
+
+    def test_deploy_passes_persistent_folder_to_deployment(self):
+        instance = self.configure_and_deploy()
+        cfg_folder = path(instance.folder + '.cfg')
+        with (cfg_folder / imp('sarge.core').APP_CFG).open() as f:
+            appcfg = json.load(f)
+        db_path = self.tmp / 'var' / 'db'
+        self.assertEqual(appcfg['services']['db'], db_path)
+
+    def test_deploy_creates_persistent_folder(self):
+        instance = self.configure_and_deploy()
+        db_path = self.tmp / 'var' / 'db'
         self.assertTrue(db_path.isdir())

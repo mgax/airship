@@ -257,10 +257,18 @@ class VarFolderPlugin(object):
         sarge.on_activate_version.connect(self.activate_deployment, weak=False)
 
     def activate_deployment(self, depl, appcfg, **extra):
-        var = depl.sarge.home_path / 'var' / depl.name
+        var = depl.sarge.home_path / 'var'
+        var_instance = var / depl.name
         services = depl.config.get('require-services', {})
+
         for name, record in services.iteritems():
             if record['type'] == 'var-folder':
+                service_path = var_instance / name
+                if not service_path.isdir():
+                    service_path.makedirs()
+                appcfg['services'][name] = service_path
+
+            elif record['type'] == 'persistent-folder':
                 service_path = var / name
                 if not service_path.isdir():
                     service_path.makedirs()
