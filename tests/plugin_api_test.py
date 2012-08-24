@@ -21,7 +21,7 @@ class PluginApiTest(SargeTestCase):
     def test_subscribe_to_activation_event(self):
         mock_handler = Mock(im_self=None)
         sarge = self.sarge()
-        sarge.on_activate_version.connect(mock_handler)
+        sarge.on_instance_start.connect(mock_handler)
         sarge.new_instance().start()
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
@@ -36,8 +36,8 @@ class PluginApiTest(SargeTestCase):
         def handler2(depl, share, **extra):
             got.append(share.get('test-something'))
 
-        sarge.on_activate_version.connect(handler1)
-        sarge.on_activate_version.connect(handler2)
+        sarge.on_instance_start.connect(handler1)
+        sarge.on_instance_start.connect(handler2)
 
         instance = sarge.new_instance()
         instance.start()
@@ -48,7 +48,7 @@ class PluginApiTest(SargeTestCase):
             appcfg['your-order'] = "is here"
 
         sarge = self.sarge()
-        sarge.on_activate_version.connect(handler)
+        sarge.on_instance_start.connect(handler)
 
         instance = sarge.new_instance()
         instance.start()

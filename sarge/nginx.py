@@ -55,7 +55,7 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
         sarge.on_initialize.connect(self.initialize, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'

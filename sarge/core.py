@@ -76,7 +76,7 @@ class Instance(object):
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
         self._appcfg = {'services': services}
-        self.sarge.on_activate_version.send(self.deployment,
+        self.sarge.on_instance_start.send(self.deployment,
                                             folder=version_folder,
                                             share=share,
                                             appcfg=self._appcfg)
@@ -136,7 +136,7 @@ class Sarge(object):
     """
 
     def __init__(self, config):
-        self.on_activate_version = blinker.Signal()
+        self.on_instance_start = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.deployments = []
@@ -223,7 +223,7 @@ class VarFolderPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_activate_version.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
 
     def activate_deployment(self, depl, appcfg, **extra):
         var = depl.sarge.home_path / 'var'
