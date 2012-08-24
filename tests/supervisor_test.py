@@ -57,7 +57,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config = config_file_checker(cfg_path)
         section = 'program:%s_daemon' % instance.id_
 
-        eq_config(section, 'command', 'run')
+        eq_config(section, 'command', 'server')
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   instance.run_folder / 'stdout.log')
