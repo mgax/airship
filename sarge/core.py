@@ -43,9 +43,7 @@ class Instance(object):
         self.id_ = id_
         self.sarge = sarge
         self.config = config
-        self.folder = (self.sarge.home_path /
-                       (self.id_ + '.deploy') /
-                       '1')
+        self.folder = self.sarge._instance_folder(id_) / '1'
 
     def start(self):
         version_folder = self.folder
@@ -152,10 +150,22 @@ class Sarge(object):
 
         return Instance(instance_id, self, yaml.load(config_path.bytes()))
 
+    def _instance_folder(self, id_):
+        return self.home_path / (id_ + '.deploy')
+
     def _generate_instance_id(self):
         def random_id(size=6, vocabulary=string.letters + string.digits):
             return ''.join(random.choice(vocabulary) for c in range(size))
-        return random_id()  # TODO check for uniqueness
+        for c in range(10):
+            id_ = random_id()
+            try:
+                self._instance_folder(id_).mkdir()
+            except OSError:
+                continue
+            else:
+                return id_
+        else:
+            raise RuntimeError("Failed to generate unique instance ID")
 
     def new_instance(self, config={}):
         instance_id = self._generate_instance_id()
@@ -174,7 +184,7 @@ class Sarge(object):
                 'require-services': services,
             }, f)
         instance = self.get_instance(instance_id)
-        instance.folder.makedirs()
+        instance.folder.mkdir()
         return instance
 
 

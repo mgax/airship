@@ -1,4 +1,4 @@
-from mock import Mock, call, ANY
+from mock import Mock, patch, call, ANY
 from common import SargeTestCase
 
 
@@ -74,3 +74,11 @@ class InstanceTest(SargeTestCase):
         instance_2 = sarge.new_instance()
         self.assertNotEqual(instance_1.folder, instance_2.folder)
         self.assertNotEqual(instance_1.id_, instance_2.id_)
+
+    def test_unlucky_instance_id_generator_gives_up(self):
+        sarge = self.sarge()
+        with patch('sarge.core.random') as random:
+            random.choice.return_value = 'z'
+            sarge.new_instance()
+            with self.assertRaises(RuntimeError):
+                sarge.new_instance()
