@@ -63,3 +63,10 @@ class InstanceTest(SargeTestCase):
 
         services = instance.deployment.config['require-services']
         self.assertEqual(services['something'], {'foo': 'bar'})
+
+    def test_two_instances_have_different_paths_and_ids(self):
+        sarge = self.sarge()
+        instance_1 = sarge.new_instance()
+        instance_2 = sarge.new_instance()
+        self.assertNotEqual(instance_1.folder, instance_2.folder)
+        self.assertNotEqual(instance_1.id_, instance_2.id_)

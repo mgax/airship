@@ -1,6 +1,8 @@
 import sys
 import logging
 import json
+import random
+import string
 from importlib import import_module
 from path import path
 import blinker
@@ -220,8 +222,13 @@ class Sarge(object):
         deployment = self.get_deployment(instance_id)
         return Instance(deployment)
 
+    def _generate_instance_id(self):
+        def random_id(size=6, vocabulary=string.letters + string.digits):
+            return ''.join(random.choice(vocabulary) for c in range(size))
+        return random_id()  # TODO check for uniqueness
+
     def new_instance(self, config={}):
-        instance_id = 'inst'  # TODO make it random and unique
+        instance_id = self._generate_instance_id()
         deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
         deploy_cfg_dir.mkdir_p()
         instance_cfg_path = (self.home_path /
