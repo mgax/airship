@@ -35,11 +35,6 @@ class WorkflowTest(SargeTestCase):
         self.assertIn(call(['restart', '%s:*' % self.instance.id_]),
                       self.mock_supervisorctl.mock_calls)
 
-    def test_status_invokes_supervisorctl_status(self):
-        self.mock_supervisorctl.reset_mock()
-        self.sarge().status()
-        self.assertIn(call(['status']), self.mock_supervisorctl.mock_calls)
-
     def test_enumerate_instances(self):
         self.assertEqual([d.name for d in self.sarge().deployments],
                          [self.instance.id_])

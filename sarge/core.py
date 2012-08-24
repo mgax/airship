@@ -220,9 +220,6 @@ class Sarge(object):
         else:
             raise KeyError
 
-    def status(self):
-        self.daemons.print_status()
-
     def get_instance(self, instance_id):
         deployment = self.get_deployment(instance_id)
         return Instance(deployment)
@@ -285,10 +282,6 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
-def status_cmd(sarge, args):
-    sarge.status()
-
-
 def activate_version_cmd(sarge, args):
     version_folder = path(args.version_folder).abspath()
     sarge.get_deployment(args.name).activate_version(version_folder)
@@ -321,8 +314,6 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
-    status_parser = subparsers.add_parser('status')
-    status_parser.set_defaults(func=status_cmd)
     new_instance_parser = subparsers.add_parser('new_instance')
     new_instance_parser.set_defaults(func=new_instance_cmd)
     start_instance_parser = subparsers.add_parser('start_instance')
