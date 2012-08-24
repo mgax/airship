@@ -108,10 +108,6 @@ class Deployment(object):
 
         self.sarge.daemons.configure_deployment(self.name, cfg_folder, programs)
 
-    def start(self):
-        self.log.info("Starting deployment %r.", self.name)
-        self.sarge.daemons.start_deployment(self.name)
-
 
 def _get_named_object(name):
     module_name, attr_name = name.split(':')
