@@ -1,5 +1,3 @@
-import os
-import pwd
 import json
 import tempfile
 try:
@@ -9,15 +7,6 @@ except ImportError:
 from path import path
 from mock import patch
 from importlib import import_module as imp
-
-
-def configure_deployment(sarge_home, config):
-    deployment_config_folder = (sarge_home /
-                                imp('sarge.core').DEPLOYMENT_CFG_DIR)
-    imp('sarge.util').ensure_folder(deployment_config_folder)
-    filename = config['name'] + '.yaml'
-    with open(deployment_config_folder / filename, 'wb') as f:
-        json.dump(config, f)
 
 
 class SargeTestCase(unittest.TestCase):

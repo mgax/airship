@@ -3,7 +3,7 @@ from StringIO import StringIO
 import json
 from path import path
 from mock import Mock, patch, call
-from common import SargeTestCase, configure_deployment, imp
+from common import SargeTestCase, imp
 
 
 class ShellTest(SargeTestCase):
@@ -25,12 +25,6 @@ class ShellTest(SargeTestCase):
         instance = self.sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'start_instance', instance.id_])
         self.assertEqual(start.mock_calls, [call()])
-
-    @patch('sarge.core.Deployment.start')
-    def test_start_calls_api_method(self, mock_start):
-        configure_deployment(self.tmp, {'name': 'testy'})
-        imp('sarge.core').main([str(self.tmp), 'start', 'testy'])
-        self.assertEqual(mock_start.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
