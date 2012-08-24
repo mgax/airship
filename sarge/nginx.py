@@ -80,10 +80,10 @@ class NginxPlugin(object):
                       sarge_sites_conf)
             sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
 
-    def activate_deployment(self, depl, folder, share, **extra):
-        version_folder = folder
-        run_folder = path(folder + '.run')
-        cfg_folder = path(folder + '.cfg')
+    def activate_deployment(self, instance, share, **extra):
+        version_folder = instance.folder
+        run_folder = path(instance.folder + '.run')
+        cfg_folder = path(instance.folder + '.cfg')
 
         app_config_path = version_folder / 'sargeapp.yaml'
         if app_config_path.exists():
@@ -96,10 +96,10 @@ class NginxPlugin(object):
         urlmap_path = cfg_folder / 'nginx-urlmap.conf'
 
         log.debug("Writing nginx configuration for instance %r at %r.",
-                  depl.name, conf_path)
+                  instance.id_, conf_path)
 
         conf_options = ""
-        nginx_options = depl.config.get('nginx_options', {})
+        nginx_options = instance.config.get('nginx_options', {})
         for key, value in sorted(nginx_options.items()):
             conf_options += '  %s %s;\n' % (key, value)
 
@@ -116,7 +116,7 @@ class NginxPlugin(object):
                 conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         fcgi_params_path=self.fcgi_params_path)
-                depl.config['tmp-wsgi-app'] = entry['app_factory']
+                instance.config['tmp-wsgi-app'] = entry['app_factory']
 
             elif entry['type'] == 'php':
                 socket_path = run_folder / 'php.sock'
@@ -161,4 +161,4 @@ class NginxPlugin(object):
             f.write(conf_urlmap)
 
         ensure_folder(self.sites_folder)
-        force_symlink(conf_path, self.sites_folder / depl.name)
+        force_symlink(conf_path, self.sites_folder / instance.id_)

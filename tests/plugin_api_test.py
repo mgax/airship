@@ -28,12 +28,12 @@ class PluginApiTest(SargeTestCase):
     def test_activation_event_passes_shared_dict(self):
         sarge = self.sarge()
 
-        def handler1(depl, share, **extra):
+        def handler1(instance, share, **extra):
             share['test-something'] = 123
 
         got = []
 
-        def handler2(depl, share, **extra):
+        def handler2(instance, share, **extra):
             got.append(share.get('test-something'))
 
         sarge.on_instance_start.connect(handler1)
@@ -44,7 +44,7 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(got, [123])
 
     def test_activation_event_allows_passing_info_to_application(self):
-        def handler(depl, appcfg, **extra):
+        def handler(instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
         sarge = self.sarge()

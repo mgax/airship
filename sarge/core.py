@@ -76,10 +76,7 @@ class Instance(object):
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
         self._appcfg = {'services': services}
-        self.sarge.on_instance_start.send(self.deployment,
-                                            folder=version_folder,
-                                            share=share,
-                                            appcfg=self._appcfg)
+        self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = version_folder / 'quickapp.py'
@@ -225,10 +222,10 @@ class VarFolderPlugin(object):
         self.sarge = sarge
         sarge.on_instance_start.connect(self.activate_deployment, weak=False)
 
-    def activate_deployment(self, depl, appcfg, **extra):
-        var = depl.sarge.home_path / 'var'
-        var_instance = var / depl.name
-        services = depl.config.get('require-services', {})
+    def activate_deployment(self, instance, appcfg, **extra):
+        var = instance.sarge.home_path / 'var'
+        var_instance = var / instance.id_
+        services = instance.config.get('require-services', {})
 
         for name, record in services.iteritems():
             if record['type'] == 'var-folder':
