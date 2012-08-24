@@ -25,6 +25,7 @@ def setUpModule(self):
     if not exists(cfg['sarge-venv']):
         provision()
 
+    sudo("rm -rf '%(sarge-home)s'" % cfg)
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
     nginx_all_sites = cfg['sarge-home'] / 'nginx.plugin' / 'sarge_sites.conf'
     sudo("ln -s '%s' '%s'" % (nginx_all_sites, self._nginx_symlink))
