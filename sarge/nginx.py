@@ -60,30 +60,23 @@ class NginxPlugin(object):
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
-    FOLDER_NAME = 'nginx.plugin'
-
     @property
-    def folder(self):
-        return self.sarge.home_path / self.FOLDER_NAME
-
-    @property
-    def sites_folder(self):
-        return self.folder / 'sites'
+    def etc_nginx(self):
+        return self.sarge.home_path / 'etc' / 'nginx'
 
     def initialize(self, sarge):
-        if not self.sites_folder.isdir():
-            (self.sites_folder).makedirs()
-        sarge_sites_conf = self.folder / 'sarge_sites.conf'
+        if not self.etc_nginx.isdir():
+            (self.etc_nginx).makedirs()
+        sarge_sites_conf = self.etc_nginx / 'sarge_sites.conf'
         if not sarge_sites_conf.isfile():
             log.debug("Writing \"sarge_sites\" "
                       "nginx configuration at %r.",
                       sarge_sites_conf)
-            sarge_sites_conf.write_text('include %s/*;\n' % self.sites_folder)
+            sarge_sites_conf.write_text('include %s/*;\n' % self.etc_nginx)
+        self.etc_nginx.makedirs_p()
 
     def activate_deployment(self, instance, share, **extra):
         version_folder = instance.folder
-        run_folder = path(instance.folder + '.run')
-        cfg_folder = path(instance.folder + '.cfg')
 
         app_config_path = version_folder / 'sargeapp.yaml'
         if app_config_path.exists():
@@ -92,8 +85,8 @@ class NginxPlugin(object):
         else:
             app_config = {}
 
-        conf_path = cfg_folder / 'nginx-site.conf'
-        urlmap_path = cfg_folder / 'nginx-urlmap.conf'
+        conf_path = self.etc_nginx / (instance.id_ + '-site')
+        urlmap_path = self.etc_nginx / (instance.id_ + '-urlmap')
 
         log.debug("Writing nginx configuration for instance %r at %r.",
                   instance.id_, conf_path)
@@ -112,14 +105,14 @@ class NginxPlugin(object):
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
                         version_folder=version_folder)
             elif entry['type'] == 'wsgi':
-                socket_path = run_folder / 'wsgi-app.sock'
+                socket_path = instance.run_folder / 'wsgi-app.sock'
                 conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         fcgi_params_path=self.fcgi_params_path)
                 instance.config['tmp-wsgi-app'] = entry['app_factory']
 
             elif entry['type'] == 'php':
-                socket_path = run_folder / 'php.sock'
+                socket_path = instance.run_folder / 'php.sock'
                 conf_urlmap += self.PHP_TEMPLATE % dict(entry,
                         socket_path=socket_path,
                         version_folder=version_folder,
@@ -159,6 +152,3 @@ class NginxPlugin(object):
 
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
-
-        ensure_folder(self.sites_folder)
-        force_symlink(conf_path, self.sites_folder / instance.id_)

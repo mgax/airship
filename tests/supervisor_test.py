@@ -2,7 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call
-from common import SargeTestCase, imp
+from common import SargeTestCase
 
 
 def read_config(cfg_path):
@@ -34,44 +34,46 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
 
-        config_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
+        config_path = self.tmp / 'etc' / 'supervisor.conf'
         eq_config = config_file_checker(config_path)
 
-        eq_config('unix_http_server', 'file', self.tmp / 'supervisord.sock')
+        eq_config('unix_http_server', 'file',
+                  self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
                   'supervisor.rpcinterface:make_main_rpcinterface')
-        eq_config('supervisord', 'logfile', self.tmp / 'supervisord.log')
-        eq_config('supervisord', 'pidfile', self.tmp / 'supervisord.pid')
+        eq_config('supervisord', 'logfile',
+                  self.tmp / 'var' / 'log' / 'supervisor.log')
+        eq_config('supervisord', 'pidfile',
+                  self.tmp / 'var' / 'run' / 'supervisor.pid')
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
-                  'unix://' + self.tmp / 'supervisord.sock')
-        eq_config('include', 'files', 'active/*/supervisor_deploy.conf')
+                  'unix://' + self.tmp / 'var' / 'run' / 'supervisor.sock')
+        eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
     def test_generate_supervisord_cfg_with_run_command(self):
         instance = self.sarge().new_instance()
         instance.start()
 
-        run_folder = path(instance.folder + '.run')
         cfg_folder = path(instance.folder + '.cfg')
-        config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        eq_config = config_file_checker(config_path)
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
+        eq_config = config_file_checker(cfg_path)
         section = 'program:%s_daemon' % instance.id_
 
-        eq_config(section, 'command', 'run')
+        eq_config(section, 'command', 'server')
         eq_config(section, 'redirect_stderr', 'true')
-        eq_config(section, 'stdout_logfile', run_folder / 'stdout.log')
+        eq_config(section, 'stdout_logfile',
+                  self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'environment',
-                  'SARGEAPP_CFG="%s"' % (cfg_folder /
-                                         imp('sarge.core').APP_CFG))
+                  'SARGEAPP_CFG="%s"' % instance.appcfg_path)
 
     def test_supervisor_cfg_defines_group(self):
         instance = self.sarge().new_instance()
         instance.start()
 
         cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
 
         eq_config('group:%s' % instance.id_, 'programs',
@@ -82,7 +84,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance.start()
 
         cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
         eq_config('program:%s_daemon' % instance.id_, 'directory',
                   instance.folder)
@@ -95,7 +97,7 @@ class SupervisorInvocationTest(SargeTestCase):
         self.sarge().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
-        cfg_path = self.tmp / imp('sarge.core').SUPERVISORD_CFG
+        cfg_path = self.tmp / 'etc' / 'supervisor.conf'
         self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,
                                 '-c', cfg_path,

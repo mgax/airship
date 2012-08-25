@@ -14,7 +14,7 @@ class SargeTestCase(unittest.TestCase):
     def sarge(self, config=None):
         if config is None:
             config = {}
-        cfg_path = self.tmp / imp('sarge.core').SARGE_CFG
+        cfg_path = self.tmp / 'etc' / 'sarge.yaml'
         if cfg_path.isfile():
             with open(cfg_path, 'rb') as f:
                 config.update(json.load(f))
@@ -29,6 +29,7 @@ class SargeTestCase(unittest.TestCase):
 
     def _pre_setup(self):
         self.tmp = path(tempfile.mkdtemp())
+        (self.tmp / 'etc').mkdir()
         self.addCleanup(self.tmp.rmtree)
         self.mock_subprocess = self.patch('sarge.daemons.subprocess')
 

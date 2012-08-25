@@ -21,6 +21,7 @@ class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
+        (self.tmp / 'etc' / 'nginx').makedirs()
 
     def configure_and_activate(self, app_config, deployment_config={}):
         instance = sarge(self.tmp).new_instance(deployment_config)
@@ -34,32 +35,12 @@ class NginxConfigurationTest(SargeTestCase):
         collapse = lambda s: re.sub('\s+', ' ', s).strip()
         self.assertEqual(collapse(cfg1), collapse(cfg2))
 
-    def test_nginx_common_config_created_on_init(self):
-        imp('sarge.core').init_cmd(sarge(self.tmp), None)
-        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
-        nginx_sites = nginx_folder / 'sites'
-        self.assertTrue(nginx_sites.isdir())
-
-        nginx_common = nginx_folder / 'sarge_sites.conf'
-        self.assertTrue(nginx_common.isfile())
-        self.assertEqual(nginx_common.text(),
-                         'include ' + nginx_folder + '/sites/*;\n')
-
     def test_no_web_services_yields_blank_configuration(self):
         instance = self.configure_and_activate({})
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf, "")
-
-    def test_activation_creates_symlink_in_sites_folder(self):
-        instance = self.configure_and_activate({})
-        cfg_folder = path(instance.folder + '.cfg')
-        nginx_folder = self.tmp / imp('sarge').NginxPlugin.FOLDER_NAME
-        link_path = nginx_folder / 'sites' / self._instance.id_
-        link_target = cfg_folder / 'nginx-site.conf'
-        self.assertTrue(link_path.islink())
-        self.assertEqual(link_path.readlink(), link_target)
 
     def test_static_folder_is_configured_in_nginx(self):
         instance = self.configure_and_activate({
@@ -69,8 +50,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'path': 'mymedia'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
         conf_ok = ("location /media { alias %s/mymedia; }" %
                    instance.folder)
@@ -84,9 +65,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'app_factory': 'wsgiref.simple_server:demo_app'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        run_folder = path(instance.folder + '.run')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'location / { '
@@ -94,7 +74,7 @@ class NginxConfigurationTest(SargeTestCase):
             '  fastcgi_param PATH_INFO $fastcgi_script_name; '
             '  fastcgi_param SCRIPT_NAME ""; '
             '  fastcgi_pass unix:%(socket_path)s; '
-            '}' % {'socket_path': run_folder / 'wsgi-app.sock'})
+            '}' % {'socket_path': instance.run_folder / 'wsgi-app.sock'})
 
     def test_php_app_is_configured_in_nginx(self):
         instance = self.configure_and_activate({
@@ -103,9 +83,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'type': 'php'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        run_folder = path(instance.folder + '.run')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(cfg_urlmap, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'location / { '
@@ -116,7 +95,7 @@ class NginxConfigurationTest(SargeTestCase):
             '  fastcgi_param SCRIPT_NAME ""; '
             '  fastcgi_pass unix:%(run_folder)s/php.sock; '
             '}' % {'instance.folder': instance.folder,
-                   'run_folder': run_folder})
+                   'run_folder': instance.run_folder})
 
     @skip('PHP setup broken when using instance api')
     def test_php_fcgi_startup_command_is_generated(self):
@@ -127,8 +106,6 @@ class NginxConfigurationTest(SargeTestCase):
             ],
         })
         cfg_folder = path(instance.folder + '.cfg')
-        run_folder = path(instance.folder + '.run')
-        cfg_folder = path(instance.folder + '.cfg')
 
         config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
         command = read_config(config_path).get(
@@ -137,7 +114,7 @@ class NginxConfigurationTest(SargeTestCase):
         self.assertEqual(command, '/usr/bin/spawn-fcgi '
                                   '-s %(run_folder)s/php.sock -M 0777 '
                                   '-f /usr/bin/php5-cgi -n' % {
-                                      'run_folder': run_folder,
+                                      'run_folder': instance.run_folder,
                                   })
 
     def test_proxy_is_configured_in_nginx(self):
@@ -148,8 +125,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'upstream_url': 'http://backend:4912/some/path'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        urlmap_path = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(urlmap_path, 'rb') as f:
             nginx_conf = f.read()
         conf_ok = (
             "location /stuff { "
@@ -169,8 +146,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'socket': 'tcp://localhost:24637'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        urlmap_path = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(urlmap_path, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'location / { '
@@ -188,8 +165,8 @@ class NginxConfigurationTest(SargeTestCase):
                  'socket': 'unix:///path/to/socket'},
             ],
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-urlmap.conf', 'rb') as f:
+        urlmap_path = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(urlmap_path, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'location / { '
@@ -207,12 +184,12 @@ class NginxConfigurationTest(SargeTestCase):
                 'listen': '8013',
             },
         })
-        cfg_folder = path(instance.folder + '.cfg')
-        with open(cfg_folder / 'nginx-site.conf', 'rb') as f:
+        cfg_site = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-site')
+        with open(cfg_site, 'rb') as f:
             nginx_conf = f.read()
         self.assert_equivalent(nginx_conf,
             'server { '
             '    listen 8013; '
             '    server_name something.example.com; '
             '    include %(urlmap_path)s; '
-            '}' % {'urlmap_path': cfg_folder / 'nginx-urlmap.conf'})
+            '}' % {'urlmap_path': cfg_urlmap})

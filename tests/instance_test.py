@@ -7,7 +7,7 @@ class ProgramsRecorder(object):
     def __init__(self):
         self.programs = []
 
-    def __call__(self, deployment_name, cfg_folder, programs):
+    def __call__(self, instance_id, programs):
         self.programs.extend([{'name': name, 'command': p['command']}
                               for name, p in programs])
 
@@ -57,7 +57,7 @@ class InstanceTest(SargeTestCase):
         instance.start()
 
         self.assertEqual(sarge.daemons.configure_deployment.programs,
-                         [{'name': ANY, 'command': 'run'}])
+                         [{'name': ANY, 'command': 'server'}])
 
     def test_service_is_configured_at_instance_creation(self):
         sarge = self.sarge()
