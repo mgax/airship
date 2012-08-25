@@ -9,7 +9,7 @@ from common import SargeTestCase, imp
 class ShellTest(SargeTestCase):
 
     def setUp(self):
-        (self.tmp / imp('sarge.core').SARGE_CFG).write_text('{}')
+        (self.tmp / 'etc' / 'sarge.yaml').write_text('{}')
 
     @patch('sarge.core.Sarge.new_instance')
     def test_new_instance_calls_api_and_returns_path(self, new_instance):
@@ -28,13 +28,13 @@ class ShellTest(SargeTestCase):
 
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
+        (other_tmp / 'etc').mkdir()
         self.addCleanup(other_tmp.rmtree)
-        (other_tmp / imp('sarge.core').SARGE_CFG).write_text('{}')
+        (other_tmp / 'etc' / 'sarge.yaml').write_text('{}')
 
         core = imp('sarge.core')
         core.main([str(other_tmp), 'init'])
         expected = [core.DEPLOYMENT_CFG_DIR,
-                    core.SARGE_CFG,
                     'sarge.log',
                     'etc']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)

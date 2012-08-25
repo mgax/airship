@@ -14,7 +14,6 @@ from .daemons import Supervisor
 log = logging.getLogger(__name__)
 
 
-SARGE_CFG = 'sargecfg.yaml'
 DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
 
@@ -239,7 +238,7 @@ def main(raw_arguments=None):
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home_path = path(args.sarge_home).abspath()
     set_up_logging(sarge_home_path)
-    with open(sarge_home_path / SARGE_CFG, 'rb') as f:
+    with open(sarge_home_path / 'etc' / 'sarge.yaml', 'rb') as f:
         config = yaml.load(f)
     config['home'] = sarge_home_path
     sarge = Sarge(config)

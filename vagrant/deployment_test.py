@@ -2,7 +2,6 @@ import unittest
 from StringIO import StringIO
 import json
 import urllib
-from importlib import import_module as imp
 from fabric.api import env, run, sudo, put, cd
 from fabric.contrib.files import exists
 from path import path
@@ -82,8 +81,9 @@ class VagrantDeploymentTest(unittest.TestCase):
     def setUp(self):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         sudo("chown vagrant: '%(sarge-home)s'" % cfg)
+        run("mkdir '%(sarge-home)s'/etc" % cfg)
         put_json({'plugins': ['sarge:NginxPlugin']},
-                 cfg['sarge-home'] / imp('sarge.core').SARGE_CFG,
+                 cfg['sarge-home'] / 'etc' / 'sarge.yaml',
                  use_sudo=True)
         sarge_cmd("init")
         run("'%(sarge-venv)s'/bin/supervisord "

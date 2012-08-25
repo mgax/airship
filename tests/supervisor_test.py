@@ -2,7 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call
-from common import SargeTestCase, imp
+from common import SargeTestCase
 
 
 def read_config(cfg_path):
@@ -32,7 +32,6 @@ def config_file_checker(cfg_path):
 class SupervisorConfigurationTest(SargeTestCase):
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        (self.tmp / 'etc').mkdir()
         self.sarge().generate_supervisord_configuration()
 
         config_path = self.tmp / 'etc' / 'supervisor.conf'
