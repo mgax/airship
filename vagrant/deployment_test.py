@@ -194,3 +194,26 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/sub/marine.txt'),
                          "submarine\n")
+
+    def test_start_daemon_with_server_script(self):
+        instance_folder = path(sarge_cmd("new_instance '{}'"))
+
+        put_json({'urlmap': [
+                    {'type': 'proxy',
+                     'url': '/',
+                     'upstream_url': 'http://localhost:43423'},
+                 ]},
+                 instance_folder / 'sargeapp.yaml')
+        app_py = ('#!/usr/bin/env python\n'
+                  'from wsgiref.simple_server import make_server\n'
+                  'def theapp(environ, start_response):\n'
+                  '    start_response("200 OK", [])\n'
+                  '    return ["hello sarge!\\n"]\n'
+                  'make_server("0", 43423, theapp).serve_forever()\n')
+        put(StringIO(app_py), str(instance_folder / 'server'), mode=0755)
+        sarge_cmd("start_instance '%s'" % instance_folder.name)
+        link_in_nginx(instance_folder.name)
+        sudo("service nginx reload")
+
+        self.assertEqual(get_url('http://192.168.13.13:8013/'),
+                         "hello sarge!\n")
