@@ -59,7 +59,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'command', 'server')
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
-                  instance.run_folder / 'stdout.log')
+                  self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'environment',

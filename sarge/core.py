@@ -41,8 +41,10 @@ class Instance(object):
         self.sarge = sarge
         self.config = config
         self.folder = self.sarge._instance_folder(id_)
-        self.run_folder = self.sarge.home_path / 'var' / 'run' / id_
+        var = self.sarge.home_path / 'var'
+        self.run_folder = var / 'run' / id_
         self.appcfg_path = self.run_folder / 'appcfg.json'
+        self.log_path = var / 'log' / (self.id_ + '.log')
 
     def start(self):
         version_folder = self.folder
@@ -88,6 +90,7 @@ class Instance(object):
                 'name': program_name,
                 'directory': version_folder,
                 'run': self.run_folder,
+                'log': self.log_path,
                 'environment': 'SARGEAPP_CFG="%s"\n' % self.appcfg_path,
                 'command': program_cfg['command'],
             }
@@ -196,6 +199,8 @@ class VarFolderPlugin(object):
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
     (sarge.home_path / 'etc').mkdir_p()
+    (sarge.home_path / 'var').mkdir_p()
+    (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     sarge.on_initialize.send(sarge)
     sarge.generate_supervisord_configuration()

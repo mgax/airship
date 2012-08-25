@@ -28,7 +28,7 @@ SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
 directory = %(directory)s
 redirect_stderr = true
-stdout_logfile = %(run)s/stdout.log
+stdout_logfile = %(log)s
 startsecs = 2
 autostart = false
 environment = %(environment)s
