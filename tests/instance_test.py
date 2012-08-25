@@ -56,8 +56,9 @@ class InstanceTest(SargeTestCase):
         instance = sarge.new_instance()
         instance.start()
 
+        command = instance.folder / 'server'
         self.assertEqual(sarge.daemons.configure_deployment.programs,
-                         [{'name': ANY, 'command': 'server'}])
+                         [{'name': ANY, 'command': command}])
 
     def test_service_is_configured_at_instance_creation(self):
         sarge = self.sarge()

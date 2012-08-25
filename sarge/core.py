@@ -157,12 +157,13 @@ class Sarge(object):
         instance_cfg_path = (self.home_path /
                              DEPLOYMENT_CFG_DIR /
                              instance_id+'.yaml')
+        instance_folder = self.home_path / instance_id
         with open(instance_cfg_path, 'wb') as f:
             services = config.get('services')
             json.dump({
                 'name': instance_id,
                 'programs': [
-                    {'name': 'daemon', 'command': 'server'},
+                    {'name': 'daemon', 'command': instance_folder / 'server'},
                 ],
                 'require-services': services,
             }, f)
