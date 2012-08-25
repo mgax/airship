@@ -37,15 +37,17 @@ class SupervisorConfigurationTest(SargeTestCase):
         config_path = self.tmp / 'etc' / 'supervisor.conf'
         eq_config = config_file_checker(config_path)
 
-        eq_config('unix_http_server', 'file', self.tmp / 'supervisord.sock')
+        eq_config('unix_http_server', 'file',
+                  self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
                   'supervisor.rpcinterface:make_main_rpcinterface')
         eq_config('supervisord', 'logfile',
                   self.tmp / 'var' / 'log' / 'supervisor.log')
-        eq_config('supervisord', 'pidfile', self.tmp / 'supervisord.pid')
+        eq_config('supervisord', 'pidfile',
+                  self.tmp / 'var' / 'run' / 'supervisor.pid')
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
-                  'unix://' + self.tmp / 'supervisord.sock')
+                  'unix://' + self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
     def test_generate_supervisord_cfg_with_run_command(self):

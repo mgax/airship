@@ -201,6 +201,7 @@ def init_cmd(sarge, args):
     (sarge.home_path / 'etc').mkdir_p()
     (sarge.home_path / 'var').mkdir_p()
     (sarge.home_path / 'var' / 'log').mkdir_p()
+    (sarge.home_path / 'var' / 'run').mkdir_p()
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     sarge.on_initialize.send(sarge)
     sarge.generate_supervisord_configuration()

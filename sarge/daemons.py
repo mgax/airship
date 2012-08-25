@@ -5,7 +5,7 @@ from path import path
 
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
-file = %(home_path)s/supervisord.sock
+file = %(home_path)s/var/run/supervisor.sock
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = \
@@ -13,11 +13,11 @@ supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisord]
 logfile = %(home_path)s/var/log/supervisor.log
-pidfile = %(home_path)s/supervisord.pid
+pidfile = %(home_path)s/var/run/supervisor.pid
 directory = %(home_path)s
 
 [supervisorctl]
-serverurl = unix://%(home_path)s/supervisord.sock
+serverurl = unix://%(home_path)s/var/run/supervisor.sock
 
 [include]
 files = %(include_files)s
