@@ -230,8 +230,10 @@ def build_args_parser():
     return parser
 
 
-def set_up_logging(sarge_home_path):
-    handler = logging.FileHandler(sarge_home_path / 'sarge.log')
+def set_up_logging(sarge_home):
+    log_folder = sarge_home / 'var' / 'log'
+    log_folder.makedirs_p()
+    handler = logging.FileHandler(log_folder / 'sarge.log')
     log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
     handler.setLevel(logging.DEBUG)
@@ -241,11 +243,11 @@ def set_up_logging(sarge_home_path):
 def main(raw_arguments=None):
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments or sys.argv[1:])
-    sarge_home_path = path(args.sarge_home).abspath()
-    set_up_logging(sarge_home_path)
-    with open(sarge_home_path / 'etc' / 'sarge.yaml', 'rb') as f:
+    sarge_home = path(args.sarge_home).abspath()
+    set_up_logging(sarge_home)
+    with open(sarge_home / 'etc' / 'sarge.yaml', 'rb') as f:
         config = yaml.load(f)
-    config['home'] = sarge_home_path
+    config['home'] = sarge_home
     sarge = Sarge(config)
     args.func(sarge, args)
 
