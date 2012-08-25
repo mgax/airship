@@ -12,7 +12,7 @@ supervisor.rpcinterface_factory = \
 supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisord]
-logfile = %(home_path)s/supervisord.log
+logfile = %(home_path)s/var/log/supervisor.log
 pidfile = %(home_path)s/supervisord.pid
 directory = %(home_path)s
 

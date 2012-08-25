@@ -40,7 +40,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('unix_http_server', 'file', self.tmp / 'supervisord.sock')
         eq_config('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
                   'supervisor.rpcinterface:make_main_rpcinterface')
-        eq_config('supervisord', 'logfile', self.tmp / 'supervisord.log')
+        eq_config('supervisord', 'logfile',
+                  self.tmp / 'var' / 'log' / 'supervisor.log')
         eq_config('supervisord', 'pidfile', self.tmp / 'supervisord.pid')
         eq_config('supervisord', 'directory', self.tmp)
         eq_config('supervisorctl', 'serverurl',
