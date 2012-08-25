@@ -163,7 +163,7 @@ class Sarge(object):
             json.dump({
                 'name': instance_id,
                 'programs': [
-                    {'name': 'daemon', 'command': instance_folder / 'server'},
+                    {'name': 'server', 'command': instance_folder / 'server'},
                 ],
                 'require-services': services,
             }, f)

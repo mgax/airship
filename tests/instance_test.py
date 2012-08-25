@@ -46,7 +46,7 @@ class InstanceTest(SargeTestCase):
         instance.start()
 
         self.assertEqual(sarge.daemons.configure_deployment.programs,
-                         [{'name': instance.id_ + '_daemon', 'command': ANY}])
+                         [{'name': instance.id_ + '_server', 'command': ANY}])
 
     def test_instance_program_command_is_called_run(self):
         sarge = self.sarge()

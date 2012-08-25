@@ -195,7 +195,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         self.assertEqual(get_url('http://192.168.13.13:8013/sub/marine.txt'),
                          "submarine\n")
 
-    def test_start_daemon_with_server_script(self):
+    def test_start_server_using_default_executable_name(self):
         instance_folder = path(sarge_cmd("new_instance '{}'"))
 
         put_json({'urlmap': [

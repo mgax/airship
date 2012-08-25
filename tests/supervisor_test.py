@@ -57,7 +57,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
-        section = 'program:%s_daemon' % instance.id_
+        section = 'program:%s_server' % instance.id_
 
         eq_config(section, 'command', instance.folder / 'server')
         eq_config(section, 'redirect_stderr', 'true')
@@ -77,7 +77,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config = config_file_checker(cfg_path)
 
         eq_config('group:%s' % instance.id_, 'programs',
-                  "%s_daemon" % instance.id_)
+                  "%s_server" % instance.id_)
 
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()
@@ -86,7 +86,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
-        eq_config('program:%s_daemon' % instance.id_, 'directory',
+        eq_config('program:%s_server' % instance.id_, 'directory',
                   instance.folder)
 
 
