@@ -64,6 +64,7 @@ class NginxPlugin(object):
         self.sarge = sarge
         sarge.on_instance_start.connect(self.activate_deployment, weak=False)
         sarge.on_initialize.connect(self.initialize, weak=False)
+        sarge.on_instance_stop.connect(self.instance_stop, weak=False)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
@@ -82,11 +83,17 @@ class NginxPlugin(object):
             sarge_sites_conf.write_text('include %s/*;\n' % self.etc_nginx)
         self.etc_nginx.makedirs_p()
 
+    def _conf_site_path(self, instance):
+        return self.etc_nginx / (instance.id_ + '-site')
+
+    def _conf_urlmap_path(self, instance):
+        return self.etc_nginx / (instance.id_ + '-urlmap')
+
     def activate_deployment(self, instance, share, appcfg, **extra):
         version_folder = instance.folder
 
-        conf_path = self.etc_nginx / (instance.id_ + '-site')
-        urlmap_path = self.etc_nginx / (instance.id_ + '-urlmap')
+        conf_path = self._conf_site_path(instance)
+        urlmap_path = self._conf_urlmap_path(instance)
 
         log.debug("Writing nginx configuration for instance %r at %r.",
                   instance.id_, conf_path)
@@ -154,3 +161,7 @@ class NginxPlugin(object):
 
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
+
+    def instance_stop(self, instance, **extra):
+        self._conf_site_path(instance).unlink()
+        self._conf_urlmap_path(instance).unlink()
