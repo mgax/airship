@@ -63,7 +63,7 @@ def get_url(url):
         f.close()
 
 
-def quote_config(config):
+def quote_json(config):
     data = json.dumps(config)
     for ch in ['\\', '"', '$', '`']:
         data = data.replace(ch, '\\\\' + ch)
@@ -97,14 +97,11 @@ class VagrantDeploymentTest(unittest.TestCase):
         assert run('pwd') == '/home/vagrant'
 
     def test_deploy_simple_wsgi_app(self):
-        instance_folder = path(sarge_cmd("new_instance '{}'"))
+        cfg = {'urlmap': [{'type': 'wsgi',
+                           'url': '/',
+                           'app_factory': 'mytinyapp:gettheapp'}]}
+        instance_folder = path(sarge_cmd("new_instance " + quote_json(cfg)))
 
-        put_json({'urlmap': [
-                    {'type': 'wsgi',
-                     'url': '/',
-                     'app_factory': 'mytinyapp:gettheapp'},
-                 ]},
-                 instance_folder / 'sargeapp.yaml')
         app_py = ('def gettheapp(appcfg):\n'
                   '    def theapp(environ, start_response):\n'
                   '        start_response("200 OK", [])\n'
@@ -119,13 +116,9 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge!\n")
 
     def test_deploy_new_instance(self):
-        app_cfg = {
-            'urlmap': [
-                {'type': 'wsgi',
-                 'url': '/',
-                 'app_factory': 'mytinyapp:gettheapp'},
-            ],
-        }
+        cfg = {'urlmap': [{'type': 'wsgi',
+                           'url': '/',
+                           'app_factory': 'mytinyapp:gettheapp'}]}
         app_py_tmpl = ('def gettheapp(appcfg):\n'
                        '    def theapp(environ, start_response):\n'
                        '        start_response("200 OK", [])\n'
@@ -133,8 +126,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                        '    return theapp\n')
 
         # deploy instance one
-        instance_folder_1 = path(sarge_cmd("new_instance '{}'"))
-        put_json(app_cfg, instance_folder_1 / 'sargeapp.yaml')
+        instance_folder_1 = path(sarge_cmd("new_instance " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'one'),
             str(instance_folder_1 / 'mytinyapp.py'))
         sarge_cmd("start_instance '%s'" % instance_folder_1.name)
@@ -145,8 +137,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge one!\n")
 
         # deploy instance two
-        instance_folder_2 = path(sarge_cmd("new_instance '{}'"))
-        put_json(app_cfg, instance_folder_2 / 'sargeapp.yaml')
+        instance_folder_2 = path(sarge_cmd("new_instance " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'two'),
             str(instance_folder_2 / 'mytinyapp.py'))
         sarge_cmd("start_instance '%s'" % instance_folder_2.name)
@@ -157,12 +148,8 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge two!\n")
 
     def test_deploy_php(self):
-        instance_folder = path(sarge_cmd("new_instance '{}'"))
-
-        put_json({'urlmap': [
-                    {'type': 'php', 'url': '/'},
-                 ]},
-                 instance_folder / 'sargeapp.yaml')
+        cfg = {'urlmap': [{'type': 'php', 'url': '/'}]}
+        instance_folder = path(sarge_cmd("new_instance " + quote_json(cfg)))
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
         put(StringIO(app_php), str(instance_folder / 'someapp.php'))
@@ -174,11 +161,8 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello from PHP!\n")
 
     def test_deploy_static_site(self):
-        instance_folder = path(sarge_cmd("new_instance '{}'"))
-        put_json({'urlmap': [
-                    {'type': 'static', 'url': '/', 'path': ''},
-                 ]},
-                 instance_folder / 'sargeapp.yaml')
+        cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
+        instance_folder = path(sarge_cmd("new_instance " + quote_json(cfg)))
 
         with cd(str(instance_folder)):
             run("echo 'hello static!' > hello.html")
@@ -196,14 +180,11 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "submarine\n")
 
     def test_start_server_using_default_executable_name(self):
-        instance_folder = path(sarge_cmd("new_instance '{}'"))
+        cfg = {'urlmap': [{'type': 'proxy',
+                           'url': '/',
+                           'upstream_url': 'http://localhost:43423'}]}
+        instance_folder = path(sarge_cmd("new_instance " + quote_json(cfg)))
 
-        put_json({'urlmap': [
-                    {'type': 'proxy',
-                     'url': '/',
-                     'upstream_url': 'http://localhost:43423'},
-                 ]},
-                 instance_folder / 'sargeapp.yaml')
         app_py = ('#!/usr/bin/env python\n'
                   'from wsgiref.simple_server import make_server\n'
                   'def theapp(environ, start_response):\n'
