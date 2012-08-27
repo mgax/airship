@@ -198,7 +198,7 @@ class VarFolderPlugin(object):
 
 class ListenPlugin(object):
 
-    RANDOM_PORT_RANGE = (41300, 41399)
+    RANDOM_PORT_RANGE = (40000, 59999)
 
     def __init__(self, sarge):
         self.sarge = sarge
