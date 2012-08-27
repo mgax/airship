@@ -82,7 +82,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         sudo("mkdir '%(sarge-home)s'" % cfg)
         sudo("chown vagrant: '%(sarge-home)s'" % cfg)
         run("mkdir '%(sarge-home)s'/etc" % cfg)
-        put_json({'plugins': ['sarge:NginxPlugin']},
+        put_json({'plugins': ['sarge:NginxPlugin', 'sarge:ListenPlugin']},
                  cfg['sarge-home'] / 'etc' / 'sarge.yaml',
                  use_sudo=True)
         sarge_cmd("init")
@@ -198,3 +198,28 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
+
+    def test_if_listening_on_random_port_number_nginx_serves_our_page(self):
+        cfg = {
+            'urlmap': [{'type': 'proxy',
+                        'url': '/',
+                        'upstream_url': 'http://localhost:$LISTEN_PORT'}],
+            'services': {'listen': {'type': 'listen', 'port': 'random'}},
+        }
+        instance_folder = path(sarge_cmd("new_instance " + quote_json(cfg)))
+
+        app_py = ('#!/usr/bin/env python\n'
+                  'from wsgiref.simple_server import make_server\n'
+                  'import os, json\n'
+                  'cfg = json.load(open(os.environ["SARGEAPP_CFG"]))\n'
+                  'port = int(cfg["LISTEN_PORT"])\n'
+                  'def theapp(environ, start_response):\n'
+                  '    start_response("200 OK", [])\n'
+                  '    return ["hello sarge! port=%d\\n" % port]\n'
+                  'make_server("0", port, theapp).serve_forever()\n')
+        put(StringIO(app_py), str(instance_folder / 'server'), mode=0755)
+        sarge_cmd("start_instance '%s'" % instance_folder.name)
+        link_in_nginx(instance_folder.name)
+        sudo("service nginx reload")
+
+        self.assertIn("hello sarge!", get_url('http://192.168.13.13:8013/'))
