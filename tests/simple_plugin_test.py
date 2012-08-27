@@ -65,3 +65,8 @@ class ListenPluginTest(SargeTestCase):
         instance = self.configure_and_start({
             'services': {'listen': {'type': 'listen', 'host': '127.0.0.1'}}})
         self.assertEqual(get_appcfg(instance)['LISTEN_HOST'], '127.0.0.1')
+
+    def test_listen_port_is_found_in_appcfg(self):
+        instance = self.configure_and_start({
+            'services': {'listen': {'type': 'listen', 'port': '4327'}}})
+        self.assertEqual(get_appcfg(instance)['LISTEN_PORT'], '4327')

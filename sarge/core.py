@@ -208,6 +208,8 @@ class ListenPlugin(object):
             if record['type'] == 'listen':
                 if 'host' in record:
                     appcfg[name.upper() + '_HOST'] = record['host']
+                if 'port' in record:
+                    appcfg[name.upper() + '_PORT'] = record['port']
 
 
 def init_cmd(sarge, args):
