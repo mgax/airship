@@ -26,7 +26,6 @@ class NginxConfigurationTest(SargeTestCase):
     def configure_and_activate(self, deployment_config):
         instance = sarge(self.tmp).new_instance(deployment_config)
         instance.start()
-        self._instance = instance  # TODO clean this up
         return instance
 
     def assert_equivalent(self, cfg1, cfg2):
