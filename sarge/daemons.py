@@ -63,7 +63,7 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def configure_deployment(self, instance_id, programs):
+    def configure_instance(self, instance_id, programs):
         with self._instance_cfg(instance_id).open('wb') as f:
             for name, cfg in programs:
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % cfg)
@@ -73,7 +73,7 @@ class Supervisor(object):
                 'programs': ','.join(name for name, cfg in programs),
             })
 
-    def remove_deployment(self, instance_id):
+    def remove_instance(self, instance_id):
         self._instance_cfg(instance_id).unlink()
 
     def ctl(self, cmd_args):
@@ -83,13 +83,13 @@ class Supervisor(object):
     def update(self):
         self.ctl(['update'])
 
-    def restart_deployment(self, name):
+    def restart_instance(self, name):
         self.ctl(['restart', name + ':*'])
 
-    def start_deployment(self, name):
+    def start_instance(self, name):
         self.ctl(['start', name + ':*'])
 
-    def stop_deployment(self, name):
+    def stop_instance(self, name):
         self.ctl(['stop', name + ':*'])
 
     def print_status(self):

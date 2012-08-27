@@ -78,15 +78,15 @@ class Instance(object):
 
         self.write_supervisor_program_config(share)
         self.sarge.daemons.update()
-        self.sarge.daemons.restart_deployment(self.id_)
+        self.sarge.daemons.restart_instance(self.id_)
 
     def stop(self):
-        self.sarge.daemons.stop_deployment(self.id_)
+        self.sarge.daemons.stop_instance(self.id_)
         self.sarge.on_instance_stop.send(self)
         self.run_folder.rmtree()
 
     def destroy(self):
-        self.sarge.daemons.remove_deployment(self.id_)
+        self.sarge.daemons.remove_instance(self.id_)
         self.sarge.on_instance_destroy.send(self)
         self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink()
@@ -105,7 +105,7 @@ class Instance(object):
             }
             programs.append((program_name, program_config))
 
-        self.sarge.daemons.configure_deployment(self.id_, programs)
+        self.sarge.daemons.configure_instance(self.id_, programs)
 
 
 class Sarge(object):
