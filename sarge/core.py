@@ -198,6 +198,8 @@ class VarFolderPlugin(object):
 
 class ListenPlugin(object):
 
+    RANDOM_PORT_RANGE = (41300, 41399)
+
     def __init__(self, sarge):
         self.sarge = sarge
         sarge.on_instance_configure.connect(self.configure, weak=False)
@@ -209,7 +211,10 @@ class ListenPlugin(object):
                 if 'host' in record:
                     appcfg[name.upper() + '_HOST'] = record['host']
                 if 'port' in record:
-                    appcfg[name.upper() + '_PORT'] = record['port']
+                    port = record['port']
+                    if port == 'random':
+                        port = random.randint(*self.RANDOM_PORT_RANGE)
+                    appcfg[name.upper() + '_PORT'] = port
 
 
 def init_cmd(sarge, args):
