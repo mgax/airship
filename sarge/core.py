@@ -83,6 +83,7 @@ class Instance(object):
     def stop(self):
         self.sarge.daemons.stop_deployment(self.id_)
         self.sarge.on_instance_stop.send(self)
+        self.run_folder.rmtree()
 
     def destroy(self):
         self.sarge.daemons.remove_deployment(self.id_)

@@ -27,3 +27,10 @@ class WorkflowTest(SargeTestCase):
         self.instance.stop()
         self.assertIn(call(['stop', '%s:*' % self.instance.id_]),
                       self.mock_supervisorctl.mock_calls)
+
+    def test_instance_stop_removes_run_folder(self):
+        self.instance.start()
+        run_folder = self.instance.run_folder
+        self.assertTrue(run_folder.isdir())
+        self.instance.stop()
+        self.assertFalse(run_folder.isdir())
