@@ -131,13 +131,14 @@ class Sarge(object):
             folder.makedirs()
         return folder
 
+    def _instance_config_path(self, instance_id):
+        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + '.yaml')
+
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
 
     def get_instance(self, instance_id):
-        config_path = (self.home_path /
-                       DEPLOYMENT_CFG_DIR /
-                       (instance_id + '.yaml'))
+        config_path = self._instance_config_path(instance_id)
         if not config_path.isfile():
             raise KeyError
 
@@ -162,13 +163,9 @@ class Sarge(object):
 
     def new_instance(self, config={}):
         instance_id = self._generate_instance_id()
-        deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
-        deploy_cfg_dir.mkdir_p()
-        instance_cfg_path = (self.home_path /
-                             DEPLOYMENT_CFG_DIR /
-                             instance_id+'.yaml')
+        (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         instance_folder = self.home_path / instance_id
-        with open(instance_cfg_path, 'wb') as f:
+        with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'name': instance_id,
                 'programs': [
