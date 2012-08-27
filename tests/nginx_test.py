@@ -13,7 +13,7 @@ def read_config(cfg_path):
     return config
 
 
-def sarge(home):
+def create_sarge(home):
     return imp('sarge').Sarge({'home': home, 'plugins': ['sarge:NginxPlugin']})
 
 
@@ -24,7 +24,7 @@ class NginxConfigurationTest(SargeTestCase):
         (self.tmp / 'etc' / 'nginx').makedirs()
 
     def configure_and_activate(self, deployment_config):
-        instance = sarge(self.tmp).new_instance(deployment_config)
+        instance = create_sarge(self.tmp).new_instance(deployment_config)
         instance.start()
         return instance
 
