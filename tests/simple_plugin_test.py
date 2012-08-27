@@ -42,3 +42,38 @@ class VarFolderTest(SargeTestCase):
         instance = self.configure_and_deploy()
         db_path = self.tmp / 'var' / 'data' / 'db'
         self.assertTrue(db_path.isdir())
+
+
+def get_appcfg(instance):
+    with instance.appcfg_path.open() as f:
+        return json.load(f)
+
+
+class ListenPluginTest(SargeTestCase):
+
+    def sarge(self):
+        return imp('sarge').Sarge({
+            'home': self.tmp,
+            'plugins': ['sarge:ListenPlugin']})
+
+    def configure_and_start(self, cfg):
+        instance = self.sarge().new_instance(cfg)
+        instance.start()
+        return instance
+
+    def test_listen_host_is_found_in_appcfg(self):
+        instance = self.configure_and_start({
+            'services': {'listen': {'type': 'listen', 'host': '127.0.0.1'}}})
+        self.assertEqual(get_appcfg(instance)['LISTEN_HOST'], '127.0.0.1')
+
+    def test_listen_port_is_found_in_appcfg(self):
+        instance = self.configure_and_start({
+            'services': {'listen': {'type': 'listen', 'port': '4327'}}})
+        self.assertEqual(get_appcfg(instance)['LISTEN_PORT'], '4327')
+
+    def test_listen_random_port_is_found_in_appcfg(self):
+        instance = self.configure_and_start({
+            'services': {'listen': {'type': 'listen', 'port': 'random'}}})
+        appcfg = get_appcfg(instance)
+        self.assertIn('LISTEN_PORT', appcfg)
+        self.assertTrue(1024 <= int(appcfg['LISTEN_PORT']) < 65536)
