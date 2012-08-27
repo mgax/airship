@@ -176,9 +176,9 @@ class VarFolderPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_configure.connect(self.configure, weak=False)
 
-    def activate_deployment(self, instance, appcfg, **extra):
+    def configure(self, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
         var_tmp = var / 'tmp'
         services = instance.config.get('require-services', {})
