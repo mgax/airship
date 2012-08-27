@@ -82,6 +82,7 @@ class Instance(object):
 
     def stop(self):
         self.sarge.daemons.stop_deployment(self.id_)
+        self.sarge.on_instance_stop.send(self)
 
     def destroy(self):
         self.sarge.daemons.remove_deployment(self.id_)
@@ -111,6 +112,7 @@ class Sarge(object):
     def __init__(self, config):
         self.on_instance_configure = blinker.Signal()
         self.on_instance_start = blinker.Signal()
+        self.on_instance_stop = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.config = config
