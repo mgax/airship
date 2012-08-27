@@ -53,6 +53,9 @@ class Supervisor(object):
     def config_dir(self):
         return self.etc / 'supervisor.d'
 
+    def _instance_cfg(self, instance_id):
+        return self.config_dir / instance_id
+
     def configure(self, home_path):
         with open(self.config_path, 'wb') as f:
             f.write(SUPERVISORD_CFG_TEMPLATE % {
@@ -61,7 +64,7 @@ class Supervisor(object):
             })
 
     def configure_deployment(self, instance_id, programs):
-        with open(self.config_dir / instance_id, 'wb') as f:
+        with self._instance_cfg(instance_id).open('wb') as f:
             for name, cfg in programs:
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % cfg)
 
@@ -69,6 +72,9 @@ class Supervisor(object):
                 'name': instance_id,
                 'programs': ','.join(name for name, cfg in programs),
             })
+
+    def remove_deployment(self, instance_id):
+        self._instance_cfg(instance_id).unlink()
 
     def ctl(self, cmd_args):
         base_args = [self.ctl_path, '-c', self.config_path]

@@ -83,6 +83,9 @@ class Instance(object):
     def stop(self):
         self.sarge.daemons.stop_deployment(self.id_)
 
+    def destroy(self):
+        self.sarge.daemons.remove_deployment(self.id_)
+
     def write_supervisor_program_config(self, share):
         programs = []
         for program_cfg in share['programs']:
