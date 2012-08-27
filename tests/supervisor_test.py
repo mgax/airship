@@ -89,6 +89,15 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config('program:%s_server' % instance.id_, 'directory',
                   instance.folder)
 
+    def test_destroy_instance_removes_its_supervisor_configuration(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        cfg_folder = path(instance.folder + '.cfg')
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
+        self.assertTrue(cfg_path.isfile())
+        instance.destroy()
+        self.assertFalse(cfg_path.isfile())
+
 
 class SupervisorInvocationTest(SargeTestCase):
 

@@ -78,7 +78,18 @@ class Instance(object):
 
         self.write_supervisor_program_config(share)
         self.sarge.daemons.update()
-        self.sarge.daemons.restart_deployment(self.id_)
+        self.sarge.daemons.restart_instance(self.id_)
+
+    def stop(self):
+        self.sarge.daemons.stop_instance(self.id_)
+        self.sarge.on_instance_stop.send(self)
+        self.run_folder.rmtree()
+
+    def destroy(self):
+        self.sarge.daemons.remove_instance(self.id_)
+        self.sarge.on_instance_destroy.send(self)
+        self.folder.rmtree()
+        self.sarge._instance_config_path(self.id_).unlink()
 
     def write_supervisor_program_config(self, share):
         programs = []
@@ -94,7 +105,7 @@ class Instance(object):
             }
             programs.append((program_name, program_config))
 
-        self.sarge.daemons.configure_deployment(self.id_, programs)
+        self.sarge.daemons.configure_instance(self.id_, programs)
 
 
 class Sarge(object):
@@ -105,6 +116,8 @@ class Sarge(object):
     def __init__(self, config):
         self.on_instance_configure = blinker.Signal()
         self.on_instance_start = blinker.Signal()
+        self.on_instance_stop = blinker.Signal()
+        self.on_instance_destroy = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.config = config
@@ -120,13 +133,14 @@ class Sarge(object):
             folder.makedirs()
         return folder
 
+    def _instance_config_path(self, instance_id):
+        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + '.yaml')
+
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
 
     def get_instance(self, instance_id):
-        config_path = (self.home_path /
-                       DEPLOYMENT_CFG_DIR /
-                       (instance_id + '.yaml'))
+        config_path = self._instance_config_path(instance_id)
         if not config_path.isfile():
             raise KeyError
 
@@ -151,13 +165,9 @@ class Sarge(object):
 
     def new_instance(self, config={}):
         instance_id = self._generate_instance_id()
-        deploy_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
-        deploy_cfg_dir.mkdir_p()
-        instance_cfg_path = (self.home_path /
-                             DEPLOYMENT_CFG_DIR /
-                             instance_id+'.yaml')
+        (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         instance_folder = self.home_path / instance_id
-        with open(instance_cfg_path, 'wb') as f:
+        with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'name': instance_id,
                 'programs': [
@@ -236,6 +246,14 @@ def start_instance_cmd(sarge, args):
     sarge.get_instance(args.id).start()
 
 
+def stop_instance_cmd(sarge, args):
+    sarge.get_instance(args.id).stop()
+
+
+def destroy_instance_cmd(sarge, args):
+    sarge.get_instance(args.id).destroy()
+
+
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
@@ -249,6 +267,12 @@ def build_args_parser():
     start_instance_parser = subparsers.add_parser('start_instance')
     start_instance_parser.set_defaults(func=start_instance_cmd)
     start_instance_parser.add_argument('id')
+    stop_instance_parser = subparsers.add_parser('stop_instance')
+    stop_instance_parser.set_defaults(func=stop_instance_cmd)
+    stop_instance_parser.add_argument('id')
+    destroy_instance_parser = subparsers.add_parser('destroy_instance')
+    destroy_instance_parser.set_defaults(func=destroy_instance_cmd)
+    destroy_instance_parser.add_argument('id')
     return parser
 
 

@@ -69,3 +69,28 @@ class PluginApiTest(SargeTestCase):
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")
+
+    def test_instance_stop_triggers_stop_signal(self):
+        stopped = []
+        sarge = self.sarge()
+        @sarge.on_instance_stop.connect
+        def handler(instance, **extra):
+            stopped.append(instance.id_)
+
+        instance = sarge.new_instance()
+        instance.start()
+        instance.stop()
+        self.assertEqual(stopped, [instance.id_])
+
+    def test_instance_destroy_triggers_destroy_signal(self):
+        destroyed = []
+        sarge = self.sarge()
+        @sarge.on_instance_destroy.connect
+        def handler(instance, **extra):
+            destroyed.append(instance.id_)
+
+        instance = sarge.new_instance()
+        instance.start()
+        instance.stop()
+        instance.destroy()
+        self.assertEqual(destroyed, [instance.id_])

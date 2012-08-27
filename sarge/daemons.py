@@ -53,6 +53,9 @@ class Supervisor(object):
     def config_dir(self):
         return self.etc / 'supervisor.d'
 
+    def _instance_cfg(self, instance_id):
+        return self.config_dir / instance_id
+
     def configure(self, home_path):
         with open(self.config_path, 'wb') as f:
             f.write(SUPERVISORD_CFG_TEMPLATE % {
@@ -60,8 +63,8 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def configure_deployment(self, instance_id, programs):
-        with open(self.config_dir / instance_id, 'wb') as f:
+    def configure_instance(self, instance_id, programs):
+        with self._instance_cfg(instance_id).open('wb') as f:
             for name, cfg in programs:
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % cfg)
 
@@ -70,6 +73,9 @@ class Supervisor(object):
                 'programs': ','.join(name for name, cfg in programs),
             })
 
+    def remove_instance(self, instance_id):
+        self._instance_cfg(instance_id).unlink()
+
     def ctl(self, cmd_args):
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)
@@ -77,13 +83,13 @@ class Supervisor(object):
     def update(self):
         self.ctl(['update'])
 
-    def restart_deployment(self, name):
+    def restart_instance(self, name):
         self.ctl(['restart', name + ':*'])
 
-    def start_deployment(self, name):
+    def start_instance(self, name):
         self.ctl(['start', name + ':*'])
 
-    def stop_deployment(self, name):
+    def stop_instance(self, name):
         self.ctl(['stop', name + ':*'])
 
     def print_status(self):

@@ -209,3 +209,13 @@ class NginxConfigurationTest(SargeTestCase):
         conf_ok = ("location /media { alias %s/mymedia/Forest; }" %
                    instance.folder)
         self.assert_equivalent(nginx_conf, conf_ok)
+
+    def test_nginx_configuration_is_removed_on_instance_stop(self):
+        instance = self.configure_and_activate({})
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        cfg_site = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-site')
+        self.assertTrue(cfg_urlmap.isfile())
+        self.assertTrue(cfg_site.isfile())
+        instance.stop()
+        self.assertFalse(cfg_urlmap.isfile())
+        self.assertFalse(cfg_site.isfile())
