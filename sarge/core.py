@@ -47,7 +47,6 @@ class Instance(object):
         self.log_path = var / 'log' / (self.id_ + '.log')
 
     def start(self):
-        version_folder = self.folder
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
         share = {'programs': self.config.get('programs', [])}
@@ -57,7 +56,7 @@ class Instance(object):
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
-            script_path = version_folder / 'quickapp.py'
+            script_path = self.folder / 'quickapp.py'
             log.debug("Writing WSGI script for instance %r at %r.",
                       self.id_, script_path)
             with open(script_path, 'wb') as f:
@@ -72,23 +71,23 @@ class Instance(object):
             share['programs'].append({
                 'name': 'fcgi_wsgi',
                 'command': "%s %s" % (sys.executable,
-                                      version_folder / 'quickapp.py'),
+                                      self.folder / 'quickapp.py'),
             })
 
         with self.appcfg_path.open('wb') as f:
             json.dump(self._appcfg, f, indent=2)
 
-        self.write_supervisor_program_config(version_folder, share)
+        self.write_supervisor_program_config(share)
         self.sarge.daemons.update()
         self.sarge.daemons.restart_deployment(self.id_)
 
-    def write_supervisor_program_config(self, version_folder, share):
+    def write_supervisor_program_config(self, share):
         programs = []
         for program_cfg in share['programs']:
             program_name = self.id_ + '_' + program_cfg['name']
             program_config = {
                 'name': program_name,
-                'directory': version_folder,
+                'directory': self.folder,
                 'run': self.run_folder,
                 'log': self.log_path,
                 'environment': 'SARGEAPP_CFG="%s"\n' % self.appcfg_path,
