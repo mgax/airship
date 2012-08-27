@@ -86,6 +86,7 @@ class Instance(object):
 
     def destroy(self):
         self.sarge.daemons.remove_deployment(self.id_)
+        self.sarge.on_instance_destroy.send(self)
 
     def write_supervisor_program_config(self, share):
         programs = []
@@ -113,6 +114,7 @@ class Sarge(object):
         self.on_instance_configure = blinker.Signal()
         self.on_instance_start = blinker.Signal()
         self.on_instance_stop = blinker.Signal()
+        self.on_instance_destroy = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.config = config
