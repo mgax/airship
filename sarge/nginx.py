@@ -23,14 +23,14 @@ class NginxPlugin(object):
 
     STATIC_TEMPLATE = (
         'location %(url)s {\n'
-        '    alias %(version_folder)s/%(path)s;\n'
+        '    alias %(instance_folder)s/%(path)s;\n'
         '}\n')
 
     PHP_TEMPLATE = (
         'location %(url)s {\n'
         '    include %(fcgi_params_path)s;\n'
         '    fastcgi_param SCRIPT_FILENAME '
-                '%(version_folder)s$fastcgi_script_name;\n'
+                '%(instance_folder)s$fastcgi_script_name;\n'
         '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
         '    fastcgi_param SCRIPT_NAME "";\n'
         '    fastcgi_pass unix:%(socket_path)s;\n'
@@ -78,13 +78,6 @@ class NginxPlugin(object):
     def activate_deployment(self, instance, share, **extra):
         version_folder = instance.folder
 
-        app_config_path = version_folder / 'sargeapp.yaml'
-        if app_config_path.exists():
-            with open(app_config_path, 'rb') as f:
-                app_config = yaml.load(f)
-        else:
-            app_config = {}
-
         conf_path = self.etc_nginx / (instance.id_ + '-site')
         urlmap_path = self.etc_nginx / (instance.id_ + '-urlmap')
 
@@ -98,12 +91,12 @@ class NginxPlugin(object):
 
         conf_urlmap = ""
 
-        for entry in app_config.get('urlmap', []):
+        for entry in instance.config.get('urlmap', []):
             log.debug("urlmap entry: %r", entry)
 
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
-                        version_folder=version_folder)
+                        instance_folder=instance.folder)
             elif entry['type'] == 'wsgi':
                 socket_path = instance.run_folder / 'wsgi-app.sock'
                 conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
@@ -115,7 +108,7 @@ class NginxPlugin(object):
                 socket_path = instance.run_folder / 'php.sock'
                 conf_urlmap += self.PHP_TEMPLATE % dict(entry,
                         socket_path=socket_path,
-                        version_folder=version_folder,
+                        instance_folder=instance.folder,
                         fcgi_params_path=self.fcgi_params_path)
 
                 share['programs'].append({
