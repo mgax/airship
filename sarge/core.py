@@ -88,6 +88,8 @@ class Instance(object):
     def destroy(self):
         self.sarge.daemons.remove_deployment(self.id_)
         self.sarge.on_instance_destroy.send(self)
+        self.folder.rmtree()
+        self.sarge._instance_config_path(self.id_).unlink()
 
     def write_supervisor_program_config(self, share):
         programs = []

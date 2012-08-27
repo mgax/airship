@@ -34,3 +34,15 @@ class WorkflowTest(SargeTestCase):
         self.assertTrue(run_folder.isdir())
         self.instance.stop()
         self.assertFalse(run_folder.isdir())
+
+    def test_instance_destroy_removes_instance_folder_and_yaml(self):
+        self.instance.start()
+        instance_folder = self.instance.folder
+        sarge = self.instance.sarge
+        yaml_path = sarge._instance_config_path(self.instance.id_)
+        self.assertTrue(instance_folder.isdir())
+        self.assertTrue(yaml_path.isfile())
+        self.instance.stop()
+        self.instance.destroy()
+        self.assertFalse(instance_folder.isdir())
+        self.assertFalse(yaml_path.isfile())
