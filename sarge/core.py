@@ -189,13 +189,13 @@ class VarFolderPlugin(object):
                 service_path = tempfile.mkdtemp(dir=var_tmp)
                 if not service_path.isdir():
                     service_path.makedirs()
-                appcfg['services'][name] = service_path
+                appcfg[name.upper() + '_PATH'] = service_path
 
             elif record['type'] == 'persistent-folder':
                 service_path = var / 'data' / name
                 if not service_path.isdir():
                     service_path.makedirs()
-                appcfg['services'][name] = service_path
+                appcfg[name.upper() + '_PATH'] = service_path
 
 
 def init_cmd(sarge, args):

@@ -24,7 +24,7 @@ class VarFolderTest(SargeTestCase):
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         tmp_path = self.tmp / 'var' / 'tmp'
-        self.assertEqual(path(appcfg['services']['volatile']).parent, tmp_path)
+        self.assertEqual(path(appcfg['VOLATILE_PATH']).parent, tmp_path)
 
     def test_deploy_creates_var_folder(self):
         instance = self.configure_and_deploy()
@@ -36,7 +36,7 @@ class VarFolderTest(SargeTestCase):
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         db_path = self.tmp / 'var' / 'data' / 'db'
-        self.assertEqual(appcfg['services']['db'], db_path)
+        self.assertEqual(appcfg['DB_PATH'], db_path)
 
     def test_deploy_creates_persistent_folder(self):
         instance = self.configure_and_deploy()
