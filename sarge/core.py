@@ -50,9 +50,7 @@ class Instance(object):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
         share = {'programs': self.config.get('programs', [])}
-        services = dict((s['name'], s)
-                        for s in self.config.get('services', []))
-        self._appcfg = {'services': services}
+        self._appcfg = {}
         self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
