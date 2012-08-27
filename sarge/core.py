@@ -196,6 +196,20 @@ class VarFolderPlugin(object):
                 appcfg[name.upper() + '_PATH'] = service_path
 
 
+class ListenPlugin(object):
+
+    def __init__(self, sarge):
+        self.sarge = sarge
+        sarge.on_instance_configure.connect(self.configure, weak=False)
+
+    def configure(self, instance, appcfg, **extra):
+        services = instance.config.get('require-services', {})
+        for name, record in services.iteritems():
+            if record['type'] == 'listen':
+                if 'host' in record:
+                    appcfg[name.upper() + '_HOST'] = record['host']
+
+
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
     (sarge.home_path / 'etc').mkdir_p()
