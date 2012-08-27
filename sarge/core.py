@@ -239,6 +239,10 @@ def start_instance_cmd(sarge, args):
     sarge.get_instance(args.id).start()
 
 
+def stop_instance_cmd(sarge, args):
+    sarge.get_instance(args.id).stop()
+
+
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
@@ -252,6 +256,9 @@ def build_args_parser():
     start_instance_parser = subparsers.add_parser('start_instance')
     start_instance_parser.set_defaults(func=start_instance_cmd)
     start_instance_parser.add_argument('id')
+    stop_instance_parser = subparsers.add_parser('stop_instance')
+    stop_instance_parser.set_defaults(func=stop_instance_cmd)
+    stop_instance_parser.add_argument('id')
     return parser
 
 

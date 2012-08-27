@@ -26,6 +26,12 @@ class ShellTest(SargeTestCase):
         imp('sarge.core').main([str(self.tmp), 'start_instance', instance.id_])
         self.assertEqual(start.mock_calls, [call()])
 
+    @patch('sarge.core.Instance.stop')
+    def test_stop_instance_calls_api_method(self, stop):
+        instance = self.sarge().new_instance()
+        imp('sarge.core').main([str(self.tmp), 'stop_instance', instance.id_])
+        self.assertEqual(stop.mock_calls, [call()])
+
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
         (other_tmp / 'etc').mkdir()
