@@ -158,13 +158,13 @@ class Sarge(object):
                              instance_id+'.yaml')
         instance_folder = self.home_path / instance_id
         with open(instance_cfg_path, 'wb') as f:
-            services = config.get('services')
             json.dump({
                 'name': instance_id,
                 'programs': [
                     {'name': 'server', 'command': instance_folder / 'server'},
                 ],
-                'require-services': services,
+                'require-services': config.get('services'),
+                'urlmap': config.get('urlmap', []),
             }, f)
         instance = self.get_instance(instance_id)
         return instance

@@ -78,13 +78,6 @@ class NginxPlugin(object):
     def activate_deployment(self, instance, share, **extra):
         version_folder = instance.folder
 
-        app_config_path = version_folder / 'sargeapp.yaml'
-        if app_config_path.exists():
-            with open(app_config_path, 'rb') as f:
-                app_config = yaml.load(f)
-        else:
-            app_config = {}
-
         conf_path = self.etc_nginx / (instance.id_ + '-site')
         urlmap_path = self.etc_nginx / (instance.id_ + '-urlmap')
 
@@ -98,7 +91,7 @@ class NginxPlugin(object):
 
         conf_urlmap = ""
 
-        for entry in app_config.get('urlmap', []):
+        for entry in instance.config.get('urlmap', []):
             log.debug("urlmap entry: %r", entry)
 
             if entry['type'] == 'static':

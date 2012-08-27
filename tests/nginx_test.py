@@ -23,10 +23,8 @@ class NginxConfigurationTest(SargeTestCase):
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
         (self.tmp / 'etc' / 'nginx').makedirs()
 
-    def configure_and_activate(self, app_config, deployment_config={}):
+    def configure_and_activate(self, deployment_config):
         instance = sarge(self.tmp).new_instance(deployment_config)
-        with open(instance.folder / 'sargeapp.yaml', 'wb') as f:
-            json.dump(app_config, f)
         instance.start()
         self._instance = instance  # TODO clean this up
         return instance
@@ -178,7 +176,7 @@ class NginxConfigurationTest(SargeTestCase):
 
     @skip('Arbitrary nginx options are ignored when using instance api')
     def test_configure_nginx_arbitrary_options(self):
-        instance = self.configure_and_activate({}, {
+        instance = self.configure_and_activate({
             'nginx_options': {
                 'server_name': 'something.example.com',
                 'listen': '8013',
