@@ -163,7 +163,7 @@ class Sarge(object):
                 'programs': [
                     {'name': 'server', 'command': instance_folder / 'server'},
                 ],
-                'require-services': config.get('services'),
+                'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
             }, f)
         instance = self.get_instance(instance_id)
