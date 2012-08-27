@@ -50,9 +50,8 @@ class Instance(object):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
         share = {'programs': self.config.get('programs', [])}
-        services = dict((s['name'], s)
-                        for s in self.config.get('services', []))
-        self._appcfg = {'services': services}
+        self._appcfg = {}
+        self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -104,6 +103,7 @@ class Sarge(object):
     """
 
     def __init__(self, config):
+        self.on_instance_configure = blinker.Signal()
         self.on_instance_start = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
@@ -174,9 +174,9 @@ class VarFolderPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
+        sarge.on_instance_configure.connect(self.configure, weak=False)
 
-    def activate_deployment(self, instance, appcfg, **extra):
+    def configure(self, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
         var_tmp = var / 'tmp'
         services = instance.config.get('require-services', {})
@@ -187,13 +187,13 @@ class VarFolderPlugin(object):
                 service_path = tempfile.mkdtemp(dir=var_tmp)
                 if not service_path.isdir():
                     service_path.makedirs()
-                appcfg['services'][name] = service_path
+                appcfg[name.upper() + '_PATH'] = service_path
 
             elif record['type'] == 'persistent-folder':
                 service_path = var / 'data' / name
                 if not service_path.isdir():
                     service_path.makedirs()
-                appcfg['services'][name] = service_path
+                appcfg[name.upper() + '_PATH'] = service_path
 
 
 def init_cmd(sarge, args):
