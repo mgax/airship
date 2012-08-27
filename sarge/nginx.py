@@ -1,4 +1,5 @@
 import logging
+from string import Template
 import yaml
 from path import path
 from .util import ensure_folder, force_symlink
@@ -6,6 +7,12 @@ import subprocess
 
 
 log = logging.getLogger(__name__)
+
+
+def interpolate_config(raw_entry, appcfg):
+    def interpolate(value):
+        return Template(value).substitute(appcfg)
+    return dict((k, interpolate(v)) for k, v in raw_entry.iteritems())
 
 
 class NginxPlugin(object):
@@ -75,7 +82,7 @@ class NginxPlugin(object):
             sarge_sites_conf.write_text('include %s/*;\n' % self.etc_nginx)
         self.etc_nginx.makedirs_p()
 
-    def activate_deployment(self, instance, share, **extra):
+    def activate_deployment(self, instance, share, appcfg, **extra):
         version_folder = instance.folder
 
         conf_path = self.etc_nginx / (instance.id_ + '-site')
@@ -91,8 +98,10 @@ class NginxPlugin(object):
 
         conf_urlmap = ""
 
-        for entry in instance.config.get('urlmap', []):
-            log.debug("urlmap entry: %r", entry)
+        for raw_entry in instance.config.get('urlmap', []):
+            log.debug("urlmap entry: %r", raw_entry)
+
+            entry = interpolate_config(raw_entry, appcfg)
 
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,

@@ -13,7 +13,7 @@ def read_config(cfg_path):
     return config
 
 
-def sarge(home):
+def create_sarge(home):
     return imp('sarge').Sarge({'home': home, 'plugins': ['sarge:NginxPlugin']})
 
 
@@ -23,8 +23,10 @@ class NginxConfigurationTest(SargeTestCase):
         self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
         (self.tmp / 'etc' / 'nginx').makedirs()
 
-    def configure_and_activate(self, deployment_config):
-        instance = sarge(self.tmp).new_instance(deployment_config)
+    def configure_and_activate(self, deployment_config, sarge=None):
+        if sarge is None:
+            sarge = create_sarge(self.tmp)
+        instance = sarge.new_instance(deployment_config)
         instance.start()
         return instance
 
@@ -190,3 +192,20 @@ class NginxConfigurationTest(SargeTestCase):
             '    server_name something.example.com; '
             '    include %(urlmap_path)s; '
             '}' % {'urlmap_path': cfg_urlmap})
+
+    def test_urlmap_value_is_interpolated_with_app_config_variable(self):
+        sarge = create_sarge(self.tmp)
+        @sarge.on_instance_configure.connect
+        def set_landcover(instance, appcfg, **extra):
+            appcfg['LANDCOVER'] = "Forest"
+
+        instance = self.configure_and_activate({
+            'urlmap': [{'url': '/media',
+                        'type': 'static',
+                        'path': 'mymedia/$LANDCOVER'}]}, sarge=sarge)
+        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
+        with open(cfg_urlmap, 'rb') as f:
+            nginx_conf = f.read()
+        conf_ok = ("location /media { alias %s/mymedia/Forest; }" %
+                   instance.folder)
+        self.assert_equivalent(nginx_conf, conf_ok)
