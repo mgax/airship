@@ -56,3 +56,16 @@ class PluginApiTest(SargeTestCase):
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
         self.assertEqual(appcfg['your-order'], "is here")
+
+    def test_value_injected_via_configure_event_is_available_to_app(self):
+        sarge = self.sarge()
+        @sarge.on_instance_configure.connect
+        def handler(instance, appcfg, **extra):
+            appcfg['your-order'] = "is here"
+
+        instance = sarge.new_instance()
+        instance.start()
+
+        with instance.appcfg_path.open() as f:
+            appcfg = json.load(f)
+        self.assertEqual(appcfg['your-order'], "is here")

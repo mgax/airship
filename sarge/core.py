@@ -53,6 +53,7 @@ class Instance(object):
         services = dict((s['name'], s)
                         for s in self.config.get('services', []))
         self._appcfg = {'services': services}
+        self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
@@ -104,6 +105,7 @@ class Sarge(object):
     """
 
     def __init__(self, config):
+        self.on_instance_configure = blinker.Signal()
         self.on_instance_start = blinker.Signal()
         self.on_initialize = blinker.Signal()
         self.home_path = config['home']
