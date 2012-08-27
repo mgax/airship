@@ -20,3 +20,10 @@ class WorkflowTest(SargeTestCase):
                       self.mock_supervisorctl.mock_calls)
         self.assertIn(call(['restart', '%s:*' % self.instance.id_]),
                       self.mock_supervisorctl.mock_calls)
+
+    def test_instance_stop_triggers_supervisord_stop(self):
+        self.instance.start()
+        self.mock_supervisorctl.reset_mock()
+        self.instance.stop()
+        self.assertIn(call(['stop', '%s:*' % self.instance.id_]),
+                      self.mock_supervisorctl.mock_calls)
