@@ -1,8 +1,6 @@
-import json
 import re
 from unittest import skip
 from path import path
-from mock import call
 from common import SargeTestCase, imp
 
 
@@ -190,10 +188,11 @@ class NginxConfigurationTest(SargeTestCase):
             '    listen 8013; '
             '    server_name something.example.com; '
             '    include %(urlmap_path)s; '
-            '}' % {'urlmap_path': cfg_urlmap})
+            '}' % {'urlmap_path': cfg_site})
 
     def test_urlmap_value_is_interpolated_with_app_config_variable(self):
         sarge = create_sarge(self.tmp)
+
         @sarge.on_instance_configure.connect
         def set_landcover(instance, appcfg, **extra):
             appcfg['LANDCOVER'] = "Forest"

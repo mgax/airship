@@ -27,7 +27,7 @@ class VarFolderTest(SargeTestCase):
         self.assertEqual(path(appcfg['VOLATILE_PATH']).parent, tmp_path)
 
     def test_deploy_creates_var_folder(self):
-        instance = self.configure_and_deploy()
+        self.configure_and_deploy()
         tmp_path = self.tmp / 'var' / 'tmp'
         self.assertTrue(len(tmp_path.listdir()), 1)
 
@@ -39,7 +39,7 @@ class VarFolderTest(SargeTestCase):
         self.assertEqual(appcfg['DB_PATH'], db_path)
 
     def test_deploy_creates_persistent_folder(self):
-        instance = self.configure_and_deploy()
+        self.configure_and_deploy()
         db_path = self.tmp / 'var' / 'data' / 'db'
         self.assertTrue(db_path.isdir())
 

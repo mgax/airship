@@ -1,4 +1,4 @@
-from mock import Mock, patch, call, ANY
+from mock import Mock, patch, call
 from common import SargeTestCase
 
 

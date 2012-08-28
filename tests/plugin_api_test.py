@@ -1,5 +1,4 @@
 import json
-from path import path
 from mock import Mock, call
 from common import SargeTestCase, imp
 
@@ -41,6 +40,7 @@ class PluginApiTest(SargeTestCase):
 
     def test_value_injected_via_configure_event_is_available_to_app(self):
         sarge = self.sarge()
+
         @sarge.on_instance_configure.connect
         def handler(instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
@@ -55,6 +55,7 @@ class PluginApiTest(SargeTestCase):
     def test_instance_stop_triggers_stop_signal(self):
         stopped = []
         sarge = self.sarge()
+
         @sarge.on_instance_stop.connect
         def handler(instance, **extra):
             stopped.append(instance.id_)
@@ -67,6 +68,7 @@ class PluginApiTest(SargeTestCase):
     def test_instance_destroy_triggers_destroy_signal(self):
         destroyed = []
         sarge = self.sarge()
+
         @sarge.on_instance_destroy.connect
         def handler(instance, **extra):
             destroyed.append(instance.id_)
