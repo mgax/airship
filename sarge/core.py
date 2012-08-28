@@ -100,9 +100,10 @@ class Sarge(object):
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
+        self._plugins = []
         for plugin_name in self.config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
-            plugin_factory(self)
+            self._plugins.append(plugin_factory(self))
 
     @property
     def cfg_links_folder(self):
