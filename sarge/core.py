@@ -18,6 +18,7 @@ DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
 
 QUICK_WSGI_APP_TEMPLATE = """\
+#!%(python_bin)s
 from flup.server.fcgi import WSGIServer
 from importlib import import_module
 appcfg = %(appcfg)r
@@ -55,23 +56,19 @@ class Instance(object):
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
-            script_path = self.folder / 'quickapp.py'
+            script_path = self.folder / 'server'
             log.debug("Writing WSGI script for instance %r at %r.",
                       self.id_, script_path)
             with open(script_path, 'wb') as f:
                 module_name, attribute_name = app_import_name.split(':')
                 f.write(QUICK_WSGI_APP_TEMPLATE % {
+                    'python_bin': sys.executable,
                     'module_name': module_name,
                     'attribute_name': attribute_name,
                     'socket_path': str(self.run_folder / 'wsgi-app.sock'),
                     'appcfg': self._appcfg,
                 })
-
-            share['programs'].append({
-                'name': 'fcgi_wsgi',
-                'command': "%s %s" % (sys.executable,
-                                      self.folder / 'quickapp.py'),
-            })
+            script_path.chmod(0755)
 
         with self.appcfg_path.open('wb') as f:
             json.dump(self._appcfg, f, indent=2)
