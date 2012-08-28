@@ -53,13 +53,14 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'unix://' + self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
+    def instance_cfg(self, instance):
+        return self.tmp / 'etc' / 'supervisor.d' / instance.id_
+
     def test_generate_supervisord_cfg_with_run_command(self):
         instance = self.sarge().new_instance()
         instance.start()
 
-        cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
-        eq_config = config_file_checker(cfg_path)
+        eq_config = config_file_checker(self.instance_cfg(instance))
         section = 'program:%s' % instance.id_
 
         eq_config(section, 'command', instance.folder / 'server')
@@ -93,7 +94,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance = self.sarge().new_instance()
         instance.start()
 
-        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
         eq_config('program:%s' % instance.id_, 'directory',
@@ -102,7 +102,6 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_destroy_instance_removes_its_supervisor_configuration(self):
         instance = self.sarge().new_instance()
         instance.start()
-        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         self.assertTrue(cfg_path.isfile())
         instance.destroy()
