@@ -31,6 +31,9 @@ def config_file_checker(cfg_path):
 
 class SupervisorConfigurationTest(SargeTestCase):
 
+    def setUp(self):
+        self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
+
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
 
@@ -68,6 +71,23 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startretries', '1')
         eq_config(section, 'environment',
                   'SARGEAPP_CFG="%s"' % instance.appcfg_path)
+
+    def test_instance_start_triggers_supervisord_reread_and_restart(self):
+        self.mock_supervisorctl.reset_mock()
+        instance = self.sarge().new_instance()
+        instance.start()
+        self.assertIn(call(['update']),
+                      self.mock_supervisorctl.mock_calls)
+        self.assertIn(call(['restart', '%s' % instance.id_]),
+                      self.mock_supervisorctl.mock_calls)
+
+    def test_instance_stop_triggers_supervisord_stop(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        self.mock_supervisorctl.reset_mock()
+        instance.stop()
+        self.assertIn(call(['stop', '%s' % instance.id_]),
+                      self.mock_supervisorctl.mock_calls)
 
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()
