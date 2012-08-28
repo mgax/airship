@@ -1,9 +1,5 @@
 import logging
 from string import Template
-import yaml
-from path import path
-from .util import ensure_folder, force_symlink
-import subprocess
 
 
 log = logging.getLogger(__name__)
@@ -90,8 +86,6 @@ class NginxPlugin(object):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
     def activate_deployment(self, instance, appcfg, **extra):
-        version_folder = instance.folder
-
         conf_path = self._conf_site_path(instance)
         urlmap_path = self._conf_urlmap_path(instance)
 

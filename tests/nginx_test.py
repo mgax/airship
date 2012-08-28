@@ -20,7 +20,6 @@ def create_sarge(home):
 class NginxConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        self.mock_nginx_subprocess = self.patch('sarge.nginx.subprocess')
         (self.tmp / 'etc' / 'nginx').makedirs()
 
     def configure_and_activate(self, deployment_config, sarge=None):

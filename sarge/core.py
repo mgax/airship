@@ -144,7 +144,6 @@ class Sarge(object):
     def new_instance(self, config={}):
         instance_id = self._generate_instance_id()
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
-        instance_folder = self.home_path / instance_id
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'name': instance_id,
