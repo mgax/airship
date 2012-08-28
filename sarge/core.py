@@ -72,12 +72,10 @@ class Instance(object):
         with self.appcfg_path.open('wb') as f:
             json.dump(self._appcfg, f, indent=2)
 
-        self.sarge.daemons.configure_instance(self)
-        self.sarge.daemons.update()
-        self.sarge.daemons.restart_instance(self.id_)
+        self.sarge.daemons.start_instance(self)
 
     def stop(self):
-        self.sarge.daemons.stop_instance(self.id_)
+        self.sarge.daemons.stop_instance(self)
         self.sarge.on_instance_stop.send(self)
         self.run_folder.rmtree()
 

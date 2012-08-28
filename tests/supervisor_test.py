@@ -68,27 +68,39 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
-        eq_config(section, 'autostart', 'false')
         eq_config(section, 'startretries', '1')
         eq_config(section, 'environment',
                   'SARGEAPP_CFG="%s"' % instance.appcfg_path)
 
-    def test_instance_start_triggers_supervisord_reread_and_restart(self):
+    def test_instance_start_changes_autostart_to_true(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+
+        eq_config = config_file_checker(self.instance_cfg(instance))
+        eq_config('program:%s' % instance.id_, 'autostart', 'true')
+
+    def test_instance_stop_changes_autostart_to_false(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        instance.stop()
+
+        eq_config = config_file_checker(self.instance_cfg(instance))
+        eq_config('program:%s' % instance.id_, 'autostart', 'false')
+
+    def test_instance_start_triggers_supervisord_update(self):
         self.mock_supervisorctl.reset_mock()
         instance = self.sarge().new_instance()
         instance.start()
-        self.assertIn(call(['update']),
-                      self.mock_supervisorctl.mock_calls)
-        self.assertIn(call(['restart', '%s' % instance.id_]),
-                      self.mock_supervisorctl.mock_calls)
+        self.assertEqual(self.mock_supervisorctl.mock_calls,
+                         [call(['update'])])
 
-    def test_instance_stop_triggers_supervisord_stop(self):
+    def test_instance_stop_triggers_supervisord_update(self):
         instance = self.sarge().new_instance()
         instance.start()
         self.mock_supervisorctl.reset_mock()
         instance.stop()
-        self.assertIn(call(['stop', '%s' % instance.id_]),
-                      self.mock_supervisorctl.mock_calls)
+        self.assertEqual(self.mock_supervisorctl.mock_calls,
+                         [call(['update'])])
 
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()

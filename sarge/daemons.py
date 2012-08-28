@@ -31,7 +31,7 @@ redirect_stderr = true
 stdout_logfile = %(log)s
 startsecs = 2
 startretries = 1
-autostart = false
+autostart = %(autostart)s
 environment = %(environment)s
 command = %(command)s
 """
@@ -64,7 +64,7 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def configure_instance(self, instance):
+    def _configure_instance(self, instance, autostart):
         with self._instance_cfg(instance.id_).open('wb') as f:
             f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
                 'name': instance.id_,
@@ -73,6 +73,7 @@ class Supervisor(object):
                 'log': instance.log_path,
                 'environment': 'SARGEAPP_CFG="%s"' % instance.appcfg_path,
                 'command': instance.folder / 'server',
+                'autostart': 'true' if autostart else 'false',
             })
 
     def remove_instance(self, instance_id):
@@ -82,17 +83,16 @@ class Supervisor(object):
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)
 
-    def update(self):
-        self.ctl(['update'])
-
     def restart_instance(self, name):
         self.ctl(['restart', name])
 
-    def start_instance(self, name):
-        self.ctl(['start', name])
+    def start_instance(self, instance):
+        self._configure_instance(instance, True)
+        self.ctl(['update'])
 
-    def stop_instance(self, name):
-        self.ctl(['stop', name])
+    def stop_instance(self, instance):
+        self._configure_instance(instance, False)
+        self.ctl(['update'])
 
     def print_status(self):
         self.ctl(['status'])
