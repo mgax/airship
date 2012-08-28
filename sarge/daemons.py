@@ -63,14 +63,20 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def configure_instance(self, instance_id, programs):
-        with self._instance_cfg(instance_id).open('wb') as f:
-            for name, cfg in programs:
-                f.write(SUPERVISORD_PROGRAM_TEMPLATE % cfg)
+    def configure_instance(self, instance):
+        with self._instance_cfg(instance.id_).open('wb') as f:
+            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                'name': instance.id_ + '_server',
+                'directory': instance.folder,
+                'run': instance.run_folder,
+                'log': instance.log_path,
+                'environment': 'SARGEAPP_CFG="%s"' % instance.appcfg_path,
+                'command': instance.folder / 'server',
+            })
 
             f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
-                'name': instance_id,
-                'programs': ','.join(name for name, cfg in programs),
+                'name': instance.id_,
+                'programs': instance.id_ + '_server',
             })
 
     def remove_instance(self, instance_id):
