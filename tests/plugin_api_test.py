@@ -20,7 +20,7 @@ class PluginApiTest(SargeTestCase):
     def test_subscribe_to_activation_event(self):
         mock_handler = Mock(im_self=None)
         sarge = self.sarge()
-        sarge.on_instance_start.connect(mock_handler, sarge)
+        self.signal('instance-will-start').connect(mock_handler, sarge)
         sarge.new_instance().start()
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
@@ -29,7 +29,7 @@ class PluginApiTest(SargeTestCase):
             appcfg['your-order'] = "is here"
 
         sarge = self.sarge()
-        sarge.on_instance_start.connect(handler, sarge)
+        self.signal('instance-will-start').connect(handler, sarge)
 
         instance = sarge.new_instance()
         instance.start()
@@ -39,9 +39,10 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(appcfg['your-order'], "is here")
 
     def test_value_injected_via_configure_event_is_available_to_app(self):
+        from sarge import signals
         sarge = self.sarge()
 
-        @sarge.on_instance_configure.connect_via(sarge, weak=True)
+        @signals.instance_configuring.connect_via(sarge, weak=True)
         def handler(sarge, instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
@@ -53,10 +54,11 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(appcfg['your-order'], "is here")
 
     def test_instance_stop_triggers_stop_signal(self):
+        from sarge import signals
         stopped = []
         sarge = self.sarge()
 
-        @sarge.on_instance_stop.connect_via(sarge, weak=True)
+        @signals.instance_has_stopped.connect_via(sarge, weak=True)
         def handler(sarge, instance, **extra):
             stopped.append(instance.id_)
 
@@ -66,10 +68,11 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(stopped, [instance.id_])
 
     def test_instance_destroy_triggers_destroy_signal(self):
+        from sarge import signals
         destroyed = []
         sarge = self.sarge()
 
-        @sarge.on_instance_destroy.connect_via(sarge, weak=True)
+        @signals.instance_will_be_destroyed.connect_via(sarge, weak=True)
         def handler(sarge, instance, **extra):
             destroyed.append(instance.id_)
 

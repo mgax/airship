@@ -1,5 +1,6 @@
 import logging
 from string import Template
+from . import signals
 
 
 log = logging.getLogger(__name__)
@@ -58,9 +59,9 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_start.connect(self.activate_deployment, sarge)
-        sarge.on_initialize.connect(self.initialize, sarge)
-        sarge.on_instance_stop.connect(self.instance_stop, sarge)
+        signals.instance_will_start.connect(self.activate_deployment, sarge)
+        signals.sarge_initializing.connect(self.initialize, sarge)
+        signals.instance_has_stopped.connect(self.instance_stop, sarge)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
