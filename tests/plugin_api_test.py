@@ -25,24 +25,6 @@ class PluginApiTest(SargeTestCase):
         sarge.new_instance().start()
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
-    def test_activation_event_passes_shared_dict(self):
-        sarge = self.sarge()
-
-        def handler1(instance, share, **extra):
-            share['test-something'] = 123
-
-        got = []
-
-        def handler2(instance, share, **extra):
-            got.append(share.get('test-something'))
-
-        sarge.on_instance_start.connect(handler1)
-        sarge.on_instance_start.connect(handler2)
-
-        instance = sarge.new_instance()
-        instance.start()
-        self.assertEqual(got, [123])
-
     def test_activation_event_allows_passing_info_to_application(self):
         def handler(instance, appcfg, **extra):
             appcfg['your-order'] = "is here"

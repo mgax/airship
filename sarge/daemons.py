@@ -63,14 +63,15 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def configure_instance(self, instance_id, programs):
-        with self._instance_cfg(instance_id).open('wb') as f:
-            for name, cfg in programs:
-                f.write(SUPERVISORD_PROGRAM_TEMPLATE % cfg)
-
-            f.write("[group:%(name)s]\nprograms = %(programs)s\n" % {
-                'name': instance_id,
-                'programs': ','.join(name for name, cfg in programs),
+    def configure_instance(self, instance):
+        with self._instance_cfg(instance.id_).open('wb') as f:
+            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                'name': instance.id_,
+                'directory': instance.folder,
+                'run': instance.run_folder,
+                'log': instance.log_path,
+                'environment': 'SARGEAPP_CFG="%s"' % instance.appcfg_path,
+                'command': instance.folder / 'server',
             })
 
     def remove_instance(self, instance_id):
@@ -84,13 +85,13 @@ class Supervisor(object):
         self.ctl(['update'])
 
     def restart_instance(self, name):
-        self.ctl(['restart', name + ':*'])
+        self.ctl(['restart', name])
 
     def start_instance(self, name):
-        self.ctl(['start', name + ':*'])
+        self.ctl(['start', name])
 
     def stop_instance(self, name):
-        self.ctl(['stop', name + ':*'])
+        self.ctl(['stop', name])
 
     def print_status(self):
         self.ctl(['status'])

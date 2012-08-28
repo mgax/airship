@@ -89,7 +89,7 @@ class NginxPlugin(object):
     def _conf_urlmap_path(self, instance):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
-    def activate_deployment(self, instance, share, appcfg, **extra):
+    def activate_deployment(self, instance, appcfg, **extra):
         version_folder = instance.folder
 
         conf_path = self._conf_site_path(instance)
@@ -127,13 +127,13 @@ class NginxPlugin(object):
                         instance_folder=instance.folder,
                         fcgi_params_path=self.fcgi_params_path)
 
-                share['programs'].append({
-                    'name': 'fcgi_php',
-                    'command': (
-                        '/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 '
-                        '-f /usr/bin/php5-cgi -n'
-                        % {'socket_path': socket_path})
-                })
+                server_script = instance.folder / 'server'
+                with server_script.open('wb') as f:
+                    f.write("#!/bin/sh\n\n"
+                            "/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 "
+                              "-f /usr/bin/php5-cgi -n\n"
+                            % {'socket_path': socket_path})
+                server_script.chmod(0755)
 
             elif entry['type'] == 'fcgi':
                 socket_uri = entry['socket']
