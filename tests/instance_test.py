@@ -37,29 +37,6 @@ class InstanceTest(SargeTestCase):
         self.assertEqual(sarge.daemons.restart_instance.mock_calls,
                          [call(instance.id_)])
 
-    def test_instance_has_one_program(self):
-        sarge = self.sarge()
-        sarge.daemons = Mock()
-        sarge.daemons.configure_instance = ProgramsRecorder()
-
-        instance = sarge.new_instance()
-        instance.start()
-
-        self.assertEqual(sarge.daemons.configure_instance.programs,
-                         [{'name': instance.id_ + '_server', 'command': ANY}])
-
-    def test_instance_program_command_is_called_run(self):
-        sarge = self.sarge()
-        sarge.daemons = Mock()
-        sarge.daemons.configure_instance = ProgramsRecorder()
-
-        instance = sarge.new_instance()
-        instance.start()
-
-        command = instance.folder / 'server'
-        self.assertEqual(sarge.daemons.configure_instance.programs,
-                         [{'name': ANY, 'command': command}])
-
     def test_service_is_configured_at_instance_creation(self):
         sarge = self.sarge()
         instance = sarge.new_instance({'services': {

@@ -50,7 +50,7 @@ class Instance(object):
     def start(self):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
-        share = {'programs': self.config.get('programs', [])}
+        share = {}
         self._appcfg = {}
         self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
         self.sarge.on_instance_start.send(self, share=share, appcfg=self._appcfg)
@@ -89,18 +89,14 @@ class Instance(object):
         self.sarge._instance_config_path(self.id_).unlink()
 
     def write_supervisor_program_config(self, share):
-        programs = []
-        for program_cfg in share['programs']:
-            program_name = self.id_ + '_' + program_cfg['name']
-            program_config = {
-                'name': program_name,
-                'directory': self.folder,
-                'run': self.run_folder,
-                'log': self.log_path,
-                'environment': 'SARGEAPP_CFG="%s"\n' % self.appcfg_path,
-                'command': program_cfg['command'],
-            }
-            programs.append((program_name, program_config))
+        programs = [(self.id_ + '_server', {
+            'name': self.id_ + '_server',
+            'directory': self.folder,
+            'run': self.run_folder,
+            'log': self.log_path,
+            'environment': 'SARGEAPP_CFG="%s"' % self.appcfg_path,
+            'command': self.folder / 'server',
+        })]
 
         self.sarge.daemons.configure_instance(self.id_, programs)
 
@@ -167,9 +163,6 @@ class Sarge(object):
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'name': instance_id,
-                'programs': [
-                    {'name': 'server', 'command': instance_folder / 'server'},
-                ],
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
             }, f)
