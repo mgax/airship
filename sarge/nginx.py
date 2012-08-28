@@ -89,7 +89,7 @@ class NginxPlugin(object):
     def _conf_urlmap_path(self, instance):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
-    def activate_deployment(self, instance, share, appcfg, **extra):
+    def activate_deployment(self, instance, appcfg, **extra):
         version_folder = instance.folder
 
         conf_path = self._conf_site_path(instance)
