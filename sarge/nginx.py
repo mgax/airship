@@ -1,5 +1,6 @@
 import logging
 from string import Template
+from . import signals
 
 
 log = logging.getLogger(__name__)
@@ -58,9 +59,9 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_start.connect(self.activate_deployment, weak=False)
-        sarge.on_initialize.connect(self.initialize, weak=False)
-        sarge.on_instance_stop.connect(self.instance_stop, weak=False)
+        signals.instance_will_start.connect(self.activate_deployment, sarge)
+        signals.sarge_initializing.connect(self.initialize, sarge)
+        signals.instance_has_stopped.connect(self.instance_stop, sarge)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
@@ -85,7 +86,7 @@ class NginxPlugin(object):
     def _conf_urlmap_path(self, instance):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
-    def activate_deployment(self, instance, appcfg, **extra):
+    def activate_deployment(self, sarge, instance, appcfg, **extra):
         conf_path = self._conf_site_path(instance)
         urlmap_path = self._conf_urlmap_path(instance)
 
@@ -156,6 +157,6 @@ class NginxPlugin(object):
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
 
-    def instance_stop(self, instance, **extra):
+    def instance_stop(self, sarge, instance, **extra):
         self._conf_site_path(instance).unlink()
         self._conf_urlmap_path(instance).unlink()

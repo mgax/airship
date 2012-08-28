@@ -9,6 +9,7 @@ from path import path
 import blinker
 import yaml
 from .daemons import Supervisor
+from . import signals
 
 
 log = logging.getLogger(__name__)
@@ -51,8 +52,10 @@ class Instance(object):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
         self._appcfg = {}
-        self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
-        self.sarge.on_instance_start.send(self, appcfg=self._appcfg)
+        signals.instance_configuring.send(self.sarge, instance=self,
+                                                      appcfg=self._appcfg)
+        signals.instance_will_start.send(self.sarge, instance=self,
+                                                     appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = self.folder / 'server'
@@ -76,12 +79,12 @@ class Instance(object):
 
     def stop(self):
         self.sarge.daemons.stop_instance(self)
-        self.sarge.on_instance_stop.send(self)
+        signals.instance_has_stopped.send(self.sarge, instance=self)
         self.run_folder.rmtree()
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
-        self.sarge.on_instance_destroy.send(self)
+        signals.instance_will_be_destroyed.send(self.sarge, instance=self)
         self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink()
 
@@ -92,17 +95,13 @@ class Sarge(object):
     """
 
     def __init__(self, config):
-        self.on_instance_configure = blinker.Signal()
-        self.on_instance_start = blinker.Signal()
-        self.on_instance_stop = blinker.Signal()
-        self.on_instance_destroy = blinker.Signal()
-        self.on_initialize = blinker.Signal()
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
+        self._plugins = []
         for plugin_name in self.config.get('plugins', []):
             plugin_factory = _get_named_object(plugin_name)
-            plugin_factory(self)
+            self._plugins.append(plugin_factory(self))
 
     @property
     def cfg_links_folder(self):
@@ -158,9 +157,9 @@ class VarFolderPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_configure.connect(self.configure, weak=False)
+        signals.instance_configuring.connect(self.configure, sarge)
 
-    def configure(self, instance, appcfg, **extra):
+    def configure(self, sarge, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
         var_tmp = var / 'tmp'
         services = instance.config.get('require-services', {})
@@ -186,9 +185,9 @@ class ListenPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_configure.connect(self.configure, weak=False)
+        signals.instance_configuring.connect(self.configure, sarge)
 
-    def configure(self, instance, appcfg, **extra):
+    def configure(self, sarge, instance, appcfg, **extra):
         services = instance.config.get('require-services', {})
         for name, record in services.iteritems():
             if record['type'] == 'listen':
@@ -208,7 +207,7 @@ def init_cmd(sarge, args):
     (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / 'var' / 'run').mkdir_p()
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
-    sarge.on_initialize.send(sarge)
+    signals.sarge_initializing.send(sarge)
     sarge.generate_supervisord_configuration()
 
 

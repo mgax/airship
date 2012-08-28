@@ -21,6 +21,9 @@ class SargeTestCase(unittest.TestCase):
         config['home'] = self.tmp
         return imp('sarge').Sarge(config)
 
+    def signal(self, name):
+        return imp('sarge.signals')._signals[name]
+
     def patch(self, name):
         p = patch(name)
         mock_ob = p.start()

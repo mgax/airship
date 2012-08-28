@@ -191,10 +191,11 @@ class NginxConfigurationTest(SargeTestCase):
             '}' % {'urlmap_path': cfg_site})
 
     def test_urlmap_value_is_interpolated_with_app_config_variable(self):
+        from sarge import signals
         sarge = create_sarge(self.tmp)
 
-        @sarge.on_instance_configure.connect
-        def set_landcover(instance, appcfg, **extra):
+        @signals.instance_configuring.connect_via(sarge, weak=True)
+        def set_landcover(sarge, appcfg, **extra):
             appcfg['LANDCOVER'] = "Forest"
 
         instance = self.configure_and_activate({
