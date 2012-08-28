@@ -51,8 +51,10 @@ class Instance(object):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
         self._appcfg = {}
-        self.sarge.on_instance_configure.send(self, appcfg=self._appcfg)
-        self.sarge.on_instance_start.send(self, appcfg=self._appcfg)
+        self.sarge.on_instance_configure.send(self.sarge, instance=self,
+                                                          appcfg=self._appcfg)
+        self.sarge.on_instance_start.send(self.sarge, instance=self,
+                                                      appcfg=self._appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = self.folder / 'server'
@@ -76,12 +78,12 @@ class Instance(object):
 
     def stop(self):
         self.sarge.daemons.stop_instance(self)
-        self.sarge.on_instance_stop.send(self)
+        self.sarge.on_instance_stop.send(self.sarge, instance=self)
         self.run_folder.rmtree()
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
-        self.sarge.on_instance_destroy.send(self)
+        self.sarge.on_instance_destroy.send(self.sarge, instance=self)
         self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink()
 
@@ -161,7 +163,7 @@ class VarFolderPlugin(object):
         self.sarge = sarge
         sarge.on_instance_configure.connect(self.configure)
 
-    def configure(self, instance, appcfg, **extra):
+    def configure(self, sarge, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
         var_tmp = var / 'tmp'
         services = instance.config.get('require-services', {})
@@ -189,7 +191,7 @@ class ListenPlugin(object):
         self.sarge = sarge
         sarge.on_instance_configure.connect(self.configure)
 
-    def configure(self, instance, appcfg, **extra):
+    def configure(self, sarge, instance, appcfg, **extra):
         services = instance.config.get('require-services', {})
         for name, record in services.iteritems():
             if record['type'] == 'listen':

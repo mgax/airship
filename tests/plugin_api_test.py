@@ -25,7 +25,7 @@ class PluginApiTest(SargeTestCase):
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
     def test_activation_event_allows_passing_info_to_application(self):
-        def handler(instance, appcfg, **extra):
+        def handler(sarge, instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
         sarge = self.sarge()
@@ -42,7 +42,7 @@ class PluginApiTest(SargeTestCase):
         sarge = self.sarge()
 
         @sarge.on_instance_configure.connect
-        def handler(instance, appcfg, **extra):
+        def handler(sarge, instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
         instance = sarge.new_instance()
@@ -57,7 +57,7 @@ class PluginApiTest(SargeTestCase):
         sarge = self.sarge()
 
         @sarge.on_instance_stop.connect
-        def handler(instance, **extra):
+        def handler(sarge, instance, **extra):
             stopped.append(instance.id_)
 
         instance = sarge.new_instance()
@@ -70,7 +70,7 @@ class PluginApiTest(SargeTestCase):
         sarge = self.sarge()
 
         @sarge.on_instance_destroy.connect
-        def handler(instance, **extra):
+        def handler(sarge, instance, **extra):
             destroyed.append(instance.id_)
 
         instance = sarge.new_instance()

@@ -194,7 +194,7 @@ class NginxConfigurationTest(SargeTestCase):
         sarge = create_sarge(self.tmp)
 
         @sarge.on_instance_configure.connect
-        def set_landcover(instance, appcfg, **extra):
+        def set_landcover(sarge, appcfg, **extra):
             appcfg['LANDCOVER'] = "Forest"
 
         instance = self.configure_and_activate({

@@ -85,7 +85,7 @@ class NginxPlugin(object):
     def _conf_urlmap_path(self, instance):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
-    def activate_deployment(self, instance, appcfg, **extra):
+    def activate_deployment(self, sarge, instance, appcfg, **extra):
         conf_path = self._conf_site_path(instance)
         urlmap_path = self._conf_urlmap_path(instance)
 
@@ -156,6 +156,6 @@ class NginxPlugin(object):
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
 
-    def instance_stop(self, instance, **extra):
+    def instance_stop(self, sarge, instance, **extra):
         self._conf_site_path(instance).unlink()
         self._conf_urlmap_path(instance).unlink()
