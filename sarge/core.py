@@ -95,11 +95,6 @@ class Sarge(object):
     """
 
     def __init__(self, config):
-        self.on_instance_configure = signals.instance_configuring
-        self.on_instance_start = signals.instance_will_start
-        self.on_instance_stop = signals.instance_has_stopped
-        self.on_instance_destroy = signals.instance_will_be_destroyed
-        self.on_initialize = signals.sarge_initializing
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
