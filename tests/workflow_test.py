@@ -18,14 +18,14 @@ class WorkflowTest(SargeTestCase):
         self.instance.start()
         self.assertIn(call(['update']),
                       self.mock_supervisorctl.mock_calls)
-        self.assertIn(call(['restart', '%s:*' % self.instance.id_]),
+        self.assertIn(call(['restart', '%s' % self.instance.id_]),
                       self.mock_supervisorctl.mock_calls)
 
     def test_instance_stop_triggers_supervisord_stop(self):
         self.instance.start()
         self.mock_supervisorctl.reset_mock()
         self.instance.stop()
-        self.assertIn(call(['stop', '%s:*' % self.instance.id_]),
+        self.assertIn(call(['stop', '%s' % self.instance.id_]),
                       self.mock_supervisorctl.mock_calls)
 
     def test_instance_stop_removes_run_folder(self):
