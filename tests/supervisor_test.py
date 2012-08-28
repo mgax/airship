@@ -31,6 +31,9 @@ def config_file_checker(cfg_path):
 
 class SupervisorConfigurationTest(SargeTestCase):
 
+    def setUp(self):
+        self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
+
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.sarge().generate_supervisord_configuration()
 
@@ -50,13 +53,14 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'unix://' + self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
+    def instance_cfg(self, instance):
+        return self.tmp / 'etc' / 'supervisor.d' / instance.id_
+
     def test_generate_supervisord_cfg_with_run_command(self):
         instance = self.sarge().new_instance()
         instance.start()
 
-        cfg_folder = path(instance.folder + '.cfg')
-        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
-        eq_config = config_file_checker(cfg_path)
+        eq_config = config_file_checker(self.instance_cfg(instance))
         section = 'program:%s' % instance.id_
 
         eq_config(section, 'command', instance.folder / 'server')
@@ -64,15 +68,44 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
-        eq_config(section, 'autostart', 'false')
+        eq_config(section, 'startretries', '1')
         eq_config(section, 'environment',
                   'SARGEAPP_CFG="%s"' % instance.appcfg_path)
+
+    def test_instance_start_changes_autostart_to_true(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+
+        eq_config = config_file_checker(self.instance_cfg(instance))
+        eq_config('program:%s' % instance.id_, 'autostart', 'true')
+
+    def test_instance_stop_changes_autostart_to_false(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        instance.stop()
+
+        eq_config = config_file_checker(self.instance_cfg(instance))
+        eq_config('program:%s' % instance.id_, 'autostart', 'false')
+
+    def test_instance_start_triggers_supervisord_update(self):
+        self.mock_supervisorctl.reset_mock()
+        instance = self.sarge().new_instance()
+        instance.start()
+        self.assertEqual(self.mock_supervisorctl.mock_calls,
+                         [call(['update'])])
+
+    def test_instance_stop_triggers_supervisord_update(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        self.mock_supervisorctl.reset_mock()
+        instance.stop()
+        self.assertEqual(self.mock_supervisorctl.mock_calls,
+                         [call(['update'])])
 
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()
         instance.start()
 
-        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         eq_config = config_file_checker(cfg_path)
         eq_config('program:%s' % instance.id_, 'directory',
@@ -81,7 +114,6 @@ class SupervisorConfigurationTest(SargeTestCase):
     def test_destroy_instance_removes_its_supervisor_configuration(self):
         instance = self.sarge().new_instance()
         instance.start()
-        cfg_folder = path(instance.folder + '.cfg')
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         self.assertTrue(cfg_path.isfile())
         instance.destroy()
