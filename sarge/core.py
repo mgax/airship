@@ -161,7 +161,7 @@ class VarFolderPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_configure.connect(self.configure)
+        sarge.on_instance_configure.connect(self.configure, sarge)
 
     def configure(self, sarge, instance, appcfg, **extra):
         var = instance.sarge.home_path / 'var'
@@ -189,7 +189,7 @@ class ListenPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        sarge.on_instance_configure.connect(self.configure)
+        sarge.on_instance_configure.connect(self.configure, sarge)
 
     def configure(self, sarge, instance, appcfg, **extra):
         services = instance.config.get('require-services', {})

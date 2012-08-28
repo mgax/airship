@@ -193,7 +193,7 @@ class NginxConfigurationTest(SargeTestCase):
     def test_urlmap_value_is_interpolated_with_app_config_variable(self):
         sarge = create_sarge(self.tmp)
 
-        @sarge.on_instance_configure.connect
+        @sarge.on_instance_configure.connect_via(sarge, weak=True)
         def set_landcover(sarge, appcfg, **extra):
             appcfg['LANDCOVER'] = "Forest"
 

@@ -20,7 +20,7 @@ class PluginApiTest(SargeTestCase):
     def test_subscribe_to_activation_event(self):
         mock_handler = Mock(im_self=None)
         sarge = self.sarge()
-        sarge.on_instance_start.connect(mock_handler)
+        sarge.on_instance_start.connect(mock_handler, sarge)
         sarge.new_instance().start()
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
@@ -29,7 +29,7 @@ class PluginApiTest(SargeTestCase):
             appcfg['your-order'] = "is here"
 
         sarge = self.sarge()
-        sarge.on_instance_start.connect(handler)
+        sarge.on_instance_start.connect(handler, sarge)
 
         instance = sarge.new_instance()
         instance.start()
@@ -41,7 +41,7 @@ class PluginApiTest(SargeTestCase):
     def test_value_injected_via_configure_event_is_available_to_app(self):
         sarge = self.sarge()
 
-        @sarge.on_instance_configure.connect
+        @sarge.on_instance_configure.connect_via(sarge, weak=True)
         def handler(sarge, instance, appcfg, **extra):
             appcfg['your-order'] = "is here"
 
@@ -56,7 +56,7 @@ class PluginApiTest(SargeTestCase):
         stopped = []
         sarge = self.sarge()
 
-        @sarge.on_instance_stop.connect
+        @sarge.on_instance_stop.connect_via(sarge, weak=True)
         def handler(sarge, instance, **extra):
             stopped.append(instance.id_)
 
@@ -69,7 +69,7 @@ class PluginApiTest(SargeTestCase):
         destroyed = []
         sarge = self.sarge()
 
-        @sarge.on_instance_destroy.connect
+        @sarge.on_instance_destroy.connect_via(sarge, weak=True)
         def handler(sarge, instance, **extra):
             destroyed.append(instance.id_)
 
