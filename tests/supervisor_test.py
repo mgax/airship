@@ -65,6 +65,7 @@ class SupervisorConfigurationTest(SargeTestCase):
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'autostart', 'false')
+        eq_config(section, 'startretries', '1')
         eq_config(section, 'environment',
                   'SARGEAPP_CFG="%s"' % instance.appcfg_path)
 

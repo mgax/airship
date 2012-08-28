@@ -30,6 +30,7 @@ directory = %(directory)s
 redirect_stderr = true
 stdout_logfile = %(log)s
 startsecs = 2
+startretries = 1
 autostart = false
 environment = %(environment)s
 command = %(command)s
