@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import json
@@ -211,20 +212,28 @@ def init_cmd(sarge, args):
     sarge.generate_supervisord_configuration()
 
 
-def new_instance_cmd(sarge, args):
+def new_cmd(sarge, args):
     print sarge.new_instance(json.loads(args.config)).folder
 
 
-def start_instance_cmd(sarge, args):
+def start_cmd(sarge, args):
     sarge.get_instance(args.id).start()
 
 
-def stop_instance_cmd(sarge, args):
+def stop_cmd(sarge, args):
     sarge.get_instance(args.id).stop()
 
 
-def destroy_instance_cmd(sarge, args):
+def destroy_cmd(sarge, args):
     sarge.get_instance(args.id).destroy()
+
+
+def shell_cmd(sarge, args):
+    instance = sarge.get_instance(args.id)
+    os.chdir(instance.folder)
+    environ = dict(os.environ,
+                   SARGEAPP_CFG=instance.appcfg_path)
+    os.execve('/bin/bash', ['/bin/bash', '--norc'], environ)
 
 
 def build_args_parser():
@@ -234,18 +243,21 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
-    new_instance_parser = subparsers.add_parser('new_instance')
-    new_instance_parser.set_defaults(func=new_instance_cmd)
-    new_instance_parser.add_argument('config')
-    start_instance_parser = subparsers.add_parser('start_instance')
-    start_instance_parser.set_defaults(func=start_instance_cmd)
-    start_instance_parser.add_argument('id')
-    stop_instance_parser = subparsers.add_parser('stop_instance')
-    stop_instance_parser.set_defaults(func=stop_instance_cmd)
-    stop_instance_parser.add_argument('id')
-    destroy_instance_parser = subparsers.add_parser('destroy_instance')
-    destroy_instance_parser.set_defaults(func=destroy_instance_cmd)
-    destroy_instance_parser.add_argument('id')
+    new_parser = subparsers.add_parser('new')
+    new_parser.set_defaults(func=new_cmd)
+    new_parser.add_argument('config')
+    start_parser = subparsers.add_parser('start')
+    start_parser.set_defaults(func=start_cmd)
+    start_parser.add_argument('id')
+    stop_parser = subparsers.add_parser('stop')
+    stop_parser.set_defaults(func=stop_cmd)
+    stop_parser.add_argument('id')
+    destroy_parser = subparsers.add_parser('destroy')
+    destroy_parser.set_defaults(func=destroy_cmd)
+    destroy_parser.add_argument('id')
+    shell_parser = subparsers.add_parser('shell')
+    shell_parser.set_defaults(func=shell_cmd)
+    shell_parser.add_argument('id')
     return parser
 
 
