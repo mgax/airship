@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import json
@@ -227,6 +228,14 @@ def destroy_cmd(sarge, args):
     sarge.get_instance(args.id).destroy()
 
 
+def shell_cmd(sarge, args):
+    instance = sarge.get_instance(args.id)
+    os.chdir(instance.folder)
+    environ = dict(os.environ,
+                   SARGEAPP_CFG=instance.appcfg_path)
+    os.execve('/bin/bash', ['/bin/bash', '--norc'], environ)
+
+
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
@@ -246,6 +255,9 @@ def build_args_parser():
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
     destroy_parser.add_argument('id')
+    shell_parser = subparsers.add_parser('shell')
+    shell_parser.set_defaults(func=shell_cmd)
+    shell_parser.add_argument('id')
     return parser
 
 
