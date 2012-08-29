@@ -16,27 +16,27 @@ class ShellTest(SargeTestCase):
         new_instance.return_value = Mock(folder="path-to-new-version")
         with patch('sys.stdout', StringIO()) as stdout:
             config = json.dumps({'hello': "world"})
-            imp('sarge.core').main([str(self.tmp), 'new_instance', config])
+            imp('sarge.core').main([str(self.tmp), 'new', config])
         self.assertEqual(new_instance.mock_calls, [call({'hello': "world"})])
         self.assertEqual(stdout.getvalue().strip(), "path-to-new-version")
 
     @patch('sarge.core.Instance.start')
     def test_start_instance_calls_api_method(self, start):
         instance = self.sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'start_instance', instance.id_])
+        imp('sarge.core').main([str(self.tmp), 'start', instance.id_])
         self.assertEqual(start.mock_calls, [call()])
 
     @patch('sarge.core.Instance.stop')
     def test_stop_instance_calls_api_method(self, stop):
         instance = self.sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'stop_instance', instance.id_])
+        imp('sarge.core').main([str(self.tmp), 'stop', instance.id_])
         self.assertEqual(stop.mock_calls, [call()])
 
     @patch('sarge.core.Instance.destroy')
     def test_destroy_instance_calls_api_method(self, destroy):
         instance = self.sarge().new_instance()
         imp('sarge.core').main([str(self.tmp),
-                                'destroy_instance', instance.id_])
+                                'destroy', instance.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
     def test_init_creates_configuration(self):
