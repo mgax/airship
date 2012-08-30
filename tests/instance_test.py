@@ -75,6 +75,11 @@ class InstanceTest(SargeTestCase):
         instance = sarge.new_instance({'application_name': 'testy'})
         self.assertEqual(instance.meta['APPLICATION_NAME'], 'testy')
 
+    def test_instance_id_starts_with_app_name(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance({'application_name': 'testy'})
+        self.assertTrue(instance.id_.startswith('testy-'))
+
 
 class InstanceListingTest(SargeTestCase):
 

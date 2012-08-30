@@ -142,11 +142,11 @@ class Sarge(object):
     def _instance_folder(self, id_):
         return self.home_path / id_
 
-    def _generate_instance_id(self):
+    def _generate_instance_id(self, id_prefix):
         def random_id(size=6, vocabulary=string.letters + string.digits):
             return ''.join(random.choice(vocabulary) for c in range(size))
         for c in range(10):
-            id_ = random_id()
+            id_ = id_prefix + random_id()
             try:
                 self._instance_folder(id_).mkdir()
             except OSError:
@@ -157,12 +157,15 @@ class Sarge(object):
             raise RuntimeError("Failed to generate unique instance ID")
 
     def new_instance(self, config={}):
-        instance_id = self._generate_instance_id()
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = config.get('application_name')
         if app_name:
             meta['APPLICATION_NAME'] = app_name
+            id_prefix = app_name + '-'
+        else:
+            id_prefix = ''
+        instance_id = self._generate_instance_id(id_prefix)
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'require-services': config.get('services', {}),
