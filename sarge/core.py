@@ -162,8 +162,21 @@ class Sarge(object):
         instance = self.get_instance(instance_id)
         return instance
 
+    def _iter_instance_ids(self):
+        deployment_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
+        if not deployment_cfg_dir.exists():
+            return
+        for cfg_name in [p.name for p in deployment_cfg_dir.listdir()]:
+            assert cfg_name.endswith('.yaml')
+            yield cfg_name[:-len('.yaml')]
+
     def list_instances(self):
-        return {'instances': []}
+        instances = []
+        for instance_id in self._iter_instance_ids():
+            instances.append({
+                'id': instance_id,
+            })
+        return {'instances': instances}
 
 
 class VarFolderPlugin(object):

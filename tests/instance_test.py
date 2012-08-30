@@ -68,3 +68,11 @@ class InstanceListingTest(SargeTestCase):
         sarge = self.sarge()
         report = sarge.list_instances()
         self.assertEqual(report['instances'], [])
+
+    def test_listing_with_two_instances_contains_their_ids(self):
+        sarge = self.sarge()
+        instance_1 = sarge.new_instance()
+        instance_2 = sarge.new_instance()
+        report = sarge.list_instances()
+        self.assertItemsEqual([i['id'] for i in report['instances']],
+                              [instance_1.id_, instance_2.id_])
