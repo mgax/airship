@@ -24,7 +24,7 @@ class NginxConfigurationTest(SargeTestCase):
         if sarge is None:
             sarge = create_sarge(self.tmp)
         instance = sarge.new_instance(deployment_config)
-        instance.start()
+        instance.configure()
         return instance
 
     def assert_equivalent(self, cfg1, cfg2):

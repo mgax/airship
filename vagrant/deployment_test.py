@@ -7,24 +7,23 @@ from fabric.contrib.files import exists
 from path import path
 
 
-cfg = {}
-cfg['sarge-home'] = path('/var/local/sarge')
-cfg['sarge-venv'] = path('/var/local/sarge-sandbox')
+env['sarge-home'] = path('/var/local/sarge')
+env['sarge-venv'] = path('/var/local/sarge-sandbox')
 
 
 def provision():
-    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install flup" % cfg)
+    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % env)
+    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % env)
+    sudo("'%(sarge-venv)s'/bin/pip install flup" % env)
 
 
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    if not exists(cfg['sarge-venv']):
+    if not exists(env['sarge-venv']):
         provision()
 
-    sudo("rm -rf '%(sarge-home)s'" % cfg)
+    sudo("rm -rf '%(sarge-home)s'" % env)
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
 
 
@@ -35,13 +34,13 @@ def tearDownModule(self):
 
 
 def sarge_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % cfg)
+    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % env)
     return run(base + cmd)
 
 
 def supervisorctl_cmd(cmd):
     base = ("'%(sarge-venv)s'/bin/supervisorctl "
-            "-c '%(sarge-home)s'/etc/supervisor.conf " % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf " % env)
     return run(base + cmd)
 
 
@@ -71,7 +70,7 @@ def quote_json(config):
 
 
 def link_in_nginx(id_):
-    urlmap_path = cfg['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
+    urlmap_path = env['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
     nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
     put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
 
@@ -79,19 +78,19 @@ def link_in_nginx(id_):
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        sudo("mkdir '%(sarge-home)s'" % cfg)
-        sudo("chown vagrant: '%(sarge-home)s'" % cfg)
-        run("mkdir '%(sarge-home)s'/etc" % cfg)
+        sudo("mkdir '%(sarge-home)s'" % env)
+        sudo("chown vagrant: '%(sarge-home)s'" % env)
+        run("mkdir '%(sarge-home)s'/etc" % env)
         put_json({'plugins': ['sarge:NginxPlugin', 'sarge:ListenPlugin']},
-                 cfg['sarge-home'] / 'etc' / 'sarge.yaml',
+                 env['sarge-home'] / 'etc' / 'sarge.yaml',
                  use_sudo=True)
         sarge_cmd("init")
         run("'%(sarge-venv)s'/bin/supervisord "
-            "-c '%(sarge-home)s'/etc/supervisor.conf" % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf" % env)
 
     def tearDown(self):
         supervisorctl_cmd("shutdown")
-        sudo("rm -rf '%(sarge-home)s'" % cfg)
+        sudo("rm -rf '%(sarge-home)s'" % env)
 
     def test_ping(self):
         assert run('pwd') == '/home/vagrant'
@@ -100,16 +99,17 @@ class VagrantDeploymentTest(unittest.TestCase):
         cfg = {'urlmap': [{'type': 'wsgi',
                            'url': '/',
                            'app_factory': 'mytinyapp:gettheapp'}]}
-        instance_folder = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
 
         app_py = ('def gettheapp(appcfg):\n'
                   '    def theapp(environ, start_response):\n'
                   '        start_response("200 OK", [])\n'
                   '        return ["hello sarge!\\n"]\n'
                   '    return theapp\n')
-        put(StringIO(app_py), str(instance_folder / 'mytinyapp.py'))
-        sarge_cmd("start '%s'" % instance_folder.name)
-        link_in_nginx(instance_folder.name)
+        put(StringIO(app_py),
+            str(env['sarge-home'] / instance_id / 'mytinyapp.py'))
+        sarge_cmd("start '%s'" % instance_id)
+        link_in_nginx(instance_id)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
@@ -126,22 +126,22 @@ class VagrantDeploymentTest(unittest.TestCase):
                        '    return theapp\n')
 
         # deploy instance one
-        instance_folder_1 = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id_1 = path(sarge_cmd("new " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'one'),
-            str(instance_folder_1 / 'mytinyapp.py'))
-        sarge_cmd("start '%s'" % instance_folder_1.name)
-        link_in_nginx(instance_folder_1.name)
+            str(env['sarge-home'] / instance_id_1 / 'mytinyapp.py'))
+        sarge_cmd("start '%s'" % instance_id_1)
+        link_in_nginx(instance_id_1)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge one!\n")
 
         # deploy instance two
-        instance_folder_2 = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id_2 = path(sarge_cmd("new " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'two'),
-            str(instance_folder_2 / 'mytinyapp.py'))
-        sarge_cmd("start '%s'" % instance_folder_2.name)
-        link_in_nginx(instance_folder_2.name)
+            str(env['sarge-home'] / instance_id_2 / 'mytinyapp.py'))
+        sarge_cmd("start '%s'" % instance_id_2)
+        link_in_nginx(instance_id_2)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
@@ -149,12 +149,13 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_deploy_php(self):
         cfg = {'urlmap': [{'type': 'php', 'url': '/'}]}
-        instance_folder = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
-        put(StringIO(app_php), str(instance_folder / 'someapp.php'))
-        sarge_cmd("start '%s'" % instance_folder.name)
-        link_in_nginx(instance_folder.name)
+        put(StringIO(app_php),
+            str(env['sarge-home'] / instance_id / 'someapp.php'))
+        sarge_cmd("start '%s'" % instance_id)
+        link_in_nginx(instance_id)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
@@ -162,15 +163,15 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_deploy_static_site(self):
         cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
-        instance_folder = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
 
-        with cd(str(instance_folder)):
+        with cd(str(env['sarge-home'] / instance_id)):
             run("echo 'hello static!' > hello.html")
             run("mkdir sub")
             run("echo 'submarine' > sub/marine.txt")
 
-        sarge_cmd("start '%s'" % instance_folder.name)
-        link_in_nginx(instance_folder.name)
+        sarge_cmd("start '%s'" % instance_id)
+        link_in_nginx(instance_id)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
@@ -183,7 +184,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         cfg = {'urlmap': [{'type': 'proxy',
                            'url': '/',
                            'upstream_url': 'http://localhost:43423'}]}
-        instance_folder = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
 
         app_py = ('#!/usr/bin/env python\n'
                   'from wsgiref.simple_server import make_server\n'
@@ -191,35 +192,12 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    start_response("200 OK", [])\n'
                   '    return ["hello sarge!\\n"]\n'
                   'make_server("0", 43423, theapp).serve_forever()\n')
-        put(StringIO(app_py), str(instance_folder / 'server'), mode=0755)
-        sarge_cmd("start '%s'" % instance_folder.name)
-        link_in_nginx(instance_folder.name)
+        put(StringIO(app_py),
+            str(env['sarge-home'] / instance_id / 'server'),
+            mode=0755)
+        sarge_cmd("start '%s'" % instance_id)
+        link_in_nginx(instance_id)
         sudo("service nginx reload")
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
-
-    def test_if_listening_on_random_port_number_nginx_serves_our_page(self):
-        cfg = {
-            'urlmap': [{'type': 'proxy',
-                        'url': '/',
-                        'upstream_url': 'http://localhost:$LISTEN_PORT'}],
-            'services': {'listen': {'type': 'listen', 'port': 'random'}},
-        }
-        instance_folder = path(sarge_cmd("new " + quote_json(cfg)))
-
-        app_py = ('#!/usr/bin/env python\n'
-                  'from wsgiref.simple_server import make_server\n'
-                  'import os, json\n'
-                  'cfg = json.load(open(os.environ["SARGEAPP_CFG"]))\n'
-                  'port = int(cfg["LISTEN_PORT"])\n'
-                  'def theapp(environ, start_response):\n'
-                  '    start_response("200 OK", [])\n'
-                  '    return ["hello sarge! port=%d\\n" % port]\n'
-                  'make_server("0", port, theapp).serve_forever()\n')
-        put(StringIO(app_py), str(instance_folder / 'server'), mode=0755)
-        sarge_cmd("start '%s'" % instance_folder.name)
-        link_in_nginx(instance_folder.name)
-        sudo("service nginx reload")
-
-        self.assertIn("hello sarge!", get_url('http://192.168.13.13:8013/'))

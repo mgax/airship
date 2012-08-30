@@ -102,6 +102,15 @@ class SupervisorConfigurationTest(SargeTestCase):
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
+    def test_instance_destroy_triggers_supervisord_update(self):
+        instance = self.sarge().new_instance()
+        instance.start()
+        instance.stop()
+        self.mock_supervisorctl.reset_mock()
+        instance.destroy()
+        self.assertEqual(self.mock_supervisorctl.mock_calls,
+                         [call(['update'])])
+
     def test_working_directory_is_instance_home(self):
         instance = self.sarge().new_instance()
         instance.start()

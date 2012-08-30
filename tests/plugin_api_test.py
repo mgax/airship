@@ -24,20 +24,6 @@ class PluginApiTest(SargeTestCase):
         sarge.new_instance().start()
         self.assertEqual(len(mock_handler.mock_calls), 1)
 
-    def test_activation_event_allows_passing_info_to_application(self):
-        def handler(sarge, instance, appcfg, **extra):
-            appcfg['your-order'] = "is here"
-
-        sarge = self.sarge()
-        self.signal('instance-will-start').connect(handler, sarge)
-
-        instance = sarge.new_instance()
-        instance.start()
-
-        with instance.appcfg_path.open() as f:
-            appcfg = json.load(f)
-        self.assertEqual(appcfg['your-order'], "is here")
-
     def test_value_injected_via_configure_event_is_available_to_app(self):
         from sarge import signals
         sarge = self.sarge()
@@ -47,7 +33,7 @@ class PluginApiTest(SargeTestCase):
             appcfg['your-order'] = "is here"
 
         instance = sarge.new_instance()
-        instance.start()
+        instance.configure()
 
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)

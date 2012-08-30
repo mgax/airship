@@ -49,14 +49,24 @@ class Instance(object):
         self.appcfg_path = self.run_folder / 'appcfg.json'
         self.log_path = var / 'log' / (self.id_ + '.log')
 
+    def get_appcfg(self):
+        with self.appcfg_path.open('rb') as f:
+            return json.load(f)
+
+    def configure(self):
+        self.run_folder.makedirs_p()
+        appcfg = {}
+        signals.instance_configuring.send(
+            self.sarge, instance=self, appcfg=appcfg)
+        with self.appcfg_path.open('wb') as f:
+            json.dump(appcfg, f, indent=2)
+
     def start(self):
         log.info("Activating instance %r", self.id_)
-        self.run_folder.makedirs_p()
-        self._appcfg = {}
-        signals.instance_configuring.send(self.sarge, instance=self,
-                                                      appcfg=self._appcfg)
+        self.configure()
+        appcfg = self.get_appcfg()
         signals.instance_will_start.send(self.sarge, instance=self,
-                                                     appcfg=self._appcfg)
+                                                     appcfg=appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = self.folder / 'server'
@@ -69,25 +79,24 @@ class Instance(object):
                     'module_name': module_name,
                     'attribute_name': attribute_name,
                     'socket_path': str(self.run_folder / 'wsgi-app.sock'),
-                    'appcfg': self._appcfg,
+                    'appcfg': appcfg,
                 })
             script_path.chmod(0755)
-
-        with self.appcfg_path.open('wb') as f:
-            json.dump(self._appcfg, f, indent=2)
 
         self.sarge.daemons.start_instance(self)
 
     def stop(self):
         self.sarge.daemons.stop_instance(self)
         signals.instance_has_stopped.send(self.sarge, instance=self)
-        self.run_folder.rmtree()
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
         signals.instance_will_be_destroyed.send(self.sarge, instance=self)
-        self.folder.rmtree()
-        self.sarge._instance_config_path(self.id_).unlink()
+        if self.run_folder.isdir():
+            self.run_folder.rmtree()
+        if self.folder.isdir():
+            self.folder.rmtree()
+        self.sarge._instance_config_path(self.id_).unlink_p()
 
 
 class Sarge(object):
@@ -182,8 +191,6 @@ class VarFolderPlugin(object):
 
 class ListenPlugin(object):
 
-    RANDOM_PORT_RANGE = (40000, 59999)
-
     def __init__(self, sarge):
         self.sarge = sarge
         signals.instance_configuring.connect(self.configure, sarge)
@@ -195,10 +202,7 @@ class ListenPlugin(object):
                 if 'host' in record:
                     appcfg[name.upper() + '_HOST'] = record['host']
                 if 'port' in record:
-                    port = record['port']
-                    if port == 'random':
-                        port = random.randint(*self.RANDOM_PORT_RANGE)
-                    appcfg[name.upper() + '_PORT'] = port
+                    appcfg[name.upper() + '_PORT'] = record['port']
 
 
 def init_cmd(sarge, args):
@@ -213,7 +217,11 @@ def init_cmd(sarge, args):
 
 
 def new_cmd(sarge, args):
-    print sarge.new_instance(json.loads(args.config)).folder
+    print sarge.new_instance(json.loads(args.config)).id_
+
+
+def configure_cmd(sarge, args):
+    sarge.get_instance(args.id).configure()
 
 
 def start_cmd(sarge, args):
@@ -246,6 +254,9 @@ def build_args_parser():
     new_parser = subparsers.add_parser('new')
     new_parser.set_defaults(func=new_cmd)
     new_parser.add_argument('config')
+    configure_parser = subparsers.add_parser('configure')
+    configure_parser.set_defaults(func=configure_cmd)
+    configure_parser.add_argument('id')
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('id')
