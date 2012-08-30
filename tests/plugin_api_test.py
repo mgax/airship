@@ -33,7 +33,7 @@ class PluginApiTest(SargeTestCase):
             appcfg['your-order'] = "is here"
 
         instance = sarge.new_instance()
-        instance.start()
+        instance.configure()
 
         with instance.appcfg_path.open() as f:
             appcfg = json.load(f)
