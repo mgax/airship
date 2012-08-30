@@ -87,6 +87,7 @@ class NginxPlugin(object):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
     def configure_instance(self, sarge, instance, appcfg, **extra):
+        self.etc_nginx.makedirs_p()
         conf_path = self._conf_site_path(instance)
         urlmap_path = self._conf_urlmap_path(instance)
 
