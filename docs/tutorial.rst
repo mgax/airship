@@ -9,7 +9,8 @@ Debian or Ubuntu server. You need a shell account with sudo privileges.
 
 Installation
 ------------
-Sarge needs Python 2.6 or 2.7. You also need virtualenv_ and a compiler.
+Sarge runs on Python 2.6 or 2.7. You also need virtualenv_ and a
+compiler.
 
 .. _virtualenv: http://www.virtualenv.org/
 
@@ -18,89 +19,70 @@ Sarge needs Python 2.6 or 2.7. You also need virtualenv_ and a compiler.
     sudo apt-get install python2.6 python-virtualenv nginx
     sudo apt-get install build-essential python2.6-dev libyaml-dev
 
-Let's set up the sarge home in ``/var/local/sarge``. Say you're logged
-in as `joe`. Create the folder and fetch the source code::
+Let's set up the sarge home in ``/var/local/awesome``, with a
+virtualenv in ``/var/local/awesome/var/sarge-venv``::
 
-    sudo mkdir /var/local/sarge-home
-    sudo chown joe: /var/local/sarge-home
-    cd /var/local/sarge-home
-
-Set up a virtual environment and install sarge::
-
-    virtualenv .
-    bin/pip install https://github.com/alex-morega/Sarge/zipball/master
+    sudo mkdir /var/local/awesome
+    sudo chown `whoami`: /var/local/awesome
+    cd /var/local/awesome
+    mkdir -p var/sarge-venv
+    virtualenv var/sarge-venv
+    var/sarge-venv/bin/pip install https://github.com/alex-morega/Sarge/zipball/master
 
 Configure and initialize sarge::
 
-    echo '{"plugins": ["sarge:NginxPlugin"]}' > sargecfg.yaml
-    sudo bin/sarge . init
+    mkdir etc
+    echo '{"plugins": ["sarge:NginxPlugin", "sarge:VarFolderPlugin"]}' > etc/sarge.yaml
+    sudo var/sarge-venv/bin/sarge . init
 
-Link up the nginx configuration; start up supervisor::
+Start up supervisor::
 
-    sudo ln -s `pwd`/nginx.plugin/sarge_sites.conf /etc/nginx/sites-enabled/sarge_sites
-    sudo bin/supervisord
+    var/sarge-venv/bin/supervisord -c etc/supervisor.conf
 
 
-Preparing a deployment
-----------------------
-Each application installed with sarge needs its own `deployment`. Think
-of a deployment as an application container, configured to provide
-whatever resources (e.g. database, temporary folder) the application
-needs.
+Deploying the first instance
+----------------------------
+Every time we deploy an application to sarge, we first create a new
+`instance`. The instance is a container: a folder for the application
+itself, a configuration file, and services set up.
 
-Let's create a deployment for our application. It's just a configuration
-file specifying a name and unix user::
+Let's start up an instance with a simple configuration. The `new`
+command creates an instance with a random ID and prints that to the
+console. We must provide a JSON configuration string as argument::
 
-    cat > demo.yaml <<EOF
-    {
-        "name": "demo",
-        "user": "joe",
-        "nginx_options": {
-            "listen": "8013"
-        }
-    }
+    $ var/sarge-venv/bin/sarge . new '{
+        "application_name": "webapp",
+        "services": {"storage": {"type": "persistent-folder"}}}'
+    Jh3KH6
+
+In the newly created folder we need to create an executable named
+``server``. This is our application, and we'll use the `wsgiref`
+demo server::
+
+    $ cat > Jh3KH6/server <<EOF
+    #!/usr/bin/env python
+    from wsgiref.simple_server import make_server, demo_app
+    httpd = make_server('', 8000, demo_app)
+    print "Serving on port 8000..."
+    httpd.serve_forever()
     EOF
-    sudo mv demo.yaml deployments/
+    $ chmod +x Jh3KH6/server
+
+Now we just need to start it up::
+
+    $ var/sarge-venv/bin/sarge . start Jh3KH6
 
 
-Deploying the first version
----------------------------
-Before deploying we need to ask sarge to prepare a new version of our
-deployment::
+To make sure the application is working, we can access the homepage
+using `cURL`::
 
-    sudo bin/sarge . new_version demo
-
-The `new_version` command should print the absolute path of a newly
-created folder and it's probably ``/var/local/sarge-home/demo/1``.
-That's where we're supposed to write our application. We'll just write
-an application configuration file with the urlmap and nginx port, and
-use the `demo application from wsgiref`_::
-
-    cat > demo.deploy/1/sargeapp.yaml <<EOF
-    {
-        "urlmap": [{
-            "type": "wsgi",
-            "url": "/",
-            "wsgi_app": "wsgiref.simple_server:demo_app"
-        }]
-    }
-    EOF
-
-.. _`demo application from wsgiref`: http://docs.python.org/library/wsgiref#wsgiref.simple_server.demo_app
-
-Now it's time to activate the version. This tells sarge to set up
-`nginx` and `supervisor` and then starts up the application::
-
-    sudo bin/sarge . activate_version demo demo/1
-
-To make sure the application is working, access the homepage using
-`cURL`::
-
-    curl http://localhost:8013/
+    curl http://localhost:8000/
 
 
 More examples
 -------------
-For working examples of deployments, see ``vagrant/deployment_test.py``
+For working examples of deployments, see `vagrant/deployment_test.py`_
 in the sarge source code repository. Those are automated tests that
 deploy against a local virtual machine.
+
+.. _`vagrant/deployment_test.py`: https://github.com/alex-morega/sarge/blob/master/vagrant/deployment_test.py
