@@ -209,12 +209,12 @@ class NginxConfigurationTest(SargeTestCase):
                    instance.folder)
         self.assert_equivalent(nginx_conf, conf_ok)
 
-    def test_nginx_configuration_is_removed_on_instance_stop(self):
+    def test_nginx_configuration_is_removed_on_instance_destroy(self):
         instance = self.configure_and_activate({})
         cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
         cfg_site = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-site')
         self.assertTrue(cfg_urlmap.isfile())
         self.assertTrue(cfg_site.isfile())
-        instance.stop()
+        instance.destroy()
         self.assertFalse(cfg_urlmap.isfile())
         self.assertFalse(cfg_site.isfile())

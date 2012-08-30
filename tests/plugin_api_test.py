@@ -53,6 +53,20 @@ class PluginApiTest(SargeTestCase):
         instance.stop()
         self.assertEqual(stopped, [instance.id_])
 
+    def test_instance_destroy_triggers_stop_signal(self):
+        from sarge import signals
+        stopped = []
+        sarge = self.sarge()
+
+        @signals.instance_has_stopped.connect_via(sarge, weak=True)
+        def handler(sarge, instance, **extra):
+            stopped.append(instance.id_)
+
+        instance = sarge.new_instance()
+        instance.start()
+        instance.destroy()
+        self.assertEqual(stopped, [instance.id_])
+
     def test_instance_destroy_triggers_destroy_signal(self):
         from sarge import signals
         destroyed = []

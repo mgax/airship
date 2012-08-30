@@ -56,12 +56,13 @@ class ShellTest(SargeTestCase):
 
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
-        (other_tmp / 'etc').mkdir()
         self.addCleanup(other_tmp.rmtree)
-        (other_tmp / 'etc' / 'sarge.yaml').write_text('{}')
 
         core = imp('sarge.core')
         core.main([str(other_tmp), 'init'])
         expected = [core.DEPLOYMENT_CFG_DIR, 'etc', 'var']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertTrue((other_tmp / core.DEPLOYMENT_CFG_DIR).isdir())
+        sarge_yaml_path = other_tmp / 'etc' / 'sarge.yaml'
+        self.assertTrue(sarge_yaml_path.isfile())
+        self.assertEqual(json.loads(sarge_yaml_path.text()), {'plugins': []})
