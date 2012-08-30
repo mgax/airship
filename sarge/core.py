@@ -81,11 +81,11 @@ class Instance(object):
     def stop(self):
         self.sarge.daemons.stop_instance(self)
         signals.instance_has_stopped.send(self.sarge, instance=self)
-        self.run_folder.rmtree()
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
         signals.instance_will_be_destroyed.send(self.sarge, instance=self)
+        self.run_folder.rmtree()
         self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink()
 
