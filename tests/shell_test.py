@@ -41,9 +41,18 @@ class ShellTest(SargeTestCase):
     @patch('sarge.core.Instance.destroy')
     def test_destroy_instance_calls_api_method(self, destroy):
         instance = self.sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp),
-                                'destroy', instance.id_])
+        imp('sarge.core').main([str(self.tmp), 'destroy', instance.id_])
         self.assertEqual(destroy.mock_calls, [call()])
+
+    @patch('sarge.core.Sarge.list_instances')
+    def test_destroy_instance_calls_api_method(self, list_instances):
+        data = {'some': ['json', 'data']}
+        list_instances.return_value = data
+        with patch('sys.stdout', StringIO()) as stdout:
+            config = json.dumps({'hello': "world"})
+            imp('sarge.core').main([str(self.tmp), 'list'])
+        self.assertEqual(list_instances.mock_calls, [call()])
+        self.assertEqual(json.loads(stdout.getvalue()), data)
 
     def test_init_creates_configuration(self):
         other_tmp = path(tempfile.mkdtemp())
