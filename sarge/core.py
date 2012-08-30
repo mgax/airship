@@ -5,6 +5,7 @@ import json
 import random
 import string
 import tempfile
+from datetime import datetime
 from importlib import import_module
 from path import path
 import blinker
@@ -49,6 +50,10 @@ class Instance(object):
         self.run_folder = var / 'run' / id_
         self.appcfg_path = self.run_folder / 'appcfg.json'
         self.log_path = var / 'log' / (self.id_ + '.log')
+
+    @property
+    def meta(self):
+        return self.config['meta']
 
     def get_appcfg(self):
         with self.appcfg_path.open('rb') as f:
@@ -158,6 +163,9 @@ class Sarge(object):
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
+                'meta': {
+                    'CREATION_TIME': datetime.utcnow().isoformat(),
+                }
             }, f)
         instance = self.get_instance(instance_id)
         return instance

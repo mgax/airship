@@ -1,3 +1,4 @@
+from datetime import datetime
 from mock import Mock, patch, call
 from common import SargeTestCase
 
@@ -60,6 +61,14 @@ class InstanceTest(SargeTestCase):
             sarge.new_instance()
             with self.assertRaises(RuntimeError):
                 sarge.new_instance()
+
+    def test_instance_metadata_contains_creation_time(self):
+        sarge = self.sarge()
+        t0 = datetime.utcnow().isoformat()
+        instance = sarge.new_instance()
+        t1 = datetime.utcnow().isoformat()
+        creation = instance.meta['CREATION_TIME']
+        self.assertTrue(t0 <= creation <= t1)
 
 
 class InstanceListingTest(SargeTestCase):
