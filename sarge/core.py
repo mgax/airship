@@ -215,7 +215,7 @@ def init_cmd(sarge, args):
 
 
 def new_cmd(sarge, args):
-    print sarge.new_instance(json.loads(args.config)).folder
+    print sarge.new_instance(json.loads(args.config)).id_
 
 
 def start_cmd(sarge, args):
