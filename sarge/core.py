@@ -225,6 +225,10 @@ def new_cmd(sarge, args):
     print sarge.new_instance(json.loads(args.config)).id_
 
 
+def configure_cmd(sarge, args):
+    sarge.get_instance(args.id).configure()
+
+
 def start_cmd(sarge, args):
     sarge.get_instance(args.id).start()
 
@@ -255,6 +259,9 @@ def build_args_parser():
     new_parser = subparsers.add_parser('new')
     new_parser.set_defaults(func=new_cmd)
     new_parser.add_argument('config')
+    configure_parser = subparsers.add_parser('configure')
+    configure_parser.set_defaults(func=configure_cmd)
+    configure_parser.add_argument('id')
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('id')

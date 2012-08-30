@@ -20,6 +20,12 @@ class ShellTest(SargeTestCase):
         self.assertEqual(new_instance.mock_calls, [call({'hello': "world"})])
         self.assertEqual(stdout.getvalue().strip(), "instance-id")
 
+    @patch('sarge.core.Instance.configure')
+    def test_configure_instance_calls_api_method(self, configure):
+        instance = self.sarge().new_instance()
+        imp('sarge.core').main([str(self.tmp), 'configure', instance.id_])
+        self.assertEqual(configure.mock_calls, [call()])
+
     @patch('sarge.core.Instance.start')
     def test_start_instance_calls_api_method(self, start):
         instance = self.sarge().new_instance()
