@@ -1,10 +1,14 @@
 Welcome to Sarge's documentation!
 =================================
 
-Sarge is a deployment tool that automates server-side configuration
-tasks for web applications. It's currently in early development, and
-thus not stable, and may crash and burn at any time. Use at your own
-risk.
+Sarge is a server-side tool for deploying applications inspired by the
+`twelve-factor methodology`_. It's a wrapper around supervisor_ with
+logic to set up and tear down application instances and plugins to
+configure services for each instance (e.g. persistence). Take a look at
+the :ref:`tutorial` to get a feel for the deployment process.
+
+.. _twelve-factor methodology: http://www.12factor.net/
+.. _supervisor: http://supervisord.org/
 
 
 The source code is maintained on GitHub:
@@ -17,7 +21,6 @@ Contents:
    :maxdepth: 2
 
    tutorial
-   philosophy
    development
    api
 
