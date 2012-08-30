@@ -99,7 +99,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         cfg = {'urlmap': [{'type': 'wsgi',
                            'url': '/',
                            'app_factory': 'mytinyapp:gettheapp'}]}
-        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
 
         app_py = ('def gettheapp(appcfg):\n'
                   '    def theapp(environ, start_response):\n'
@@ -126,7 +126,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                        '    return theapp\n')
 
         # deploy instance one
-        instance_id_1 = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id_1 = sarge_cmd("new " + quote_json(cfg)).strip()
         put(StringIO(app_py_tmpl % 'one'),
             str(env['sarge-home'] / instance_id_1 / 'mytinyapp.py'))
         sarge_cmd("start '%s'" % instance_id_1)
@@ -137,7 +137,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                          "hello sarge one!\n")
 
         # deploy instance two
-        instance_id_2 = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id_2 = sarge_cmd("new " + quote_json(cfg)).strip()
         put(StringIO(app_py_tmpl % 'two'),
             str(env['sarge-home'] / instance_id_2 / 'mytinyapp.py'))
         sarge_cmd("start '%s'" % instance_id_2)
@@ -149,7 +149,7 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_deploy_php(self):
         cfg = {'urlmap': [{'type': 'php', 'url': '/'}]}
-        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
         put(StringIO(app_php),
@@ -163,7 +163,7 @@ class VagrantDeploymentTest(unittest.TestCase):
 
     def test_deploy_static_site(self):
         cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
-        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
 
         with cd(str(env['sarge-home'] / instance_id)):
             run("echo 'hello static!' > hello.html")
@@ -184,7 +184,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         cfg = {'urlmap': [{'type': 'proxy',
                            'url': '/',
                            'upstream_url': 'http://localhost:43423'}]}
-        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
+        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
 
         app_py = ('#!/usr/bin/env python\n'
                   'from wsgiref.simple_server import make_server\n'
