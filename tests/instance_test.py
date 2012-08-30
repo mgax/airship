@@ -1,3 +1,4 @@
+from datetime import datetime
 from mock import Mock, patch, call
 from common import SargeTestCase
 
@@ -60,3 +61,44 @@ class InstanceTest(SargeTestCase):
             sarge.new_instance()
             with self.assertRaises(RuntimeError):
                 sarge.new_instance()
+
+    def test_instance_metadata_contains_creation_time(self):
+        sarge = self.sarge()
+        t0 = datetime.utcnow().isoformat()
+        instance = sarge.new_instance()
+        t1 = datetime.utcnow().isoformat()
+        creation = instance.meta['CREATION_TIME']
+        self.assertTrue(t0 <= creation <= t1)
+
+    def test_instance_metadata_contains_app_name(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance({'application_name': 'testy'})
+        self.assertEqual(instance.meta['APPLICATION_NAME'], 'testy')
+
+    def test_instance_id_starts_with_app_name(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance({'application_name': 'testy'})
+        self.assertTrue(instance.id_.startswith('testy-'))
+
+
+class InstanceListingTest(SargeTestCase):
+
+    def test_listing_with_no_instances_returns_empty_list(self):
+        sarge = self.sarge()
+        report = sarge.list_instances()
+        self.assertEqual(report['instances'], [])
+
+    def test_listing_with_two_instances_contains_their_ids(self):
+        sarge = self.sarge()
+        instance_1 = sarge.new_instance()
+        instance_2 = sarge.new_instance()
+        report = sarge.list_instances()
+        self.assertItemsEqual([i['id'] for i in report['instances']],
+                              [instance_1.id_, instance_2.id_])
+
+    def test_listing_contains_metadata(self):
+        sarge = self.sarge()
+        sarge.new_instance({'application_name': 'testy'})
+        report = sarge.list_instances()
+        [instance_data] = report['instances']
+        self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')

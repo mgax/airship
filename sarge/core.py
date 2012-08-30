@@ -5,6 +5,7 @@ import json
 import random
 import string
 import tempfile
+from datetime import datetime
 from importlib import import_module
 from path import path
 import blinker
@@ -18,6 +19,7 @@ log = logging.getLogger(__name__)
 
 DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
+YAML_EXT = '.yaml'
 
 QUICK_WSGI_APP_TEMPLATE = """\
 #!%(python_bin)s
@@ -48,6 +50,10 @@ class Instance(object):
         self.run_folder = var / 'run' / id_
         self.appcfg_path = self.run_folder / 'appcfg.json'
         self.log_path = var / 'log' / (self.id_ + '.log')
+
+    @property
+    def meta(self):
+        return self.config['meta']
 
     def get_appcfg(self):
         with self.appcfg_path.open('rb') as f:
@@ -121,7 +127,7 @@ class Sarge(object):
         return folder
 
     def _instance_config_path(self, instance_id):
-        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + '.yaml')
+        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + YAML_EXT)
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
@@ -136,11 +142,11 @@ class Sarge(object):
     def _instance_folder(self, id_):
         return self.home_path / id_
 
-    def _generate_instance_id(self):
+    def _generate_instance_id(self, id_prefix):
         def random_id(size=6, vocabulary=string.letters + string.digits):
             return ''.join(random.choice(vocabulary) for c in range(size))
         for c in range(10):
-            id_ = random_id()
+            id_ = id_prefix + random_id()
             try:
                 self._instance_folder(id_).mkdir()
             except OSError:
@@ -151,16 +157,41 @@ class Sarge(object):
             raise RuntimeError("Failed to generate unique instance ID")
 
     def new_instance(self, config={}):
-        instance_id = self._generate_instance_id()
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
+        meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
+        app_name = config.get('application_name')
+        if app_name:
+            meta['APPLICATION_NAME'] = app_name
+            id_prefix = app_name + '-'
+        else:
+            id_prefix = ''
+        instance_id = self._generate_instance_id(id_prefix)
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
-                'name': instance_id,
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
+                'meta': meta,
             }, f)
         instance = self.get_instance(instance_id)
         return instance
+
+    def _iter_instance_ids(self):
+        deployment_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
+        if not deployment_cfg_dir.exists():
+            return
+        for cfg_name in [p.name for p in deployment_cfg_dir.listdir()]:
+            assert cfg_name.endswith(YAML_EXT)
+            yield cfg_name[:-len(YAML_EXT)]
+
+    def list_instances(self):
+        instances = []
+        for instance_id in self._iter_instance_ids():
+            instance = self.get_instance(instance_id)
+            instances.append({
+                'id': instance.id_,
+                'meta': instance.meta,
+            })
+        return {'instances': instances}
 
 
 class VarFolderPlugin(object):
@@ -220,6 +251,10 @@ def new_cmd(sarge, args):
     print sarge.new_instance(json.loads(args.config)).id_
 
 
+def list_cmd(sarge, args):
+    print json.dumps(sarge.list_instances(), indent=2)
+
+
 def configure_cmd(sarge, args):
     sarge.get_instance(args.id).configure()
 
@@ -254,6 +289,8 @@ def build_args_parser():
     new_parser = subparsers.add_parser('new')
     new_parser.set_defaults(func=new_cmd)
     new_parser.add_argument('config')
+    list_parser = subparsers.add_parser('list')
+    list_parser.set_defaults(func=list_cmd)
     configure_parser = subparsers.add_parser('configure')
     configure_parser.set_defaults(func=configure_cmd)
     configure_parser.add_argument('id')
