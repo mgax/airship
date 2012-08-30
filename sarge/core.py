@@ -49,6 +49,10 @@ class Instance(object):
         self.appcfg_path = self.run_folder / 'appcfg.json'
         self.log_path = var / 'log' / (self.id_ + '.log')
 
+    def get_appcfg(self):
+        with self.appcfg_path.open('rb') as f:
+            return json.load(f)
+
     def start(self):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
