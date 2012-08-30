@@ -159,13 +159,15 @@ class Sarge(object):
     def new_instance(self, config={}):
         instance_id = self._generate_instance_id()
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
+        meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
+        app_name = config.get('application_name')
+        if app_name:
+            meta['APPLICATION_NAME'] = app_name
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
-                'meta': {
-                    'CREATION_TIME': datetime.utcnow().isoformat(),
-                }
+                'meta': meta,
             }, f)
         instance = self.get_instance(instance_id)
         return instance

@@ -70,6 +70,11 @@ class InstanceTest(SargeTestCase):
         creation = instance.meta['CREATION_TIME']
         self.assertTrue(t0 <= creation <= t1)
 
+    def test_instance_metadata_contains_app_name(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance({'application_name': 'testy'})
+        self.assertEqual(instance.meta['APPLICATION_NAME'], 'testy')
+
 
 class InstanceListingTest(SargeTestCase):
 
