@@ -63,10 +63,3 @@ class ListenPluginTest(SargeTestCase):
         instance = self.configure_instance({
             'services': {'listen': {'type': 'listen', 'port': '4327'}}})
         self.assertEqual(instance.get_appcfg()['LISTEN_PORT'], '4327')
-
-    def test_listen_random_port_is_found_in_appcfg(self):
-        instance = self.configure_instance({
-            'services': {'listen': {'type': 'listen', 'port': 'random'}}})
-        appcfg = instance.get_appcfg()
-        self.assertIn('LISTEN_PORT', appcfg)
-        self.assertTrue(1024 <= int(appcfg['LISTEN_PORT']) < 65536)

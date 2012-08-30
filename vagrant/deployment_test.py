@@ -201,30 +201,3 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
-
-    def test_if_listening_on_random_port_number_nginx_serves_our_page(self):
-        cfg = {
-            'urlmap': [{'type': 'proxy',
-                        'url': '/',
-                        'upstream_url': 'http://localhost:$LISTEN_PORT'}],
-            'services': {'listen': {'type': 'listen', 'port': 'random'}},
-        }
-        instance_id = path(sarge_cmd("new " + quote_json(cfg)))
-
-        app_py = ('#!/usr/bin/env python\n'
-                  'from wsgiref.simple_server import make_server\n'
-                  'import os, json\n'
-                  'cfg = json.load(open(os.environ["SARGEAPP_CFG"]))\n'
-                  'port = int(cfg["LISTEN_PORT"])\n'
-                  'def theapp(environ, start_response):\n'
-                  '    start_response("200 OK", [])\n'
-                  '    return ["hello sarge! port=%d\\n" % port]\n'
-                  'make_server("0", port, theapp).serve_forever()\n')
-        put(StringIO(app_py),
-            str(env['sarge-home'] / instance_id / 'server'),
-            mode=0755)
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
-
-        self.assertIn("hello sarge!", get_url('http://192.168.13.13:8013/'))
