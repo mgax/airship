@@ -59,7 +59,7 @@ class NginxPlugin(object):
 
     def __init__(self, sarge):
         self.sarge = sarge
-        signals.instance_will_start.connect(self.activate_deployment, sarge)
+        signals.instance_configuring.connect(self.configure_instance, sarge)
         signals.sarge_initializing.connect(self.initialize, sarge)
         signals.instance_has_stopped.connect(self.instance_stop, sarge)
 
@@ -86,7 +86,7 @@ class NginxPlugin(object):
     def _conf_urlmap_path(self, instance):
         return self.etc_nginx / (instance.id_ + '-urlmap')
 
-    def activate_deployment(self, sarge, instance, appcfg, **extra):
+    def configure_instance(self, sarge, instance, appcfg, **extra):
         conf_path = self._conf_site_path(instance)
         urlmap_path = self._conf_urlmap_path(instance)
 
