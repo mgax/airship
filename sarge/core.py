@@ -52,11 +52,11 @@ class Instance(object):
     def start(self):
         log.info("Activating instance %r", self.id_)
         self.run_folder.makedirs_p()
-        self._appcfg = {}
+        appcfg = {}
         signals.instance_configuring.send(self.sarge, instance=self,
-                                                      appcfg=self._appcfg)
+                                                      appcfg=appcfg)
         signals.instance_will_start.send(self.sarge, instance=self,
-                                                     appcfg=self._appcfg)
+                                                     appcfg=appcfg)
         if 'tmp-wsgi-app' in self.config:
             app_import_name = self.config['tmp-wsgi-app']
             script_path = self.folder / 'server'
@@ -69,12 +69,12 @@ class Instance(object):
                     'module_name': module_name,
                     'attribute_name': attribute_name,
                     'socket_path': str(self.run_folder / 'wsgi-app.sock'),
-                    'appcfg': self._appcfg,
+                    'appcfg': appcfg,
                 })
             script_path.chmod(0755)
 
         with self.appcfg_path.open('wb') as f:
-            json.dump(self._appcfg, f, indent=2)
+            json.dump(appcfg, f, indent=2)
 
         self.sarge.daemons.start_instance(self)
 
