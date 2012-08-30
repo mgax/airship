@@ -201,3 +201,12 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_url('http://192.168.13.13:8013/'),
                          "hello sarge!\n")
+
+    def test_list_instances_contains_enough_info_to_clean_up(self):
+        sarge_cmd("new " + quote_json({'application_name': 'testy'}))
+        report_1 = json.loads(sarge_cmd("list"))
+        self.assertEqual(len(report_1['instances']), 1)
+        instance_id = report_1['instances'][0]['id']
+        sarge_cmd("destroy " + instance_id)
+        report_2 = json.loads(sarge_cmd("list"))
+        self.assertEqual(len(report_2['instances']), 0)
