@@ -90,3 +90,10 @@ class InstanceListingTest(SargeTestCase):
         report = sarge.list_instances()
         self.assertItemsEqual([i['id'] for i in report['instances']],
                               [instance_1.id_, instance_2.id_])
+
+    def test_listing_contains_metadata(self):
+        sarge = self.sarge()
+        sarge.new_instance({'application_name': 'testy'})
+        report = sarge.list_instances()
+        [instance_data] = report['instances']
+        self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')

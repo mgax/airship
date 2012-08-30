@@ -183,8 +183,10 @@ class Sarge(object):
     def list_instances(self):
         instances = []
         for instance_id in self._iter_instance_ids():
+            instance = self.get_instance(instance_id)
             instances.append({
-                'id': instance_id,
+                'id': instance.id_,
+                'meta': instance.meta,
             })
         return {'instances': instances}
 
