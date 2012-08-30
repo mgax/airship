@@ -7,24 +7,23 @@ from fabric.contrib.files import exists
 from path import path
 
 
-gcfg = cfg = {}
-cfg['sarge-home'] = path('/var/local/sarge')
-cfg['sarge-venv'] = path('/var/local/sarge-sandbox')
+env['sarge-home'] = path('/var/local/sarge')
+env['sarge-venv'] = path('/var/local/sarge-sandbox')
 
 
 def provision():
-    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % cfg)
-    sudo("'%(sarge-venv)s'/bin/pip install flup" % cfg)
+    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % env)
+    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % env)
+    sudo("'%(sarge-venv)s'/bin/pip install flup" % env)
 
 
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    if not exists(cfg['sarge-venv']):
+    if not exists(env['sarge-venv']):
         provision()
 
-    sudo("rm -rf '%(sarge-home)s'" % cfg)
+    sudo("rm -rf '%(sarge-home)s'" % env)
     self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
 
 
@@ -35,13 +34,13 @@ def tearDownModule(self):
 
 
 def sarge_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % cfg)
+    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % env)
     return run(base + cmd)
 
 
 def supervisorctl_cmd(cmd):
     base = ("'%(sarge-venv)s'/bin/supervisorctl "
-            "-c '%(sarge-home)s'/etc/supervisor.conf " % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf " % env)
     return run(base + cmd)
 
 
@@ -71,7 +70,7 @@ def quote_json(config):
 
 
 def link_in_nginx(id_):
-    urlmap_path = gcfg['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
+    urlmap_path = env['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
     nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
     put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
 
@@ -79,19 +78,19 @@ def link_in_nginx(id_):
 class VagrantDeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        sudo("mkdir '%(sarge-home)s'" % cfg)
-        sudo("chown vagrant: '%(sarge-home)s'" % cfg)
-        run("mkdir '%(sarge-home)s'/etc" % cfg)
+        sudo("mkdir '%(sarge-home)s'" % env)
+        sudo("chown vagrant: '%(sarge-home)s'" % env)
+        run("mkdir '%(sarge-home)s'/etc" % env)
         put_json({'plugins': ['sarge:NginxPlugin', 'sarge:ListenPlugin']},
-                 gcfg['sarge-home'] / 'etc' / 'sarge.yaml',
+                 env['sarge-home'] / 'etc' / 'sarge.yaml',
                  use_sudo=True)
         sarge_cmd("init")
         run("'%(sarge-venv)s'/bin/supervisord "
-            "-c '%(sarge-home)s'/etc/supervisor.conf" % cfg)
+            "-c '%(sarge-home)s'/etc/supervisor.conf" % env)
 
     def tearDown(self):
         supervisorctl_cmd("shutdown")
-        sudo("rm -rf '%(sarge-home)s'" % cfg)
+        sudo("rm -rf '%(sarge-home)s'" % env)
 
     def test_ping(self):
         assert run('pwd') == '/home/vagrant'
@@ -108,7 +107,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '        return ["hello sarge!\\n"]\n'
                   '    return theapp\n')
         put(StringIO(app_py),
-            str(gcfg['sarge-home'] / instance_id / 'mytinyapp.py'))
+            str(env['sarge-home'] / instance_id / 'mytinyapp.py'))
         sarge_cmd("start '%s'" % instance_id)
         link_in_nginx(instance_id)
         sudo("service nginx reload")
@@ -129,7 +128,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         # deploy instance one
         instance_id_1 = path(sarge_cmd("new " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'one'),
-            str(gcfg['sarge-home'] / instance_id_1 / 'mytinyapp.py'))
+            str(env['sarge-home'] / instance_id_1 / 'mytinyapp.py'))
         sarge_cmd("start '%s'" % instance_id_1)
         link_in_nginx(instance_id_1)
         sudo("service nginx reload")
@@ -140,7 +139,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         # deploy instance two
         instance_id_2 = path(sarge_cmd("new " + quote_json(cfg)))
         put(StringIO(app_py_tmpl % 'two'),
-            str(gcfg['sarge-home'] / instance_id_2 / 'mytinyapp.py'))
+            str(env['sarge-home'] / instance_id_2 / 'mytinyapp.py'))
         sarge_cmd("start '%s'" % instance_id_2)
         link_in_nginx(instance_id_2)
         sudo("service nginx reload")
@@ -154,7 +153,7 @@ class VagrantDeploymentTest(unittest.TestCase):
 
         app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
         put(StringIO(app_php),
-            str(gcfg['sarge-home'] / instance_id / 'someapp.php'))
+            str(env['sarge-home'] / instance_id / 'someapp.php'))
         sarge_cmd("start '%s'" % instance_id)
         link_in_nginx(instance_id)
         sudo("service nginx reload")
@@ -166,7 +165,7 @@ class VagrantDeploymentTest(unittest.TestCase):
         cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
         instance_id = path(sarge_cmd("new " + quote_json(cfg)))
 
-        with cd(str(gcfg['sarge-home'] / instance_id)):
+        with cd(str(env['sarge-home'] / instance_id)):
             run("echo 'hello static!' > hello.html")
             run("mkdir sub")
             run("echo 'submarine' > sub/marine.txt")
@@ -194,7 +193,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    return ["hello sarge!\\n"]\n'
                   'make_server("0", 43423, theapp).serve_forever()\n')
         put(StringIO(app_py),
-            str(gcfg['sarge-home'] / instance_id / 'server'),
+            str(env['sarge-home'] / instance_id / 'server'),
             mode=0755)
         sarge_cmd("start '%s'" % instance_id)
         link_in_nginx(instance_id)
@@ -222,7 +221,7 @@ class VagrantDeploymentTest(unittest.TestCase):
                   '    return ["hello sarge! port=%d\\n" % port]\n'
                   'make_server("0", port, theapp).serve_forever()\n')
         put(StringIO(app_py),
-            str(gcfg['sarge-home'] / instance_id / 'server'),
+            str(env['sarge-home'] / instance_id / 'server'),
             mode=0755)
         sarge_cmd("start '%s'" % instance_id)
         link_in_nginx(instance_id)
