@@ -85,9 +85,11 @@ class Instance(object):
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
         signals.instance_will_be_destroyed.send(self.sarge, instance=self)
-        self.run_folder.rmtree()
-        self.folder.rmtree()
-        self.sarge._instance_config_path(self.id_).unlink()
+        if self.run_folder.isdir():
+            self.run_folder.rmtree()
+        if self.folder.isdir():
+            self.folder.rmtree()
+        self.sarge._instance_config_path(self.id_).unlink_p()
 
 
 class Sarge(object):

@@ -77,7 +77,7 @@ class Supervisor(object):
             })
 
     def remove_instance(self, instance_id):
-        self._instance_cfg(instance_id).unlink()
+        self._instance_cfg(instance_id).unlink_p()
 
     def ctl(self, cmd_args):
         base_args = [self.ctl_path, '-c', self.config_path]

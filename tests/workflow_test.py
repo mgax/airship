@@ -26,3 +26,9 @@ class WorkflowTest(SargeTestCase):
         self.assertFalse(instance_folder.isdir())
         self.assertFalse(yaml_path.isfile())
         self.assertFalse(run_folder.isdir())
+
+    def test_destroy_does_not_fail_if_called_twice(self):
+        self.instance.start()
+        self.instance.stop()
+        self.instance.destroy()
+        self.instance.destroy()

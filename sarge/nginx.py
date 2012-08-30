@@ -158,5 +158,5 @@ class NginxPlugin(object):
             f.write(conf_urlmap)
 
     def instance_stop(self, sarge, instance, **extra):
-        self._conf_site_path(instance).unlink()
-        self._conf_urlmap_path(instance).unlink()
+        self._conf_site_path(instance).unlink_p()
+        self._conf_urlmap_path(instance).unlink_p()
