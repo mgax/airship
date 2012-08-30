@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
+YAML_EXT = '.yaml'
 
 QUICK_WSGI_APP_TEMPLATE = """\
 #!%(python_bin)s
@@ -121,7 +122,7 @@ class Sarge(object):
         return folder
 
     def _instance_config_path(self, instance_id):
-        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + '.yaml')
+        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + YAML_EXT)
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
@@ -166,8 +167,8 @@ class Sarge(object):
         if not deployment_cfg_dir.exists():
             return
         for cfg_name in [p.name for p in deployment_cfg_dir.listdir()]:
-            assert cfg_name.endswith('.yaml')
-            yield cfg_name[:-len('.yaml')]
+            assert cfg_name.endswith(YAML_EXT)
+            yield cfg_name[:-len(YAML_EXT)]
 
     def list_instances(self):
         instances = []
