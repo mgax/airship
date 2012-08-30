@@ -53,12 +53,18 @@ class Instance(object):
         with self.appcfg_path.open('rb') as f:
             return json.load(f)
 
-    def start(self):
-        log.info("Activating instance %r", self.id_)
+    def configure(self):
         self.run_folder.makedirs_p()
         appcfg = {}
-        signals.instance_configuring.send(self.sarge, instance=self,
-                                                      appcfg=appcfg)
+        signals.instance_configuring.send(
+            self.sarge, instance=self, appcfg=appcfg)
+        with self.appcfg_path.open('wb') as f:
+            json.dump(appcfg, f, indent=2)
+
+    def start(self):
+        log.info("Activating instance %r", self.id_)
+        self.configure()
+        appcfg = self.get_appcfg()
         signals.instance_will_start.send(self.sarge, instance=self,
                                                      appcfg=appcfg)
         if 'tmp-wsgi-app' in self.config:
@@ -76,9 +82,6 @@ class Instance(object):
                     'appcfg': appcfg,
                 })
             script_path.chmod(0755)
-
-        with self.appcfg_path.open('wb') as f:
-            json.dump(appcfg, f, indent=2)
 
         self.sarge.daemons.start_instance(self)
 
