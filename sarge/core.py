@@ -155,7 +155,6 @@ class Sarge(object):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         with open(self._instance_config_path(instance_id), 'wb') as f:
             json.dump({
-                'name': instance_id,
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
             }, f)
