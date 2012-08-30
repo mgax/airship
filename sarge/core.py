@@ -162,6 +162,9 @@ class Sarge(object):
         instance = self.get_instance(instance_id)
         return instance
 
+    def list_instances(self):
+        return {'instances': []}
+
 
 class VarFolderPlugin(object):
 

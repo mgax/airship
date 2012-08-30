@@ -60,3 +60,11 @@ class InstanceTest(SargeTestCase):
             sarge.new_instance()
             with self.assertRaises(RuntimeError):
                 sarge.new_instance()
+
+
+class InstanceListingTest(SargeTestCase):
+
+    def test_listing_with_no_instances_returns_empty_list(self):
+        sarge = self.sarge()
+        report = sarge.list_instances()
+        self.assertEqual(report['instances'], [])
