@@ -61,7 +61,7 @@ class NginxPlugin(object):
         self.sarge = sarge
         signals.instance_configuring.connect(self.configure_instance, sarge)
         signals.sarge_initializing.connect(self.initialize, sarge)
-        signals.instance_has_stopped.connect(self.instance_stop, sarge)
+        signals.instance_will_be_destroyed.connect(self.destroy, sarge)
 
     fcgi_params_path = '/etc/nginx/fastcgi_params'
 
@@ -158,6 +158,6 @@ class NginxPlugin(object):
         with open(urlmap_path, 'wb') as f:
             f.write(conf_urlmap)
 
-    def instance_stop(self, sarge, instance, **extra):
+    def destroy(self, sarge, instance, **extra):
         self._conf_site_path(instance).unlink_p()
         self._conf_urlmap_path(instance).unlink_p()
