@@ -105,12 +105,20 @@ class Instance(object):
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
 
-    def run(self, argv):
+    def run(self, command):
         os.chdir(self.folder)
         environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
-        shell_args = ['/bin/bash', '--norc']
-        if argv:
-            shell_args += ['-c', '"$0" "$@"'] + argv
+        prerun = self.config.get('prerun')
+        shell_args = ['/bin/bash']
+        if command:
+            if prerun is not None:
+                environ['BASH_ENV'] = self.config['prerun']
+            shell_args += ['-c', command]
+        else:
+            if prerun is not None:
+                shell_args += ['--rcfile', self.config['prerun']]
+            else:
+                shell_args += ['--norc']
         os.execve(shell_args[0], shell_args, environ)
 
 
@@ -179,6 +187,7 @@ class Sarge(object):
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
+                'prerun': config.get('prerun', None),
                 'meta': meta,
             }, f)
         instance = self.get_instance(instance_id)
@@ -285,7 +294,7 @@ def destroy_cmd(sarge, args):
 
 
 def run_cmd(sarge, args):
-    sarge.get_instance(args.id).run(args.argv)
+    sarge.get_instance(args.id).run(args.command)
 
 
 def build_args_parser():
@@ -315,7 +324,7 @@ def build_args_parser():
     run_parser = subparsers.add_parser('run')
     run_parser.set_defaults(func=run_cmd)
     run_parser.add_argument('id')
-    run_parser.add_argument('argv', nargs=argparse.REMAINDER)
+    run_parser.add_argument('command', nargs='?')
     return parser
 
 
