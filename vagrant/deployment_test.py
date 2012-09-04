@@ -95,20 +95,6 @@ class VagrantDeploymentTest(unittest.TestCase):
     def test_ping(self):
         assert run('pwd') == '/home/vagrant'
 
-    def test_deploy_php(self):
-        cfg = {'urlmap': [{'type': 'php', 'url': '/'}]}
-        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
-
-        app_php = ('<?php echo "hello from" . " PHP!\\n"; ?>')
-        put(StringIO(app_php),
-            str(env['sarge-home'] / instance_id / 'someapp.php'))
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
-
-        self.assertEqual(get_url('http://192.168.13.13:8013/someapp.php'),
-                         "hello from PHP!\n")
-
     def test_deploy_static_site(self):
         cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
         instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
