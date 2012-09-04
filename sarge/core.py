@@ -106,7 +106,10 @@ class Instance(object):
         self.sarge._instance_config_path(self.id_).unlink_p()
 
     def run(self, argv):
-        raise NotImplementedError
+        os.chdir(self.folder)
+        environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
+        shell_args = ['/bin/bash', '--norc'] + argv
+        os.execve(shell_args[0], shell_args, environ)
 
 
 class Sarge(object):
