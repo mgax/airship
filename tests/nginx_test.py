@@ -53,66 +53,6 @@ class NginxConfigurationTest(SargeTestCase):
                    instance.folder)
         self.assert_equivalent(nginx_conf, conf_ok)
 
-    def test_wsgi_app_is_configured_in_nginx(self):
-        instance = self.configure_and_activate({
-            'urlmap': [
-                {'url': '/',
-                 'type': 'wsgi',
-                 'app_factory': 'wsgiref.simple_server:demo_app'},
-            ],
-        })
-        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
-        with open(cfg_urlmap, 'rb') as f:
-            nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf,
-            'location / { '
-            '  include /etc/nginx/fastcgi_params; '
-            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '  fastcgi_param SCRIPT_NAME ""; '
-            '  fastcgi_pass unix:%(socket_path)s; '
-            '}' % {'socket_path': instance.run_folder / 'wsgi-app.sock'})
-
-    def test_php_app_is_configured_in_nginx(self):
-        instance = self.configure_and_activate({
-            'urlmap': [
-                {'url': '/',
-                 'type': 'php'},
-            ],
-        })
-        cfg_urlmap = self.tmp / 'etc' / 'nginx' / (instance.id_ + '-urlmap')
-        with open(cfg_urlmap, 'rb') as f:
-            nginx_conf = f.read()
-        self.assert_equivalent(nginx_conf,
-            'location / { '
-            '  include /etc/nginx/fastcgi_params; '
-            '  fastcgi_param SCRIPT_FILENAME '
-                          '%(instance.folder)s$fastcgi_script_name; '
-            '  fastcgi_param PATH_INFO $fastcgi_script_name; '
-            '  fastcgi_param SCRIPT_NAME ""; '
-            '  fastcgi_pass unix:%(run_folder)s/php.sock; '
-            '}' % {'instance.folder': instance.folder,
-                   'run_folder': instance.run_folder})
-
-    @skip('PHP setup broken when using instance api')
-    def test_php_fcgi_startup_command_is_generated(self):
-        instance = self.configure_and_activate({
-            'urlmap': [
-                {'url': '/',
-                 'type': 'php'},
-            ],
-        })
-        cfg_folder = path(instance.folder + '.cfg')
-
-        config_path = cfg_folder / imp('sarge.core').SUPERVISOR_DEPLOY_CFG
-        command = read_config(config_path).get(
-            'program:testy_fcgi_php', 'command')
-
-        self.assertEqual(command, '/usr/bin/spawn-fcgi '
-                                  '-s %(run_folder)s/php.sock -M 0777 '
-                                  '-f /usr/bin/php5-cgi -n' % {
-                                      'run_folder': instance.run_folder,
-                                  })
-
     def test_proxy_is_configured_in_nginx(self):
         instance = self.configure_and_activate({
             'urlmap': [
