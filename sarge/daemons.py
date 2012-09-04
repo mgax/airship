@@ -26,14 +26,12 @@ files = %(include_files)s
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
-directory = %(directory)s
 redirect_stderr = true
 stdout_logfile = %(log)s
 startsecs = 2
 startretries = 1
 autostart = %(autostart)s
-environment = %(environment)s
-command = %(command)s
+command = bin/sarge run %(instance_id)s ./server
 """
 
 
@@ -71,8 +69,7 @@ class Supervisor(object):
                 'directory': instance.folder,
                 'run': instance.run_folder,
                 'log': instance.log_path,
-                'environment': 'SARGEAPP_CFG="%s"' % instance.appcfg_path,
-                'command': instance.folder / 'server',
+                'instance_id': instance.id_,
                 'autostart': 'true' if autostart else 'false',
             })
 

@@ -63,14 +63,13 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config = config_file_checker(self.instance_cfg(instance))
         section = 'program:%s' % instance.id_
 
-        eq_config(section, 'command', instance.folder / 'server')
+        eq_config(section, 'command',
+                  'bin/sarge run {0} ./server'.format(instance.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
         eq_config(section, 'startsecs', '2')
         eq_config(section, 'startretries', '1')
-        eq_config(section, 'environment',
-                  'SARGEAPP_CFG="%s"' % instance.appcfg_path)
 
     def test_instance_start_changes_autostart_to_true(self):
         instance = self.sarge().new_instance()
@@ -110,15 +109,6 @@ class SupervisorConfigurationTest(SargeTestCase):
         instance.destroy()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
-
-    def test_working_directory_is_instance_home(self):
-        instance = self.sarge().new_instance()
-        instance.start()
-
-        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
-        eq_config = config_file_checker(cfg_path)
-        eq_config('program:%s' % instance.id_, 'directory',
-                  instance.folder)
 
     def test_destroy_instance_removes_its_supervisor_configuration(self):
         instance = self.sarge().new_instance()
