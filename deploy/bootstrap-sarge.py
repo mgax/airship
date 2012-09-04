@@ -1,9 +1,18 @@
+""" Sarge automated installation script
+usage: python <(curl -fsSL raw.github.com/alex-morega/sarge/master/deploy/bootstrap-sarge.py) path/to/sarge
+"""
+
 import os
 import sys
 import subprocess
+import tempfile
+import shutil
+import urllib
 
 
 SARGE_PACKAGE = 'https://github.com/alex-morega/sarge/tarball/master'
+
+PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 
 SARGE_SCRIPT = """#!/bin/bash
 '{virtualenv_bin}/sarge' '{sarge_home}' "$@"
@@ -20,6 +29,11 @@ SUPERVISORCTL_SCRIPT = """#!/bin/bash
 
 def install(sarge_home, python_bin):
     from path import path
+
+    sarge_home = path(sarge_home).abspath()
+    if not sarge_home.exists():
+        sarge_home.makedirs_p()
+
     username = os.popen('whoami').read().strip()
     virtualenv_path = sarge_home / 'var' / 'sarge-venv'
     virtualenv_bin = virtualenv_path / 'bin'
@@ -67,11 +81,12 @@ def install(sarge_home, python_bin):
 
 if __name__ == '__main__':
     try:
-        from path import path
-    except ImportError:
-        print "This script requires the path.py library:"
-        print
-        print "  curl -O 'https://raw.github.com/jaraco/path.py/2.3/path.py'"
-        print
-    else:
-        install(path(os.getcwd()), sys.executable)
+        tmp = tempfile.mkdtemp()
+        http = urllib.urlopen(PATH_PY_URL)
+        with open(os.path.join(tmp, 'path.py'), 'wb') as f:
+            f.write(http.read())
+        http.close()
+        sys.path[0:0] = [tmp]
+        install(sys.argv[1], sys.executable)
+    finally:
+        shutil.rmtree(tmp)

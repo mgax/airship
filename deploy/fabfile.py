@@ -30,10 +30,8 @@ def bootstrap():
     sudo("mkdir -p {sarge_home}".format(**env))
     sudo("chown {username}: {sarge_home}".format(username=username, **env))
     put("bootstrap-sarge.py", str(env['sarge_home']))
-    with cd(env['sarge_home']):
-        run("curl -O 'https://raw.github.com/jaraco/path.py/2.3/path.py'")
-        run("{python_bin} bootstrap-sarge.py".format(**env))
-        run("bin/supervisord")
+    run("{python_bin} bootstrap-sarge.py {sarge_home}".format(**env))
+    run("{sarge_home}/bin/supervisord")
 
 
 @task
