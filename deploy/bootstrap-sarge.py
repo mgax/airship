@@ -16,19 +16,6 @@ PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 
-SARGE_SCRIPT = """#!/bin/bash
-'{virtualenv_bin}/sarge' '{sarge_home}' "$@"
-"""
-
-SUPERVISORD_SCRIPT = """#!/bin/bash
-'{virtualenv_bin}/supervisord' -c '{sarge_home}/etc/supervisor.conf'
-"""
-
-SUPERVISORCTL_SCRIPT = """#!/bin/bash
-'{virtualenv_bin}/supervisorctl' -c '{sarge_home}/etc/supervisor.conf' $@
-"""
-
-
 def install(sarge_home, python_bin):
     from path import path
 
@@ -53,22 +40,6 @@ def install(sarge_home, python_bin):
         (sarge_home / 'etc').mkdir_p()
         sarge_cfg.write_text('{"plugins": ["sarge:NginxPlugin"]}\n')
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
-
-    sarge_bin = sarge_home / 'bin'
-    print "creating scripts in {sarge_bin}".format(**locals())
-    sarge_bin.makedirs_p()
-
-    with open(sarge_bin / 'sarge', 'wb') as f:
-        f.write(SARGE_SCRIPT.format(**locals()))
-        path(f.name).chmod(0755)
-
-    with open(sarge_bin / 'supervisord', 'wb') as f:
-        f.write(SUPERVISORD_SCRIPT.format(**locals()))
-        path(f.name).chmod(0755)
-
-    with open(sarge_bin / 'supervisorctl', 'wb') as f:
-        f.write(SUPERVISORCTL_SCRIPT.format(**locals()))
-        path(f.name).chmod(0755)
 
     cmd = "{sarge_home}/bin/supervisord".format(**locals())
     fullcmd = "su {username} -c '{cmd}'".format(**locals())
