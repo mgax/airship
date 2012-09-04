@@ -17,14 +17,6 @@ class NginxPlugin(object):
     Upon activation of a new deployment version, the new nginx configuration is
     written, and nginx is reloaded. """
 
-    WSGI_TEMPLATE = (
-        'location %(url)s {\n'
-        '    include %(fcgi_params_path)s;\n'
-        '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
-        '    fastcgi_param SCRIPT_NAME "";\n'
-        '    fastcgi_pass unix:%(socket_path)s;\n'
-        '}\n')
-
     STATIC_TEMPLATE = (
         'location %(url)s {\n'
         '    alias %(instance_folder)s/%(path)s;\n'
@@ -109,12 +101,6 @@ class NginxPlugin(object):
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
                         instance_folder=instance.folder)
-            elif entry['type'] == 'wsgi':
-                socket_path = instance.run_folder / 'wsgi-app.sock'
-                conf_urlmap += self.WSGI_TEMPLATE % dict(entry,
-                        socket_path=socket_path,
-                        fcgi_params_path=self.fcgi_params_path)
-                instance.config['tmp-wsgi-app'] = entry['app_factory']
 
             elif entry['type'] == 'php':
                 socket_path = instance.run_folder / 'php.sock'
