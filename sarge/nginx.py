@@ -12,14 +12,12 @@ def interpolate_config(raw_entry, appcfg):
     return dict((k, interpolate(v)) for k, v in raw_entry.iteritems())
 
 
-class NginxPlugin(object):
-    """ Generates a configuration file for each deployment based on its urlmap.
-    Upon activation of a new deployment version, the new nginx configuration is
-    written, and nginx is reloaded. """
+class NginxConfGenerator(object):
+    """ Generate Nginx configuration snippets. """
 
     STATIC_TEMPLATE = (
         'location %(url)s {\n'
-        '    alias %(instance_folder)s/%(path)s;\n'
+        '    alias %(folder)s/%(path)s;\n'
         '}\n')
 
     FCGI_TEMPLATE = (
@@ -39,13 +37,41 @@ class NginxPlugin(object):
         '    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
         '}\n')
 
+    fcgi_params_path = '/etc/nginx/fastcgi_params'
+
+    def route(self, entry):
+        if entry['type'] == 'static':
+            return self.STATIC_TEMPLATE % entry
+
+        elif entry['type'] == 'fcgi':
+            socket_uri = entry['socket']
+            if socket_uri.startswith('tcp://'):
+                socket = socket_uri[len('tcp://'):]
+            elif socket_uri.startswith('unix:///'):
+                socket = 'unix:' + socket_uri[len('unix://'):]
+            else:
+                raise ValueError("Can't parse socket %r" % socket_uri)
+            return self.FCGI_TEMPLATE % dict(entry,
+                    socket=socket,
+                    fcgi_params_path=self.fcgi_params_path)
+
+        elif entry['type'] == 'proxy':
+            return self.PROXY_TEMPLATE % entry
+
+        else:
+            raise NotImplementedError
+
+
+class NginxPlugin(object):
+    """ Generates a configuration file for each deployment based on its urlmap.
+    Upon activation of a new deployment version, the new nginx configuration is
+    written, and nginx is reloaded. """
+
     def __init__(self, sarge):
         self.sarge = sarge
         signals.instance_configuring.connect(self.configure_instance, sarge)
         signals.sarge_initializing.connect(self.initialize, sarge)
         signals.instance_will_be_destroyed.connect(self.destroy, sarge)
-
-    fcgi_params_path = '/etc/nginx/fastcgi_params'
 
     @property
     def etc_nginx(self):
@@ -89,26 +115,16 @@ class NginxPlugin(object):
             entry = interpolate_config(raw_entry, appcfg)
 
             if entry['type'] == 'static':
-                conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
-                        instance_folder=instance.folder)
+                entry['folder'] = instance.folder
 
-            elif entry['type'] == 'fcgi':
-                socket_uri = entry['socket']
-                if socket_uri.startswith('tcp://'):
-                    socket = socket_uri[len('tcp://'):]
-                elif socket_uri.startswith('unix:///'):
-                    socket = 'unix:' + socket_uri[len('unix://'):]
-                else:
-                    raise ValueError("Can't parse socket %r" % socket_uri)
-                conf_urlmap += self.FCGI_TEMPLATE % dict(entry,
-                        socket=socket,
-                        fcgi_params_path=self.fcgi_params_path)
+            elif entry['type'] == 'wsgi':
+                instance.config['tmp-wsgi-app'] = entry['app_factory']
+                entry['socket_path'] = instance.run_folder / 'wsgi-app.sock'
 
-            elif entry['type'] == 'proxy':
-                conf_urlmap += self.PROXY_TEMPLATE % entry
+            elif entry['type'] == 'php':
+                entry['socket_path'] = instance.run_folder / 'php.sock'
 
-            else:
-                raise NotImplementedError
+            conf_urlmap += NginxConfGenerator().route(entry)
 
         with open(conf_path, 'wb') as f:
             f.write('server {\n')
