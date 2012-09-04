@@ -44,6 +44,12 @@ class ShellTest(SargeTestCase):
         imp('sarge.core').main([str(self.tmp), 'destroy', instance.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
+    @patch('sarge.core.Instance.run')
+    def test_run_instance_calls_api_method_with_args(self, run):
+        instance = self.sarge().new_instance()
+        imp('sarge.core').main([str(self.tmp), 'run', instance.id_, 'a', 'b'])
+        self.assertEqual(run.mock_calls, [call(['a', 'b'])])
+
     @patch('sarge.core.Sarge.list_instances')
     def test_destroy_instance_calls_api_method(self, list_instances):
         data = {'some': ['json', 'data']}

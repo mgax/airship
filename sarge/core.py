@@ -105,6 +105,9 @@ class Instance(object):
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
 
+    def run(self, argv):
+        raise NotImplementedError
+
 
 class Sarge(object):
     """ The sarge object implements most operations performed by sarge. It acts
@@ -284,6 +287,10 @@ def shell_cmd(sarge, args):
     os.execve('/bin/bash', ['/bin/bash', '--norc'], environ)
 
 
+def run_cmd(sarge, args):
+    sarge.get_instance(args.id).run(args.argv)
+
+
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
@@ -311,6 +318,10 @@ def build_args_parser():
     shell_parser = subparsers.add_parser('shell')
     shell_parser.set_defaults(func=shell_cmd)
     shell_parser.add_argument('id')
+    run_parser = subparsers.add_parser('run')
+    run_parser.set_defaults(func=run_cmd)
+    run_parser.add_argument('id')
+    run_parser.add_argument('argv', nargs=argparse.REMAINDER)
     return parser
 
 
