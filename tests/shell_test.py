@@ -60,14 +60,16 @@ class ShellTest(SargeTestCase):
         self.assertEqual(list_instances.mock_calls, [call()])
         self.assertEqual(json.loads(stdout.getvalue()), data)
 
-    def test_init_creates_configuration(self):
+    def test_init_creates_configuration_and_bin_scripts(self):
         other_tmp = path(tempfile.mkdtemp())
         self.addCleanup(other_tmp.rmtree)
 
         core = imp('sarge.core')
         core.main([str(other_tmp), 'init'])
-        expected = [core.DEPLOYMENT_CFG_DIR, 'etc', 'var']
+        expected = [core.DEPLOYMENT_CFG_DIR, 'bin', 'etc', 'var']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
+        self.assertItemsEqual([f.name for f in (other_tmp / 'bin').listdir()],
+                              ['sarge', 'supervisord', 'supervisorctl'])
         self.assertTrue((other_tmp / core.DEPLOYMENT_CFG_DIR).isdir())
         sarge_yaml_path = other_tmp / 'etc' / 'sarge.yaml'
         self.assertTrue(sarge_yaml_path.isfile())

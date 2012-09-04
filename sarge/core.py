@@ -254,6 +254,19 @@ class ListenPlugin(object):
                     appcfg[name.upper() + '_PORT'] = record['port']
 
 
+SARGE_SCRIPT = """#!/bin/bash
+'{prefix}/bin/sarge' '{home}' "$@"
+"""
+
+SUPERVISORD_SCRIPT = """#!/bin/bash
+'{prefix}/bin/supervisord' -c '{home}/etc/supervisor.conf'
+"""
+
+SUPERVISORCTL_SCRIPT = """#!/bin/bash
+'{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
+"""
+
+
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
     (sarge.home_path / 'etc').mkdir_p()
@@ -267,6 +280,23 @@ def init_cmd(sarge, args):
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     signals.sarge_initializing.send(sarge)
     sarge.generate_supervisord_configuration()
+
+    sarge_bin = sarge.home_path / 'bin'
+    sarge_bin.makedirs()
+
+    kw = {'home': sarge.home_path, 'prefix': sys.prefix}
+
+    with open(sarge_bin / 'sarge', 'wb') as f:
+        f.write(SARGE_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
+
+    with open(sarge_bin / 'supervisord', 'wb') as f:
+        f.write(SUPERVISORD_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
+
+    with open(sarge_bin / 'supervisorctl', 'wb') as f:
+        f.write(SUPERVISORCTL_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
 
 
 def new_cmd(sarge, args):
