@@ -105,6 +105,22 @@ class Instance(object):
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
 
+    def run(self, command):
+        os.chdir(self.folder)
+        environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
+        prerun = self.config.get('prerun')
+        shell_args = ['/bin/bash']
+        if command:
+            if prerun is not None:
+                environ['BASH_ENV'] = self.config['prerun']
+            shell_args += ['-c', command]
+        else:
+            if prerun is not None:
+                shell_args += ['--rcfile', self.config['prerun']]
+            else:
+                shell_args += ['--norc']
+        os.execve(shell_args[0], shell_args, environ)
+
 
 class Sarge(object):
     """ The sarge object implements most operations performed by sarge. It acts
@@ -171,6 +187,7 @@ class Sarge(object):
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
+                'prerun': config.get('prerun', None),
                 'meta': meta,
             }, f)
         instance = self.get_instance(instance_id)
@@ -237,6 +254,19 @@ class ListenPlugin(object):
                     appcfg[name.upper() + '_PORT'] = record['port']
 
 
+SARGE_SCRIPT = """#!/bin/bash
+'{prefix}/bin/sarge' '{home}' "$@"
+"""
+
+SUPERVISORD_SCRIPT = """#!/bin/bash
+'{prefix}/bin/supervisord' -c '{home}/etc/supervisor.conf'
+"""
+
+SUPERVISORCTL_SCRIPT = """#!/bin/bash
+'{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
+"""
+
+
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
     (sarge.home_path / 'etc').mkdir_p()
@@ -250,6 +280,23 @@ def init_cmd(sarge, args):
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     signals.sarge_initializing.send(sarge)
     sarge.generate_supervisord_configuration()
+
+    sarge_bin = sarge.home_path / 'bin'
+    sarge_bin.makedirs()
+
+    kw = {'home': sarge.home_path, 'prefix': sys.prefix}
+
+    with open(sarge_bin / 'sarge', 'wb') as f:
+        f.write(SARGE_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
+
+    with open(sarge_bin / 'supervisord', 'wb') as f:
+        f.write(SUPERVISORD_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
+
+    with open(sarge_bin / 'supervisorctl', 'wb') as f:
+        f.write(SUPERVISORCTL_SCRIPT.format(**kw))
+        path(f.name).chmod(0755)
 
 
 def new_cmd(sarge, args):
@@ -276,12 +323,8 @@ def destroy_cmd(sarge, args):
     sarge.get_instance(args.id).destroy()
 
 
-def shell_cmd(sarge, args):
-    instance = sarge.get_instance(args.id)
-    os.chdir(instance.folder)
-    environ = dict(os.environ,
-                   SARGEAPP_CFG=instance.appcfg_path)
-    os.execve('/bin/bash', ['/bin/bash', '--norc'], environ)
+def run_cmd(sarge, args):
+    sarge.get_instance(args.id).run(args.command)
 
 
 def build_args_parser():
@@ -308,9 +351,10 @@ def build_args_parser():
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
     destroy_parser.add_argument('id')
-    shell_parser = subparsers.add_parser('shell')
-    shell_parser.set_defaults(func=shell_cmd)
-    shell_parser.add_argument('id')
+    run_parser = subparsers.add_parser('run')
+    run_parser.set_defaults(func=run_cmd)
+    run_parser.add_argument('id')
+    run_parser.add_argument('command', nargs='?')
     return parser
 
 
