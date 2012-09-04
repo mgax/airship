@@ -28,3 +28,8 @@ class ShellTest(SargeTestCase):
         instance_id = self.sargebin('new', '{}').strip()
         directory = self.sargebin('run', instance_id, stdin="pwd\n").strip()
         self.assertEqual(directory, (self.tmp / instance_id).realpath())
+
+    def test_instance_run_with_arguments_executes_them_in_shell(self):
+        instance_id = self.sargebin('new', '{}').strip()
+        directory = self.sargebin('run', instance_id, 'pwd').strip()
+        self.assertEqual(directory, (self.tmp / instance_id).realpath())

@@ -108,7 +108,9 @@ class Instance(object):
     def run(self, argv):
         os.chdir(self.folder)
         environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
-        shell_args = ['/bin/bash', '--norc'] + argv
+        shell_args = ['/bin/bash', '--norc']
+        if argv:
+            shell_args += ['-c', '"$0" "$@"'] + argv
         os.execve(shell_args[0], shell_args, environ)
 
 
