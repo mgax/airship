@@ -22,16 +22,6 @@ class NginxPlugin(object):
         '    alias %(instance_folder)s/%(path)s;\n'
         '}\n')
 
-    PHP_TEMPLATE = (
-        'location %(url)s {\n'
-        '    include %(fcgi_params_path)s;\n'
-        '    fastcgi_param SCRIPT_FILENAME '
-                '%(instance_folder)s$fastcgi_script_name;\n'
-        '    fastcgi_param PATH_INFO $fastcgi_script_name;\n'
-        '    fastcgi_param SCRIPT_NAME "";\n'
-        '    fastcgi_pass unix:%(socket_path)s;\n'
-        '}\n')
-
     FCGI_TEMPLATE = (
         'location %(url)s {\n'
         '    include %(fcgi_params_path)s;\n'
@@ -101,21 +91,6 @@ class NginxPlugin(object):
             if entry['type'] == 'static':
                 conf_urlmap += self.STATIC_TEMPLATE % dict(entry,
                         instance_folder=instance.folder)
-
-            elif entry['type'] == 'php':
-                socket_path = instance.run_folder / 'php.sock'
-                conf_urlmap += self.PHP_TEMPLATE % dict(entry,
-                        socket_path=socket_path,
-                        instance_folder=instance.folder,
-                        fcgi_params_path=self.fcgi_params_path)
-
-                server_script = instance.folder / 'server'
-                with server_script.open('wb') as f:
-                    f.write("#!/bin/sh\n\n"
-                            "/usr/bin/spawn-fcgi -s %(socket_path)s -M 0777 "
-                              "-f /usr/bin/php5-cgi -n\n"
-                            % {'socket_path': socket_path})
-                server_script.chmod(0755)
 
             elif entry['type'] == 'fcgi':
                 socket_uri = entry['socket']
