@@ -14,6 +14,8 @@ SARGE_PACKAGE = 'https://github.com/alex-morega/sarge/tarball/master'
 
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 
+VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
+
 SARGE_SCRIPT = """#!/bin/bash
 '{virtualenv_bin}/sarge' '{sarge_home}' "$@"
 """
@@ -40,10 +42,11 @@ def install(sarge_home, python_bin):
     sarge_cfg = sarge_home / 'etc' / 'sarge.yaml'
 
     if not (virtualenv_bin / 'python').isfile():
-        virtualenv_path.makedirs_p()
-        subprocess.check_call(['virtualenv', virtualenv_path,
-                               '-p', python_bin, '--distribute'])
+        import virtualenv
+        print "creating virtualenv in {virtualenv_path} ...".format(**locals())
+        virtualenv.create_environment(virtualenv_path, use_distribute=True)
 
+    print "installing sarge ..."
     subprocess.check_call([virtualenv_bin / 'pip', 'install', SARGE_PACKAGE])
 
     if not sarge_cfg.isfile():
@@ -52,6 +55,7 @@ def install(sarge_home, python_bin):
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
 
     sarge_bin = sarge_home / 'bin'
+    print "creating scripts in {sarge_bin}".format(**locals())
     sarge_bin.makedirs_p()
 
     with open(sarge_bin / 'sarge', 'wb') as f:
@@ -79,13 +83,20 @@ def install(sarge_home, python_bin):
     print "  " + cmd
     print
 
+
+def download_to(url, file_path):
+    print "downloading {url} to {file_path}".format(**locals())
+    http = urllib.urlopen(url)
+    with open(file_path, 'wb') as f:
+        f.write(http.read())
+    http.close()
+
+
 if __name__ == '__main__':
     try:
         tmp = tempfile.mkdtemp()
-        http = urllib.urlopen(PATH_PY_URL)
-        with open(os.path.join(tmp, 'path.py'), 'wb') as f:
-            f.write(http.read())
-        http.close()
+        download_to(PATH_PY_URL, os.path.join(tmp, 'path.py'))
+        download_to(VIRTUALENV_URL, os.path.join(tmp, 'virtualenv.py'))
         sys.path[0:0] = [tmp]
         install(sys.argv[1], sys.executable)
     finally:
