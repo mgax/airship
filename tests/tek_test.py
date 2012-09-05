@@ -14,7 +14,7 @@ class TekNginxTest(HandyTestCase):
 
     def nginx_tek(self):
         from tek.nginx import NginxTek
-        return NginxTek(sites_dir=self.tmp)
+        return NginxTek(sites_dir=str(self.tmp))
 
     def test_nginx_configure_with_empty_urlmap_creates_blank_site(self):
         self.nginx_tek().configure('zz.example.com', 8080)
