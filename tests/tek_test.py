@@ -24,3 +24,9 @@ class TekNginxTest(HandyTestCase):
     def test_nginx_configure_triggers_nginx_reload(self):
         self.nginx_tek().configure('zz.example.com')
         self.assertEqual(self.reload_.mock_calls, [call()])
+
+    def test_nginx_delete_removes_site(self):
+        nginx = self.nginx_tek()
+        nginx.configure('zz.example.com')
+        nginx.delete('zz.example.com')
+        self.assertEqual(self.tmp.listdir(), [])
