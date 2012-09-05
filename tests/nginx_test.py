@@ -112,8 +112,8 @@ class NginxConfigurationTest(SargeTestCase):
             '  fastcgi_pass unix:/path/to/socket; '
             '}')
 
-    @skip('Arbitrary nginx options are ignored when using instance api')
     def test_configure_nginx_arbitrary_options(self):
+        from nose import SkipTest; raise SkipTest
         instance = self.configure_and_activate({
             'nginx_options': {
                 'server_name': 'something.example.com',
