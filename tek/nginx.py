@@ -28,3 +28,4 @@ class NginxTek(object):
 
     def delete(self, site_name):
         self._cfg_path(site_name, 80).unlink()
+        self.reload_()
