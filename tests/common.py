@@ -9,7 +9,24 @@ from mock import patch
 from importlib import import_module as imp
 
 
-class SargeTestCase(unittest.TestCase):
+class HandyTestCase(unittest.TestCase):
+
+    def patch(self, name):
+        p = patch(name)
+        mock_ob = p.start()
+        self.addCleanup(p.stop)
+        return mock_ob
+
+    def _pre_setup(self):
+        self.tmp = path(tempfile.mkdtemp())
+        self.addCleanup(self.tmp.rmtree)
+
+    def __call__(self, result=None):
+        self._pre_setup()
+        super(HandyTestCase, self).__call__(result)
+
+
+class SargeTestCase(HandyTestCase):
 
     def sarge(self, config=None):
         if config is None:
@@ -24,18 +41,7 @@ class SargeTestCase(unittest.TestCase):
     def signal(self, name):
         return imp('sarge.signals')._signals[name]
 
-    def patch(self, name):
-        p = patch(name)
-        mock_ob = p.start()
-        self.addCleanup(p.stop)
-        return mock_ob
-
     def _pre_setup(self):
-        self.tmp = path(tempfile.mkdtemp())
+        super(SargeTestCase, self)._pre_setup()
         (self.tmp / 'etc').mkdir()
-        self.addCleanup(self.tmp.rmtree)
         self.mock_subprocess = self.patch('sarge.daemons.subprocess')
-
-    def __call__(self, result=None):
-        self._pre_setup()
-        super(SargeTestCase, self).__call__(result)
