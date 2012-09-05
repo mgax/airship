@@ -9,6 +9,12 @@ from common import SargeTestCase
 src_dir = path(__file__).parent.parent
 
 
+def setUpModule():
+    if os.environ.get('SKIPSLOW'):
+        from nose import SkipTest
+        raise SkipTest
+
+
 class ShellTest(SargeTestCase):
 
     def setUp(self):
