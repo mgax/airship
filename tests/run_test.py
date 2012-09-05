@@ -1,7 +1,12 @@
+import os
 import sys
 import subprocess
+from path import path
 from mock import patch, call
 from common import SargeTestCase
+
+
+src_dir = path(__file__).parent.parent
 
 
 class ShellTest(SargeTestCase):
@@ -19,6 +24,7 @@ class ShellTest(SargeTestCase):
         stdin = kwargs.pop('stdin', '')
         assert not kwargs
         p = subprocess.Popen(argv, cwd=self.tmp,
+                             env=dict(os.environ, PYTHONPATH=src_dir),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
