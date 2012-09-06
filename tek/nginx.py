@@ -1,5 +1,9 @@
 import subprocess
 from path import path
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 
 SITE_CFG = """\
@@ -50,6 +54,7 @@ class NginxTek(object):
         configure.set_defaults(func=self.configure)
         configure.add_argument('site_name')
         configure.add_argument('-p', '--port', type=int, default=80)
+        configure.add_argument('urlmap')
 
         delete = subparsers.add_parser('delete')
         delete.set_defaults(func=self.delete)
@@ -63,4 +68,6 @@ class NginxTek(object):
         args = parser.parse_args(raw_arguments)
         kwargs = dict(args.__dict__)
         func = kwargs.pop('func')
+        if 'urlmap' in kwargs:
+            kwargs['urlmap'] = json.loads(kwargs['urlmap'])
         func(**kwargs)
