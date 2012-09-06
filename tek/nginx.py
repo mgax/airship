@@ -6,7 +6,15 @@ SITE_CFG = """\
 server {{
     server_name {site_name};
     listen {port};
-}}
+
+{urlmap_rules}}}
+"""
+
+
+STATIC_URL = """\
+    location {url} {{
+        alias {path};
+    }}
 """
 
 
@@ -22,7 +30,8 @@ class NginxTek(object):
     def _cfg_path(self, site_name, port):
         return self.sites_dir / "{site_name}:{port}".format(**locals())
 
-    def configure(self, site_name, port):
+    def configure(self, site_name, port, urlmap):
+        urlmap_rules = '\n'.join(STATIC_URL.format(**rule) for rule in urlmap)
         cfg_path = self._cfg_path(site_name, port)
         cfg_path.write_bytes(SITE_CFG.format(**locals()))
         self.reload_()
