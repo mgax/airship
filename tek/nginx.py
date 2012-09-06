@@ -1,4 +1,5 @@
 import subprocess
+import errno
 from path import path
 try:
     import simplejson as json
@@ -69,8 +70,13 @@ class NginxTek(object):
         cfg_path.write_bytes(SITE_CFG.format(**locals()))
         self.reload_()
 
-    def delete(self, site_name, port):
-        self._cfg_path(site_name, port).unlink()
+    def delete(self, site_name, port, nofail=False):
+        try:
+            self._cfg_path(site_name, port).unlink()
+        except OSError, e:
+            if nofail and e.errno == errno.ENOENT:
+                return
+            raise
         self.reload_()
 
     def build_args_parser(self):
@@ -89,6 +95,7 @@ class NginxTek(object):
         delete.set_defaults(func=self.delete)
         delete.add_argument('site_name')
         delete.add_argument('-p', '--port', type=int, default=80)
+        delete.add_argument('-f', '--nofail', action='store_true')
 
         return parser
 

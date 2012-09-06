@@ -31,6 +31,9 @@ class TekNginxTest(HandyTestCase):
         nginx.delete('zz.example.com', 8080)
         self.assertEqual(self.tmp.listdir(), [])
 
+    def test_nginx_delete_with_no_site_obeys_nofail_flag(self):
+        self.nginx_tek().delete('zz.example.com', 8080, nofail=True)
+
     def test_nginx_delete_triggers_nginx_reload(self):
         nginx = self.nginx_tek()
         nginx.configure('zz.example.com', 8080, [])
