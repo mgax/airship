@@ -94,3 +94,15 @@ class TekNginxTest(HandyTestCase):
                 'proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; '
               '} '
             '}'))
+
+    def test_shell_configure_invocation_calls_configure_with_parameters(self):
+        configure = self.patch('tek.nginx.NginxTek.configure')
+        self.nginx_tek().main(['configure', 'zzz', '-p', '8080', '{"a": "b"}'])
+        self.assertEqual(configure.mock_calls,
+                         [call(site_name='zzz', port=8080, config={'a': 'b'})])
+
+    def test_shell_delete_invocation_calls_delete_with_parameters(self):
+        delete = self.patch('tek.nginx.NginxTek.delete')
+        self.nginx_tek().main(['delete', 'zzz', '-p', '8080', '-f'])
+        self.assertEqual(delete.mock_calls,
+                         [call(site_name='zzz', port=8080, nofail=True)])
