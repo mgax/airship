@@ -255,15 +255,15 @@ class ListenPlugin(object):
 
 
 SARGE_SCRIPT = """#!/bin/bash
-'{prefix}/bin/sarge' '{home}' "$@"
+exec '{prefix}/bin/sarge' '{home}' "$@"
 """
 
 SUPERVISORD_SCRIPT = """#!/bin/bash
-'{prefix}/bin/supervisord' -c '{home}/etc/supervisor.conf'
+exec '{prefix}/bin/supervisord' -c '{home}/etc/supervisor.conf'
 """
 
 SUPERVISORCTL_SCRIPT = """#!/bin/bash
-'{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
+exec '{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
 """
 
 
