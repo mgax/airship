@@ -9,11 +9,11 @@ the `example deployment scripts`_ to get a feel for the deployment process.
 
 .. _twelve-factor methodology: http://www.12factor.net/
 .. _supervisor: http://supervisord.org/
-.. _example deployment scripts: https://github.com/alex-morega/sarge/tree/master/deploy
+.. _example deployment scripts: https://github.com/mgax/sarge/tree/master/deploy
 
 
 The source code is maintained on GitHub:
-https://github.com/alex-morega/Sarge.
+https://github.com/mgax/Sarge.
 
 
 Contents:

@@ -1,5 +1,5 @@
 """ Sarge automated installation script
-usage: python <(curl -fsSL raw.github.com/alex-morega/sarge/master/deploy/bootstrap-sarge.py) path/to/sarge
+usage: python <(curl -fsSL raw.github.com/mgax/sarge/master/deploy/bootstrap-sarge.py) path/to/sarge
 """
 
 import os
@@ -10,7 +10,7 @@ import shutil
 import urllib
 
 
-SARGE_PACKAGE = 'https://github.com/alex-morega/sarge/tarball/master'
+SARGE_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
 
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 
