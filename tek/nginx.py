@@ -9,8 +9,7 @@ except ImportError:
 
 SITE_CFG = """\
 server {{
-    server_name {site_name};
-    listen {port};
+{option_lines}
 
 {urlmap_rules}}}
 """
@@ -63,9 +62,16 @@ class NginxTek(object):
     def _cfg_path(self, site_name, port):
         return self.sites_dir / "{site_name}:{port}".format(**locals())
 
-    def configure(self, site_name, port, urlmap):
+    def configure(self, site_name, port, config):
+        options = {
+            'server_name': site_name,
+            'listen': port,
+        }
+        options.update(config.get('options', {}))
+        option_lines = '\n'.join("    {0} {1};".format(name, options[name])
+                                 for name in sorted(options))
         urlmap_rules = '\n'.join(URL_TEMPLATE[rule['type']].format(**rule)
-                                 for rule in urlmap)
+                                 for rule in config.get('urlmap', []))
         cfg_path = self._cfg_path(site_name, port)
         cfg_path.write_bytes(SITE_CFG.format(**locals()))
         self.reload_()
@@ -89,7 +95,7 @@ class NginxTek(object):
         configure.set_defaults(func=self.configure)
         configure.add_argument('site_name')
         configure.add_argument('-p', '--port', type=int, default=80)
-        configure.add_argument('urlmap')
+        configure.add_argument('config')
 
         delete = subparsers.add_parser('delete')
         delete.set_defaults(func=self.delete)
@@ -104,6 +110,6 @@ class NginxTek(object):
         args = parser.parse_args(raw_arguments)
         kwargs = dict(args.__dict__)
         func = kwargs.pop('func')
-        if 'urlmap' in kwargs:
-            kwargs['urlmap'] = json.loads(kwargs['urlmap'])
+        if 'config' in kwargs:
+            kwargs['config'] = json.loads(kwargs['config'])
         func(**kwargs)
