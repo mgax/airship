@@ -22,6 +22,22 @@ STATIC_URL = """\
 """
 
 
+FCGI_URL = """\
+    location {url} {{
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param PATH_INFO $fastcgi_script_name;
+        fastcgi_param SCRIPT_NAME "";
+        fastcgi_pass {socket};
+    }}
+"""
+
+
+URL_TEMPLATE = {
+    'static': STATIC_URL,
+    'fcgi': FCGI_URL,
+}
+
+
 class NginxTek(object):
 
     def __init__(self, sites_dir):
@@ -35,7 +51,8 @@ class NginxTek(object):
         return self.sites_dir / "{site_name}:{port}".format(**locals())
 
     def configure(self, site_name, port, urlmap):
-        urlmap_rules = '\n'.join(STATIC_URL.format(**rule) for rule in urlmap)
+        urlmap_rules = '\n'.join(URL_TEMPLATE[rule['type']].format(**rule)
+                                 for rule in urlmap)
         cfg_path = self._cfg_path(site_name, port)
         cfg_path.write_bytes(SITE_CFG.format(**locals()))
         self.reload_()

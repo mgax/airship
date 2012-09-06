@@ -49,3 +49,18 @@ class TekNginxTest(HandyTestCase):
                               'alias /var/local/x; '
                             '} '
                           '}'))
+
+    def test_fcgi_route_is_configured_in_nginx(self):
+        self.nginx_tek().configure('zz.example.com', 80, urlmap=[
+            {'url': '/app', 'type': 'fcgi', 'socket': 'localhost:24637'}])
+        self.assertEqual(collapse((self.tmp / 'zz.example.com:80').text()), (
+            'server { '
+              'server_name zz.example.com; '
+              'listen 80; '
+              'location /app { '
+                'include /etc/nginx/fastcgi_params; '
+                'fastcgi_param PATH_INFO $fastcgi_script_name; '
+                'fastcgi_param SCRIPT_NAME ""; '
+                'fastcgi_pass localhost:24637; '
+              '} '
+            '}'))
