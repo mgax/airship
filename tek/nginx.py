@@ -32,9 +32,21 @@ FCGI_URL = """\
 """
 
 
+PROXY_URL = """\
+    location {url} {{
+        proxy_pass {upstream_url};
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }}
+"""
+
+
 URL_TEMPLATE = {
     'static': STATIC_URL,
     'fcgi': FCGI_URL,
+    'proxy': PROXY_URL,
 }
 
 

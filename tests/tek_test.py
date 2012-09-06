@@ -64,3 +64,20 @@ class TekNginxTest(HandyTestCase):
                 'fastcgi_pass localhost:24637; '
               '} '
             '}'))
+
+    def test_http_proxy_route_is_configured_in_nginx(self):
+        self.nginx_tek().configure('zz.example.com', 80, urlmap=[
+            {'url': '/other', 'type': 'proxy',
+             'upstream_url': 'http://backend:4912/some/path'}])
+        self.assertEqual(collapse((self.tmp / 'zz.example.com:80').text()), (
+            'server { '
+              'server_name zz.example.com; '
+              'listen 80; '
+              'location /other { '
+                'proxy_pass http://backend:4912/some/path; '
+                'proxy_redirect off; '
+                'proxy_set_header Host $host; '
+                'proxy_set_header X-Real-IP $remote_addr; '
+                'proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; '
+              '} '
+            '}'))
