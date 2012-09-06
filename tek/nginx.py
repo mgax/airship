@@ -1,3 +1,4 @@
+import subprocess
 from path import path
 
 
@@ -13,9 +14,10 @@ class NginxTek(object):
 
     def __init__(self, sites_dir):
         self.sites_dir = path(sites_dir)
+        self.reload_cmd = ['/usr/sbin/service', 'nginx', 'reload']
 
     def reload_(self):
-        raise NotImplementedError
+        subprocess.check_call(self.reload_cmd)
 
     def _cfg_path(self, site_name, port):
         return self.sites_dir / "{site_name}:{port}".format(**locals())
