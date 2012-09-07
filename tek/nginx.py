@@ -59,12 +59,13 @@ class NginxTek(object):
     def reload_(self):
         subprocess.check_call(self.reload_cmd)
 
-    def _cfg_path(self, site_name, port):
-        return self.sites_dir / "{site_name}:{port}".format(**locals())
+    def _cfg_path(self, site_name):
+        return self.sites_dir / site_name
 
-    def configure(self, site_name, port, config):
+    def configure(self, site_name, config):
+        (server_name, port) = site_name.split(':')
         options = {
-            'server_name': site_name,
+            'server_name': server_name,
             'listen': port,
         }
         options.update(config.get('options', {}))
@@ -72,13 +73,13 @@ class NginxTek(object):
                                  for name in sorted(options))
         urlmap_rules = '\n'.join(URL_TEMPLATE[rule['type']].format(**rule)
                                  for rule in config.get('urlmap', []))
-        cfg_path = self._cfg_path(site_name, port)
+        cfg_path = self._cfg_path(site_name)
         cfg_path.write_bytes(SITE_CFG.format(**locals()))
         self.reload_()
 
-    def delete(self, site_name, port, nofail=False):
+    def delete(self, site_name, nofail=False):
         try:
-            self._cfg_path(site_name, port).unlink()
+            self._cfg_path(site_name).unlink()
         except OSError, e:
             if nofail and e.errno == errno.ENOENT:
                 return
@@ -94,13 +95,11 @@ class NginxTek(object):
         configure = subparsers.add_parser('configure')
         configure.set_defaults(func=self.configure)
         configure.add_argument('site_name')
-        configure.add_argument('-p', '--port', type=int, default=80)
         configure.add_argument('config')
 
         delete = subparsers.add_parser('delete')
         delete.set_defaults(func=self.delete)
         delete.add_argument('site_name')
-        delete.add_argument('-p', '--port', type=int, default=80)
         delete.add_argument('-f', '--nofail', action='store_true')
 
         return parser
