@@ -44,6 +44,18 @@ sarge destroy
 Remove the instance (its folder and configuration files). Calls `stop`
 first, in case the instance was running.
 
+supervisord
+-----------
+Start the `supervisord` daemon. See `the supervisord documentation`_ for
+details.
+
+.. _the supervisord documentation: http://supervisord.org/running.html#running-supervisord
+
+supervisorctl
+-------------
+Interact with `supervisord`. Type `help` at the prompt to see what it
+can do.
+
 
 API
 ===
