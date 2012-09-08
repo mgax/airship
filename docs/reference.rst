@@ -10,8 +10,8 @@ argument, then a sub-command which may have additional arguments. If
 `sarge` is called from the ``bin`` folder in `sarge_home`, the first
 argument is already provided by the bin/ script.
 
-new
----
+sarge new
+---------
 Create a new application instance. Receives one argument, a JSON
 document with information about the application; be sure to quote it
 properly. The JSON may contain:
@@ -29,18 +29,18 @@ properly. The JSON may contain:
     $ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
     web-jCCbfV
 
-start
------
+sarge start
+-----------
 Start an instance. This simply configures the ``./server`` script,
 inside the instance's folder, as a supervisor `program`.
 
-stop
-----
+sarge stop
+----------
 Stops an instance. This simply removes the relevant `program` from
 supervisor.
 
-destroy
--------
+sarge destroy
+-------------
 Remove the instance (its folder and configuration files). Calls `stop`
 first, in case the instance was running.
 
