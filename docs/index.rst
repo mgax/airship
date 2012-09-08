@@ -23,7 +23,7 @@ Contents:
 
    usage
    development
-   api
+   reference
 
 
 
