@@ -96,4 +96,7 @@ To make all this work automatically we need a tool for configuring the
 front-end server. The `tek.nginx module`_ contains code for such a tool,
 but it needs to be installed manually right now.
 
+See `this complex fabfile`_ for an example of rolling deployment.
+
 .. _tek.nginx module: https://github.com/mgax/sarge/blob/master/tek/nginx.py
+.. _this complex fabfile: https://github.com/mgax/sarge/blob/master/deploy/complex_fabfile.py
