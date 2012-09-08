@@ -75,3 +75,19 @@ deploy our application code. Sarge expects an executable named
     $ chmod +x web-jCCbfV/server
 
 Now we can `start`, `stop` and `destroy` the instance.
+
+
+Rolling deployment
+------------------
+Sarge can host any number of instances, even if the application name is
+the same. This allows us to perform a rolling deployment:
+
+* Create a new instance of the application.
+* Install the current version of source code in that instance.
+* Start up the instance.
+* Run some kind of checks to see if the site is sane.
+* Configure the front-end web server to point to the new instance.
+* Tear down the old instance.
+
+If the sanity checks fail, we simply abort, and tear down the new
+instance.
