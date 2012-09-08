@@ -29,6 +29,21 @@ properly. The JSON may contain:
     $ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
     web-jCCbfV
 
+start
+-----
+Start an instance. This simply configures the ``./server`` script,
+inside the instance's folder, as a supervisor `program`.
+
+stop
+----
+Stops an instance. This simply removes the relevant `program` from
+supervisor.
+
+destroy
+-------
+Remove the instance (its folder and configuration files). Calls `stop`
+first, in case the instance was running.
+
 
 API
 ===
