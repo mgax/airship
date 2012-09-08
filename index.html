@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,7 +9,7 @@
     
     <title>Welcome to Sarge’s documentation! &mdash; Sarge 0.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,7 +25,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Sarge 0.1 documentation" href="#" />
-    <link rel="next" title="Tutorial" href="tutorial.html" /> 
+    <link rel="next" title="Usage" href="usage.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,10 +35,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
+          <a href="usage.html" title="Usage"
              accesskey="N">next</a> |</li>
         <li><a href="#">Sarge 0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -52,46 +48,32 @@
             
   <div class="section" id="welcome-to-sarge-s-documentation">
 <h1>Welcome to Sarge&#8217;s documentation!<a class="headerlink" href="#welcome-to-sarge-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Sarge is a deployment tool that automates server-side configuration
-tasks for web applications. It&#8217;s currently in early development, and
-thus not stable, and may crash and burn at any time. Use at your own
-risk.</p>
+<p>Sarge is a server-side tool for deploying applications inspired by the
+<a class="reference external" href="http://www.12factor.net/">twelve-factor methodology</a>. It&#8217;s a wrapper around <a class="reference external" href="http://supervisord.org/">supervisor</a>, with
+logic to set up and tear down application instances, and plugins to
+configure services for each instance (e.g. persistence). Take a look at
+the <a class="reference external" href="https://github.com/mgax/sarge/tree/master/deploy">example deployment scripts</a> to get a feel for the deployment process.</p>
 <p>The source code is maintained on GitHub:
-<a class="reference external" href="https://github.com/alex-morega/Sarge">https://github.com/alex-morega/Sarge</a>.</p>
+<a class="reference external" href="https://github.com/mgax/Sarge">https://github.com/mgax/Sarge</a>.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#preparing-a-deployment">Preparing a deployment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#deploying-the-first-version">Deploying the first version</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#more-examples">More examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="philosophy.html#hosting-configuration">Hosting configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="philosophy.html#hosted-application">Hosted application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#bootstrapping">Bootstrapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#deploying-an-instance">Deploying an instance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#rolling-deployment">Rolling deployment</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="development.html#automated-tests">Automated tests</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-sarge"><tt class="docutils literal"><span class="pre">sarge</span></tt></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#plugins">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#commands">Commands</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
-<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
-</ul>
 </div>
 
 
@@ -100,17 +82,9 @@ risk.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to Sarge&#8217;s documentation!</a><ul>
-</ul>
-</li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-
   <h4>Next topic</h4>
-  <p class="topless"><a href="tutorial.html"
-                        title="next chapter">Tutorial</a></p>
+  <p class="topless"><a href="usage.html"
+                        title="next chapter">Usage</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/index.txt"
@@ -140,10 +114,7 @@ risk.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
+          <a href="usage.html" title="Usage"
              >next</a> |</li>
         <li><a href="#">Sarge 0.1 documentation</a> &raquo;</li> 
       </ul>

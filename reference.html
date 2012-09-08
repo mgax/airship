@@ -1,0 +1,167 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Reference &mdash; Sarge 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Sarge 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Development" href="development.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="development.html" title="Development"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Sarge 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="commands">
+<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>sarge</cite> shell command expects the path to <cite>sarge_home</cite> as first
+argument, then a sub-command which may have additional arguments. If
+<cite>sarge</cite> is called from the <tt class="docutils literal"><span class="pre">bin</span></tt> folder in <cite>sarge_home</cite>, the first
+argument is already provided by the bin/ script.</p>
+<div class="section" id="sarge-new">
+<h3>sarge new<a class="headerlink" href="#sarge-new" title="Permalink to this headline">¶</a></h3>
+<p>Create a new application instance. Receives one argument, a JSON
+document with information about the application; be sure to quote it
+properly. The JSON may contain:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">application_name</span></tt></dt>
+<dd>Short string used to distinguish between application types. Good
+names are e.g. <cite>web</cite>, <cite>worker</cite>.</dd>
+<dt><tt class="docutils literal"><span class="pre">prerun</span></tt></dt>
+<dd>Bash file to be sourced before running the application. This is
+the place to activate a virtualenv or set environment variables.</dd>
+</dl>
+<p><cite>new</cite> prints the <cite>id</cite> of the new instance to <cite>stderr</cite>. Example:</p>
+<div class="highlight-python"><pre>$ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
+web-jCCbfV</pre>
+</div>
+</div>
+<div class="section" id="sarge-start">
+<h3>sarge start<a class="headerlink" href="#sarge-start" title="Permalink to this headline">¶</a></h3>
+<p>Start an instance. This simply configures the <tt class="docutils literal"><span class="pre">./server</span></tt> script,
+inside the instance&#8217;s folder, as a supervisor <cite>program</cite>.</p>
+</div>
+<div class="section" id="sarge-stop">
+<h3>sarge stop<a class="headerlink" href="#sarge-stop" title="Permalink to this headline">¶</a></h3>
+<p>Stops an instance. This simply removes the relevant <cite>program</cite> from
+supervisor.</p>
+</div>
+<div class="section" id="sarge-destroy">
+<h3>sarge destroy<a class="headerlink" href="#sarge-destroy" title="Permalink to this headline">¶</a></h3>
+<p>Remove the instance (its folder and configuration files). Calls <cite>stop</cite>
+first, in case the instance was running.</p>
+</div>
+<div class="section" id="supervisord">
+<h3>supervisord<a class="headerlink" href="#supervisord" title="Permalink to this headline">¶</a></h3>
+<p>Start the <cite>supervisord</cite> daemon. See <a class="reference external" href="http://supervisord.org/running.html#running-supervisord">the supervisord documentation</a> for
+details.</p>
+</div>
+<div class="section" id="supervisorctl">
+<h3>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h3>
+<p>Interact with <cite>supervisord</cite>. Type <cite>help</cite> at the prompt to see what it
+can do.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Reference</a><ul>
+<li><a class="reference internal" href="#commands">Commands</a><ul>
+<li><a class="reference internal" href="#sarge-new">sarge new</a></li>
+<li><a class="reference internal" href="#sarge-start">sarge start</a></li>
+<li><a class="reference internal" href="#sarge-stop">sarge stop</a></li>
+<li><a class="reference internal" href="#sarge-destroy">sarge destroy</a></li>
+<li><a class="reference internal" href="#supervisord">supervisord</a></li>
+<li><a class="reference internal" href="#supervisorctl">supervisorctl</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="development.html"
+                        title="previous chapter">Development</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/reference.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="development.html" title="Development"
+             >previous</a> |</li>
+        <li><a href="index.html">Sarge 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Alex Morega.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
