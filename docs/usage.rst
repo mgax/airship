@@ -91,3 +91,9 @@ the same. This allows us to perform a rolling deployment:
 
 If the sanity checks fail, we simply abort, and tear down the new
 instance.
+
+To make all this work automatically we need a tool for configuring the
+front-end server. The `tek.nginx module`_ contains code for such a tool,
+but it needs to be installed manually right now.
+
+.. _tek.nginx module: https://github.com/mgax/sarge/blob/master/tek/nginx.py
