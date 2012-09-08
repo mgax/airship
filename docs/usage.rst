@@ -32,6 +32,21 @@ deployment, you should start the supervisord process, by calling
 at system boot, e.g. from ``/etc/rc.local``; be sure to run it as the
 correct user, which is probably not `root`.
 
+loging
+~~~~~~
+Instance logs are handled by `supervisord`. They are saved in the sarge
+home folder, as ``var/log/${INSTANCE_ID}.log``.
+
+You can either let `supervisord` rotate logs itself, based on the log
+file size, or the system-wide `logrotate` utility. If you choose
+`logrotate` don't forget to tell `supervisord` to re-open its logs::
+
+    $ kill -USR2 `cat /var/local/gardensale/var/run/supervisord.pid`
+
+See the `supervisord` `logging documentation`_ for details.
+
+.. _logging documentation: http://supervisord.org/logging.html
+
 
 Deploying an instance
 ---------------------
