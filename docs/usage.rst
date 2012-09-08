@@ -24,6 +24,14 @@ that creates a virtualenv, installs sarge, and initializes a home folder::
 .. _virtualenv: http://www.virtualenv.org/
 .. _`this script`: https://github.com/mgax/sarge/blob/master/deploy/bootstrap-sarge.py
 
+supervisord
+~~~~~~~~~~~
+Sarge relies on supervisord to keep track of running instances. After
+deployment, you should start the supervisord process, by calling
+``bin/supervisord`` from the sarge home folder. It should also be called
+at system boot, e.g. from ``/etc/rc.local``; be sure to run it as the
+correct user, which is probably not `root`.
+
 
 Deploying an instance
 ---------------------
