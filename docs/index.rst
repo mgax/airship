@@ -21,15 +21,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   usage
    development
-   api
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   reference
