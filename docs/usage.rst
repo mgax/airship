@@ -96,7 +96,16 @@ To make all this work automatically we need a tool for configuring the
 front-end server. The `tek.nginx module`_ contains code for such a tool,
 but it needs to be installed manually right now.
 
-See `this complex fabfile`_ for an example of rolling deployment.
+See `this complex fabfile`_ for an example of rolling deployment. It
+describes two targets, `staging` and `production`, each with two
+application types, `web` and `worker`. Deployment for `worker` is
+simple: destroy any existing workers and install new ones. Deployment
+for `web` is a bit more complex: start up a new instance, prompt the
+developer to do a quick check (the instance is served at its own
+separate URL), and then promote the new instance to the main URL and
+clean up the old one. There is a `virtualenv` command, that creates or
+updates the remote virtual environment, shared between instances because
+it takes a while to set up.
 
 .. _tek.nginx module: https://github.com/mgax/sarge/blob/master/tek/nginx.py
 .. _this complex fabfile: https://github.com/mgax/sarge/blob/master/deploy/complex_fabfile.py
