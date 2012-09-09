@@ -29,6 +29,17 @@ properly. The JSON may contain:
     $ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
     web-jCCbfV
 
+sarge run
+---------
+Open a bash shell in the instance's folder. The ``prerun`` script, if
+any, is executed as `rc` file. `run` accepts an optional argument, a
+command to be run in the shell. With this option it behaves like ``bash
+-c <command>``.
+
+::
+
+    $ bin/sarge run web-jCCbfV 'echo "hello from instance in" `pwd`'
+
 sarge start
 -----------
 Start an instance. This simply configures the ``./server`` script,
