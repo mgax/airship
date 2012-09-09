@@ -45,20 +45,36 @@ sarge start
 Start an instance. This simply configures the ``./server`` script,
 inside the instance's folder, as a supervisor `program`.
 
+::
+
+    $ bin/sarge start web-jCCbfV
+
 sarge stop
 ----------
 Stops an instance. This simply removes the relevant `program` from
 supervisor.
+
+::
+
+    $ bin/sarge stop web-jCCbfV
 
 sarge destroy
 -------------
 Remove the instance (its folder and configuration files). Calls `stop`
 first, in case the instance was running.
 
+::
+
+    $ bin/sarge destroy web-jCCbfV
+
 supervisord
 -----------
 Start the `supervisord` daemon. See `the supervisord documentation`_ for
 details.
+
+::
+
+    $ bin/supervisord
 
 .. _the supervisord documentation: http://supervisord.org/running.html#running-supervisord
 
@@ -66,3 +82,7 @@ supervisorctl
 -------------
 Interact with `supervisord`. Type `help` at the prompt to see what it
 can do.
+
+::
+
+    $ bin/supervisorctl
