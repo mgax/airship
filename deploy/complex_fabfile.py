@@ -92,7 +92,7 @@ def create_deployer(name, deployment_env):
     return deployer
 
 
-def create_gardensale_deployer(name, extra_env):
+def create_web_deployer(name, extra_env):
 
     deployer = create_deployer(name, extra_env)
 
@@ -175,8 +175,54 @@ def create_gardensale_deployer(name, extra_env):
     return deployer
 
 
+def create_worker_deployer(name, extra_env):
+
+    deployer = create_deployer(name, extra_env)
+
+    @deployer.module_func
+    def install():
+        instance_dir = env['sarge_home'] / env['sarge_instance']
+        if not exists(instance_dir / '.git'):
+            run("git init '{instance_dir}'"
+                .format(instance_dir=instance_dir))
+        local("git push -f '{host_string}:{instance_dir}' "
+              "HEAD:refs/heads/incoming"
+              .format(instance_dir=instance_dir, **env))
+        with cd(instance_dir):
+            run("git reset incoming --hard")
+
+        sarge_rc = (
+            "source {gardensale_venv}/bin/activate\n"
+        ).format(**env)
+        put(StringIO(sarge_rc), str(instance_dir / 'sarge_rc.sh'))
+
+        put(StringIO("#!/bin/bash\n"
+                     "exec celery worker --app=gardensale.worker -l info\n"
+                     .format(**env)),
+            str(instance_dir / 'server'),
+            mode=0755)
+
+    @deployer.module_task
+    @warn_if_branch_is_not_sync
+    @warn_if_live
+    def deploy():
+        for other_instance in deployer.instances():
+            deployer.sarge("destroy " + other_instance['id'])
+        instance_config = {
+            'application_name': env['sarge_application_name'],
+        }
+        instance_config.update(env.get('sarge_instance_config', {}))
+        out = deployer.sarge("new " + deployer.quote_json(instance_config))
+        sarge_instance = out.strip()
+        with settings(sarge_instance=sarge_instance):
+            deployer.install()
+            deployer.sarge("start {sarge_instance}".format(**env))
+
+    return deployer
+
+
 _staging_home = path('/var/local/gardensale-staging')
-staging = create_gardensale_deployer('staging', {
+staging = create_web_deployer('staging', {
         'host_string': 'app@gardensale.example.com',
         'gardensale_python_bin': '/usr/local/Python-2.7.3/bin/python',
         'sarge_application_name': 'web',
@@ -188,8 +234,21 @@ staging = create_gardensale_deployer('staging', {
     })
 
 
+staging_worker = create_worker_deployer('staging_worker', {
+        'host_string': 'app@gardensale.example.com',
+        'gardensale_python_bin': '/usr/local/Python-2.7.3/bin/python',
+        'sarge_application_name': 'worker',
+        'sarge_instance_config': {'prerun': 'sarge_rc.sh'},
+        'sarge_home':      _staging_home,
+        'gardensale_venv': _staging_home / 'var' / 'gardensale-venv',
+    })
+del staging_worker.supervisorctl
+del staging_worker.destroy_instance
+del staging_worker.destroy_all
+
+
 _production_home = path('/var/local/gardensale-production')
-production = create_gardensale_deployer('production', {
+production = create_web_deployer('production', {
         'host_string': 'app@gardensale.example.com',
         'gardensale_python_bin': '/usr/local/Python-2.7.3/bin/python',
         'sarge_application_name': 'web',
@@ -200,3 +259,16 @@ production = create_gardensale_deployer('production', {
         'gardensale_venv': _production_home / 'var' / 'gardensale-venv',
         'gardensale_is_production': True,
     })
+
+
+production_worker = create_worker_deployer('production_worker', {
+        'host_string': 'app@gardensale.example.com',
+        'gardensale_python_bin': '/usr/local/Python-2.7.3/bin/python',
+        'sarge_application_name': 'worker',
+        'sarge_instance_config': {'prerun': 'sarge_rc.sh'},
+        'sarge_home':      _staging_home,
+        'gardensale_venv': _staging_home / 'var' / 'gardensale-venv',
+    })
+del production_worker.supervisorctl
+del production_worker.destroy_instance
+del production_worker.destroy_all
