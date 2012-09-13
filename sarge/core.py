@@ -149,12 +149,25 @@ class Sarge(object):
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
 
-    def get_instance(self, instance_id):
+    def _get_instance_by_id(self, instance_id):
         config_path = self._instance_config_path(instance_id)
         if not config_path.isfile():
             raise KeyError
 
         return Instance(instance_id, self, yaml.load(config_path.bytes()))
+
+    def get_instance(self, name):
+        try:
+            return self._get_instance_by_id(name)
+
+        except KeyError:
+            for instance_id in self._iter_instance_ids():
+                instance = self._get_instance_by_id(instance_id)
+                if name == instance.meta.get('APPLICATION_NAME'):
+                    return instance
+
+            else:
+                raise KeyError
 
     def _instance_folder(self, id_):
         return self.home_path / id_
@@ -190,7 +203,7 @@ class Sarge(object):
                 'prerun': config.get('prerun', None),
                 'meta': meta,
             }, f)
-        instance = self.get_instance(instance_id)
+        instance = self._get_instance_by_id(instance_id)
         return instance
 
     def _iter_instance_ids(self):
@@ -204,7 +217,7 @@ class Sarge(object):
     def list_instances(self):
         instances = []
         for instance_id in self._iter_instance_ids():
-            instance = self.get_instance(instance_id)
+            instance = self._get_instance_by_id(instance_id)
             instances.append({
                 'id': instance.id_,
                 'meta': instance.meta,
