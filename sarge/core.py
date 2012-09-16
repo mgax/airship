@@ -8,7 +8,6 @@ import tempfile
 from datetime import datetime
 from importlib import import_module
 from path import path
-import blinker
 import yaml
 from .daemons import Supervisor
 from . import signals
