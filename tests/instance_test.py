@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from mock import Mock, patch, call
 from common import SargeTestCase
 
@@ -108,3 +109,18 @@ class InstanceListingTest(SargeTestCase):
         report = sarge.list_instances()
         [instance_data] = report['instances']
         self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')
+
+
+class InstanceConfigTest(SargeTestCase):
+
+    def test_run_prepares_environ_from_etc_app_config(self):
+        os = self.patch('sarge.core.os')
+        os.environ = {}
+        (self.tmp / 'etc' / 'app').mkdir_p()
+        with (self.tmp / 'etc' / 'app' / 'config.json').open('wb') as f:
+            json.dump({'SOME_CONFIG_VALUE': "hello there!"}, f)
+        sarge = self.sarge()
+        sarge.new_instance().run(None)
+        [execve_call] = os.execve.mock_calls
+        environ = execve_call[1][2]
+        self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")

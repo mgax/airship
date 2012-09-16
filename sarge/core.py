@@ -104,9 +104,18 @@ class Instance(object):
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
 
+    def _get_config(self):
+        config_json = self.sarge.home_path / 'etc' / 'app' / 'config.json'
+        if not config_json.isfile():
+            return {}
+
+        with config_json.open('rb') as f:
+            return json.load(f)
+
     def run(self, command):
         os.chdir(self.folder)
         environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
+        environ.update(self._get_config())
         prerun = self.config.get('prerun')
         shell_args = ['/bin/bash']
         if command:
