@@ -28,7 +28,7 @@ SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
 redirect_stderr = true
 stdout_logfile = %(log)s
-startsecs = 2
+startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 command = bin/sarge run %(instance_id)s ./server
@@ -71,6 +71,7 @@ class Supervisor(object):
                 'log': instance.log_path,
                 'instance_id': instance.id_,
                 'autostart': 'true' if autostart else 'false',
+                'startsecs': 2,
             })
 
     def remove_instance(self, instance_id):
