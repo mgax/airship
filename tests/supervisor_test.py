@@ -68,23 +68,27 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
-        eq_config(section, 'startsecs', '2')
         eq_config(section, 'startretries', '1')
 
     def test_instance_start_changes_autostart_to_true(self):
         instance = self.sarge().new_instance()
         instance.start()
 
+        section = 'program:%s' % instance.id_
         eq_config = config_file_checker(self.instance_cfg(instance))
-        eq_config('program:%s' % instance.id_, 'autostart', 'true')
+        eq_config(section, 'autostart', 'true')
+        eq_config(section, 'startsecs', '2')
 
     def test_instance_stop_changes_autostart_to_false(self):
         instance = self.sarge().new_instance()
         instance.start()
         instance.stop()
 
+        section = 'program:%s' % instance.id_
         eq_config = config_file_checker(self.instance_cfg(instance))
-        eq_config('program:%s' % instance.id_, 'autostart', 'false')
+        eq_config(section, 'autostart', 'false')
+        eq_config(section, 'autorestart', 'false')
+        eq_config(section, 'startsecs', '0')
 
     def test_instance_start_triggers_supervisord_update(self):
         self.mock_supervisorctl.reset_mock()

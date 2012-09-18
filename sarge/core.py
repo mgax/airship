@@ -88,11 +88,14 @@ class Instance(object):
                 })
             script_path.chmod(0755)
 
-        self.sarge.daemons.start_instance(self)
+        self.sarge.daemons.configure_instance_running(self)
 
     def stop(self):
-        self.sarge.daemons.stop_instance(self)
+        self.sarge.daemons.configure_instance_stopped(self)
         signals.instance_has_stopped.send(self.sarge, instance=self)
+
+    def trigger(self):
+        self.sarge.daemons.trigger_instance(self)
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
@@ -340,6 +343,10 @@ def stop_cmd(sarge, args):
     sarge.get_instance(args.id).stop()
 
 
+def trigger_cmd(sarge, args):
+    sarge.get_instance(args.id).trigger()
+
+
 def destroy_cmd(sarge, args):
     sarge.get_instance(args.id).destroy()
 
@@ -369,6 +376,9 @@ def build_args_parser():
     stop_parser = subparsers.add_parser('stop')
     stop_parser.set_defaults(func=stop_cmd)
     stop_parser.add_argument('id')
+    trigger_parser = subparsers.add_parser('trigger')
+    trigger_parser.set_defaults(func=trigger_cmd)
+    trigger_parser.add_argument('id')
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
     destroy_parser.add_argument('id')
