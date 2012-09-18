@@ -24,6 +24,9 @@ files = %(include_files)s
 """
 
 
+# autorestart is disabled because otherwise it would keep restarting
+# triggered instances when they exit
+
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
 redirect_stderr = true
@@ -31,6 +34,7 @@ stdout_logfile = %(log)s
 startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
+autorestart = false
 command = bin/sarge run %(instance_id)s ./server
 """
 
@@ -71,7 +75,7 @@ class Supervisor(object):
                 'log': instance.log_path,
                 'instance_id': instance.id_,
                 'autostart': 'true' if autostart else 'false',
-                'startsecs': 2,
+                'startsecs': 2 if autostart else 0,
             })
 
     def remove_instance(self, instance_id):
