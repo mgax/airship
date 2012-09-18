@@ -87,7 +87,7 @@ class Supervisor(object):
         if os.environ.get('SARGE_NO_SUPERVISORCTL'):
             return
         base_args = [self.ctl_path, '-c', self.config_path]
-        return subprocess.check_call(base_args + cmd_args)
+        return subprocess.check_call(base_args + cmd_args, stdout=sys.stderr)
 
     def configure_instance_running(self, instance):
         self._configure_instance(instance, True)
