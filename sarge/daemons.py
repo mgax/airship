@@ -85,11 +85,11 @@ class Supervisor(object):
     def restart_instance(self, name):
         self.ctl(['restart', name])
 
-    def start_instance(self, instance):
+    def configure_instance_running(self, instance):
         self._configure_instance(instance, True)
         self.ctl(['update'])
 
-    def stop_instance(self, instance):
+    def configure_instance_stopped(self, instance):
         self._configure_instance(instance, False)
         self.ctl(['update'])
 

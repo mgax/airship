@@ -88,10 +88,10 @@ class Instance(object):
                 })
             script_path.chmod(0755)
 
-        self.sarge.daemons.start_instance(self)
+        self.sarge.daemons.configure_instance_running(self)
 
     def stop(self):
-        self.sarge.daemons.stop_instance(self)
+        self.sarge.daemons.configure_instance_stopped(self)
         signals.instance_has_stopped.send(self.sarge, instance=self)
 
     def destroy(self):

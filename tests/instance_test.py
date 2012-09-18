@@ -42,7 +42,7 @@ class InstanceTest(SargeTestCase):
         sarge.daemons = Mock()
         instance = sarge.new_instance()
         instance.start()
-        self.assertEqual(sarge.daemons.start_instance.mock_calls,
+        self.assertEqual(sarge.daemons.configure_instance_running.mock_calls,
                          [call(instance)])
 
     def test_service_is_configured_at_instance_creation(self):
