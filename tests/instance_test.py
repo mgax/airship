@@ -45,6 +45,14 @@ class InstanceTest(SargeTestCase):
         self.assertEqual(sarge.daemons.configure_instance_running.mock_calls,
                          [call(instance)])
 
+    def test_trigger_instance_calls_daemon_start(self):
+        sarge = self.sarge()
+        sarge.daemons = Mock()
+        instance = sarge.new_instance()
+        instance.trigger()
+        self.assertEqual(sarge.daemons.trigger_instance.mock_calls,
+                         [call(instance)])
+
     def test_service_is_configured_at_instance_creation(self):
         sarge = self.sarge()
         instance = sarge.new_instance({'services': {

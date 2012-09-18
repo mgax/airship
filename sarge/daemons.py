@@ -93,3 +93,6 @@ class Supervisor(object):
     def configure_instance_stopped(self, instance):
         self._configure_instance(instance, False)
         self.ctl(['update'])
+
+    def trigger_instance(self, instance):
+        self.ctl(['start', instance.id_])

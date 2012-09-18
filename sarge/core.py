@@ -94,6 +94,9 @@ class Instance(object):
         self.sarge.daemons.configure_instance_stopped(self)
         signals.instance_has_stopped.send(self.sarge, instance=self)
 
+    def trigger(self):
+        self.sarge.daemons.trigger_instance(self)
+
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
         signals.instance_has_stopped.send(self.sarge, instance=self)
