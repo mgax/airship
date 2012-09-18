@@ -38,6 +38,12 @@ class ShellTest(SargeTestCase):
         imp('sarge.core').main([str(self.tmp), 'stop', instance.id_])
         self.assertEqual(stop.mock_calls, [call()])
 
+    @patch('sarge.core.Instance.trigger')
+    def test_trigger_instance_calls_api_method(self, trigger):
+        instance = self.sarge().new_instance()
+        imp('sarge.core').main([str(self.tmp), 'trigger', instance.id_])
+        self.assertEqual(trigger.mock_calls, [call()])
+
     @patch('sarge.core.Instance.destroy')
     def test_destroy_instance_calls_api_method(self, destroy):
         instance = self.sarge().new_instance()
