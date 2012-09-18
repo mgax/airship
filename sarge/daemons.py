@@ -82,9 +82,6 @@ class Supervisor(object):
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)
 
-    def restart_instance(self, name):
-        self.ctl(['restart', name])
-
     def configure_instance_running(self, instance):
         self._configure_instance(instance, True)
         self.ctl(['update'])
@@ -92,6 +89,3 @@ class Supervisor(object):
     def configure_instance_stopped(self, instance):
         self._configure_instance(instance, False)
         self.ctl(['update'])
-
-    def print_status(self):
-        self.ctl(['status'])
