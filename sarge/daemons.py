@@ -1,3 +1,4 @@
+import os
 import sys
 import subprocess
 from path import path
@@ -83,6 +84,8 @@ class Supervisor(object):
         self.ctl(['update'])
 
     def ctl(self, cmd_args):
+        if os.environ.get('SARGE_NO_SUPERVISORCTL'):
+            return
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args)
 

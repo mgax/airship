@@ -58,6 +58,9 @@ class Instance(object):
         with self.appcfg_path.open('rb') as f:
             return json.load(f)
 
+    def _new(self):
+        self.sarge.daemons.configure_instance_stopped(self)
+
     def configure(self):
         self.run_folder.makedirs_p()
         appcfg = {}
@@ -215,6 +218,7 @@ class Sarge(object):
                 'meta': meta,
             }, f)
         instance = self._get_instance_by_id(instance_id)
+        instance._new()
         return instance
 
     def _iter_instance_ids(self):

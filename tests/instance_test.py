@@ -37,7 +37,14 @@ class InstanceTest(SargeTestCase):
         with self.assertRaises(KeyError):
             self.sarge().get_instance('nonesuch')
 
-    def test_start_instance_calls_restart_instance(self):
+    def test_new_instance_configures_daemon_to_stopped(self):
+        sarge = self.sarge()
+        sarge.daemons = Mock()
+        instance = sarge.new_instance()
+        self.assertEqual(sarge.daemons.configure_instance_stopped.mock_calls,
+                         [call(instance)])
+
+    def test_start_instance_configures_daemon_to_running(self):
         sarge = self.sarge()
         sarge.daemons = Mock()
         instance = sarge.new_instance()

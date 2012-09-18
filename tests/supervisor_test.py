@@ -91,8 +91,8 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startsecs', '0')
 
     def test_instance_start_triggers_supervisord_update(self):
-        self.mock_supervisorctl.reset_mock()
         instance = self.sarge().new_instance()
+        self.mock_supervisorctl.reset_mock()
         instance.start()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
