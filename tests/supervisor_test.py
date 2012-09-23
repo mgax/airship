@@ -1,7 +1,7 @@
 import sys
 import ConfigParser
 from path import path
-from mock import call
+from mock import call, ANY
 from common import SargeTestCase
 
 
@@ -134,4 +134,4 @@ class SupervisorInvocationTest(SargeTestCase):
         self.assertEqual(self.mock_subprocess.check_call.mock_calls,
                          [call([supervisorctl_path,
                                 '-c', cfg_path,
-                                'hello', 'world!'])])
+                                'hello', 'world!'], stdout=ANY)])
