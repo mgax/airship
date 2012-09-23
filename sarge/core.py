@@ -20,17 +20,6 @@ DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
 
-QUICK_WSGI_APP_TEMPLATE = """\
-#!%(python_bin)s
-from flup.server.fcgi import WSGIServer
-from importlib import import_module
-appcfg = %(appcfg)r
-app_factory = getattr(import_module(%(module_name)r), %(attribute_name)r)
-app = app_factory(appcfg)
-server = WSGIServer(app, bindAddress=%(socket_path)r, umask=0)
-server.run()
-"""
-
 
 def _get_named_object(name):
     module_name, attr_name = name.split(':')
@@ -75,22 +64,6 @@ class Instance(object):
         appcfg = self.get_appcfg()
         signals.instance_will_start.send(self.sarge, instance=self,
                                                      appcfg=appcfg)
-        if 'tmp-wsgi-app' in self.config:
-            app_import_name = self.config['tmp-wsgi-app']
-            script_path = self.folder / 'server'
-            log.debug("Writing WSGI script for instance %r at %r.",
-                      self.id_, script_path)
-            with open(script_path, 'wb') as f:
-                module_name, attribute_name = app_import_name.split(':')
-                f.write(QUICK_WSGI_APP_TEMPLATE % {
-                    'python_bin': sys.executable,
-                    'module_name': module_name,
-                    'attribute_name': attribute_name,
-                    'socket_path': str(self.run_folder / 'wsgi-app.sock'),
-                    'appcfg': appcfg,
-                })
-            script_path.chmod(0755)
-
         self.sarge.daemons.configure_instance_running(self)
 
     def stop(self):

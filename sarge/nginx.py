@@ -117,10 +117,6 @@ class NginxPlugin(object):
             if entry['type'] == 'static':
                 entry['folder'] = instance.folder
 
-            elif entry['type'] == 'wsgi':
-                instance.config['tmp-wsgi-app'] = entry['app_factory']
-                entry['socket_path'] = instance.run_folder / 'wsgi-app.sock'
-
             elif entry['type'] == 'php':
                 entry['socket_path'] = instance.run_folder / 'php.sock'
 
