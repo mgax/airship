@@ -48,8 +48,9 @@ class ShellTest(SargeTestCase):
         self.assertEqual(directory, (self.tmp / instance_id).realpath())
 
     def test_shell_loads_rc_file(self):
-        instance_id = self.sargebin('new', '{"prerun": "shellrc"}').strip()
-        (self.tmp / instance_id / 'shellrc').write_text("MYVAR='asdf'\n")
+        from sarge.core import RUN_RC_NAME
+        instance_id = self.sargebin('new', '{}').strip()
+        (self.tmp / instance_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
         out = self.sargebin('run', instance_id, "echo $MYVAR").strip()
         self.assertEqual(out, "asdf")
 

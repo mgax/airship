@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
+RUN_RC_NAME = '.runrc'
 
 
 def _get_named_object(name):
@@ -95,17 +96,12 @@ class Instance(object):
         os.chdir(self.folder)
         environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
         environ.update(self._get_config())
-        prerun = self.config.get('prerun')
         shell_args = ['/bin/bash']
         if command:
-            if prerun is not None:
-                environ['BASH_ENV'] = self.config['prerun']
+            environ['BASH_ENV'] = RUN_RC_NAME
             shell_args += ['-c', command]
         else:
-            if prerun is not None:
-                shell_args += ['--rcfile', self.config['prerun']]
-            else:
-                shell_args += ['--norc']
+            shell_args += ['--rcfile', RUN_RC_NAME]
         os.execve(shell_args[0], shell_args, environ)
 
 
@@ -187,7 +183,6 @@ class Sarge(object):
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
-                'prerun': config.get('prerun', None),
                 'meta': meta,
             }, f)
         instance = self._get_instance_by_id(instance_id)
