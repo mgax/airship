@@ -26,6 +26,10 @@ def _get_named_object(name):
     return getattr(module, attr_name)
 
 
+def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
+    return ''.join(random.choice(vocabulary) for c in range(size))
+
+
 class Instance(object):
 
     def __init__(self, id_, sarge, config):
@@ -134,8 +138,6 @@ class Sarge(object):
         return self.home_path / id_
 
     def _generate_instance_id(self, id_prefix):
-        def random_id(size=6, vocabulary=string.letters + string.digits):
-            return ''.join(random.choice(vocabulary) for c in range(size))
         for c in range(10):
             id_ = id_prefix + random_id()
             try:
