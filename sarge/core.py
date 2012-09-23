@@ -4,13 +4,11 @@ import logging
 import json
 import random
 import string
-import tempfile
 from datetime import datetime
 from importlib import import_module
 from path import path
 import yaml
 from .daemons import Supervisor
-from . import signals
 
 
 log = logging.getLogger(__name__)
@@ -54,30 +52,22 @@ class Instance(object):
     def configure(self):
         self.run_folder.makedirs_p()
         appcfg = {}
-        signals.instance_configuring.send(
-            self.sarge, instance=self, appcfg=appcfg)
         with self.appcfg_path.open('wb') as f:
             json.dump(appcfg, f, indent=2)
 
     def start(self):
         log.info("Activating instance %r", self.id_)
         self.configure()
-        appcfg = self.get_appcfg()
-        signals.instance_will_start.send(self.sarge, instance=self,
-                                                     appcfg=appcfg)
         self.sarge.daemons.configure_instance_running(self)
 
     def stop(self):
         self.sarge.daemons.configure_instance_stopped(self)
-        signals.instance_has_stopped.send(self.sarge, instance=self)
 
     def trigger(self):
         self.sarge.daemons.trigger_instance(self)
 
     def destroy(self):
         self.sarge.daemons.remove_instance(self.id_)
-        signals.instance_has_stopped.send(self.sarge, instance=self)
-        signals.instance_will_be_destroyed.send(self.sarge, instance=self)
         if self.run_folder.isdir():
             self.run_folder.rmtree()
         if self.folder.isdir():
@@ -114,10 +104,6 @@ class Sarge(object):
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
-        self._plugins = []
-        for plugin_name in self.config.get('plugins', []):
-            plugin_factory = _get_named_object(plugin_name)
-            self._plugins.append(plugin_factory(self))
 
     @property
     def cfg_links_folder(self):
@@ -208,48 +194,6 @@ class Sarge(object):
         return {'instances': instances}
 
 
-class VarFolderPlugin(object):
-
-    def __init__(self, sarge):
-        self.sarge = sarge
-        signals.instance_configuring.connect(self.configure, sarge)
-
-    def configure(self, sarge, instance, appcfg, **extra):
-        var = instance.sarge.home_path / 'var'
-        var_tmp = var / 'tmp'
-        services = instance.config.get('require-services', {})
-
-        for name, record in services.iteritems():
-            if record['type'] == 'var-folder':
-                var_tmp.makedirs_p()
-                service_path = tempfile.mkdtemp(dir=var_tmp)
-                if not service_path.isdir():
-                    service_path.makedirs()
-                appcfg[name.upper() + '_PATH'] = service_path
-
-            elif record['type'] == 'persistent-folder':
-                service_path = var / 'data' / name
-                if not service_path.isdir():
-                    service_path.makedirs()
-                appcfg[name.upper() + '_PATH'] = service_path
-
-
-class ListenPlugin(object):
-
-    def __init__(self, sarge):
-        self.sarge = sarge
-        signals.instance_configuring.connect(self.configure, sarge)
-
-    def configure(self, sarge, instance, appcfg, **extra):
-        services = instance.config.get('require-services', {})
-        for name, record in services.iteritems():
-            if record['type'] == 'listen':
-                if 'host' in record:
-                    appcfg[name.upper() + '_HOST'] = record['host']
-                if 'port' in record:
-                    appcfg[name.upper() + '_PORT'] = record['port']
-
-
 SARGE_SCRIPT = """#!/bin/bash
 exec '{prefix}/bin/sarge' '{home}' "$@"
 """
@@ -269,12 +213,11 @@ def init_cmd(sarge, args):
     sarge_yaml_path = sarge.home_path / 'etc' / 'sarge.yaml'
     if not sarge_yaml_path.isfile():
         with sarge_yaml_path.open('wb') as f:
-            f.write('{\n  "plugins": [\n  ]\n}\n')
+            f.write('{}\n')
     (sarge.home_path / 'var').mkdir_p()
     (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / 'var' / 'run').mkdir_p()
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
-    signals.sarge_initializing.send(sarge)
     sarge.generate_supervisord_configuration()
 
     sarge_bin = sarge.home_path / 'bin'
