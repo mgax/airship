@@ -35,25 +35,17 @@ class Instance(object):
         self.folder = self.sarge._instance_folder(id_)
         var = self.sarge.home_path / 'var'
         self.run_folder = var / 'run' / id_
-        self.appcfg_path = self.run_folder / 'appcfg.json'
         self.log_path = var / 'log' / (self.id_ + '.log')
 
     @property
     def meta(self):
         return self.config['meta']
 
-    def get_appcfg(self):
-        with self.appcfg_path.open('rb') as f:
-            return json.load(f)
-
     def _new(self):
         self.sarge.daemons.configure_instance_stopped(self)
 
     def configure(self):
         self.run_folder.makedirs_p()
-        appcfg = {}
-        with self.appcfg_path.open('wb') as f:
-            json.dump(appcfg, f, indent=2)
 
     def start(self):
         log.info("Activating instance %r", self.id_)
@@ -84,7 +76,7 @@ class Instance(object):
 
     def run(self, command):
         os.chdir(self.folder)
-        environ = dict(os.environ, SARGEAPP_CFG=self.appcfg_path)
+        environ = dict(os.environ)
         environ.update(self._get_config())
         shell_args = ['/bin/bash']
         if command:

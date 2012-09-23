@@ -53,9 +53,3 @@ class ShellTest(SargeTestCase):
         (self.tmp / instance_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
         out = self.sargebin('run', instance_id, "echo $MYVAR").strip()
         self.assertEqual(out, "asdf")
-
-    def test_instance_run_defines_sargeapp_cfg(self):
-        instance_id = self.sargebin('new', '{}').strip()
-        out = self.sargebin('run', instance_id, "echo $SARGEAPP_CFG").strip()
-        var_run = (self.tmp / 'var' / 'run').realpath()
-        self.assertEqual(out, var_run / instance_id / 'appcfg.json')
