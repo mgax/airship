@@ -5,6 +5,7 @@ from StringIO import StringIO
 from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
 from path import path
+import requests
 
 
 WEB_INDEX_URL = "http://grep.ro/quickpub/pypkg/"
@@ -83,6 +84,15 @@ def tearDownModule(self):
     disconnect_all()
 
 
+SIMPLE_APP = """#!/usr/bin/env python
+from wsgiref.simple_server import make_server
+def theapp(environ, start_response):
+    start_response("200 OK", [])
+    return ["{response_data}"]
+make_server("0", {port}, theapp).serve_forever()
+"""
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -94,3 +104,24 @@ class DeploymentTest(unittest.TestCase):
     def test_ping(self):
         return
         import pdb; pdb.set_trace()
+
+    def test_deploy_sarge_instance_answers_to_http(self):
+        testdata = {
+            'response_data': "hello sarge!",
+            'port': 5005,
+        }
+        with cd(env['sarge-home']):
+            instance_id = run('bin/sarge new \'{"application_name": "web"}\' '
+                              '2> /dev/null')
+            with cd(env['sarge-home'] / instance_id):
+                code = SIMPLE_APP.format(**testdata)
+                put(StringIO(code), 'server', mode=0755)
+            run('bin/sarge start web')
+
+        import time; time.sleep(0.5)
+        response = requests.get('http://192.168.13.13:{port}/'
+                                .format(**testdata))
+        self.assertEqual(response.text, testdata['response_data'])
+
+        with cd(env['sarge-home']):
+            run('bin/sarge destroy web'.format(**env))
