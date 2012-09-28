@@ -1,146 +1,96 @@
+import os
 import unittest
+import subprocess
 from StringIO import StringIO
-import json
-import urllib
-from fabric.api import env, run, sudo, put, cd
+from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
 from path import path
 
 
-env['sarge-home'] = path('/var/local/sarge')
-env['sarge-venv'] = path('/var/local/sarge-sandbox')
+WEB_INDEX_URL = "http://grep.ro/quickpub/pypkg/"
+PACKAGE_FILENAMES = [
+    "virtualenv.py",
+    "distribute-0.6.28.tar.gz",
+    "pip-1.2.1.post1.zip",
+    "wheel-0.9.7.tar.gz",
+    "markerlib-0.5.2.tar.gz",
+    "PyYAML-3.10-cp26-none-linux_i686.whl",
+    "blinker-1.2-py26-none-any.whl",
+    "importlib-1.0.2-py26-none-any.whl",
+    "meld3-0.6.9-py26-none-any.whl",
+    "path.py-2.4-py26-none-any.whl",
+    "supervisor-3.0b1-py26-none-any.whl",
+    "argparse-1.2.1-py26-none-any.whl",
+]
+VAGRANT_HOME = path('/home/vagrant')
+
+env['sarge-home'] = path('/var/local/sarge-test')
+env['sarge-src'] = VAGRANT_HOME / 'sarge'
+env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
+env['index-url'] = 'file://' + env['index-dir']
 
 
-def provision():
-    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % env)
-    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % env)
-    sudo("'%(sarge-venv)s'/bin/pip install flup" % env)
+def update_virtualenv():
+    run("mkdir -p {index-dir}".format(**env))
+    with cd(env['index-dir']):
+        for name in PACKAGE_FILENAMES:
+            if not exists(name):
+                run("curl -O {url}".format(url=WEB_INDEX_URL + name))
+
+SARGE_REPO = path(__file__).parent.parent
+
+
+def upload_src():
+    src = subprocess.check_output(['git', 'archive', 'HEAD'], cwd=SARGE_REPO)
+    run("rm -rf {sarge-src}; mkdir -p {sarge-src}".format(**env))
+    with cd(env['sarge-src']):
+        put(StringIO(src), '_src.tar')
+        run("tar xf _src.tar")
+        run("rm _src.tar")
+
+
+def install_sarge():
+    sudo("mkdir {sarge-home}".format(**env))
+    with cd(env['sarge-home']):
+        sudo("chown vagrant: .")
+        run("mkdir opt")
+        run("python {index-dir}/virtualenv.py --distribute "
+            "--extra-search-dir={index-dir} --never-download "
+            "opt/sarge-venv"
+            .format(**env))
+        run("opt/sarge-venv/bin/pip install wheel "
+            "--no-index --find-links={index-url} "
+            .format(**env))
+        upload_src()
+        run("opt/sarge-venv/bin/pip install "
+            "--use-wheel --no-index --find-links={index-url} "
+            "-e {sarge-src}"
+            .format(**env))
+        run("opt/sarge-venv/bin/sarge . init")
 
 
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    if not exists(env['sarge-venv']):
-        provision()
-
-    sudo("rm -rf '%(sarge-home)s'" % env)
-    self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
+    update_virtualenv()
+    if os.environ.get("SARGE_TEST_REINSTALL") or not exists(env['sarge-home']):
+        sudo("rm -rf {sarge-home}".format(**env))
+        install_sarge()
 
 
 def tearDownModule(self):
-    sudo("rm -f %s" % self._nginx_symlink)
     from fabric.network import disconnect_all
     disconnect_all()
 
 
-def sarge_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % env)
-    return run(base + cmd)
-
-
-def supervisorctl_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/supervisorctl "
-            "-c '%(sarge-home)s'/etc/supervisor.conf " % env)
-    return run(base + cmd)
-
-
-def remote_listdir(name):
-    cmd = ("python -c 'import json,os; "
-           "print json.dumps(os.listdir(\"%s\"))'" % name)
-    return json.loads(run(cmd))
-
-
-def put_json(data, remote_path, **kwargs):
-    return put(StringIO(json.dumps(data)), str(remote_path), **kwargs)
-
-
-def get_url(url):
-    f = urllib.urlopen(url)
-    try:
-        return f.read()
-    finally:
-        f.close()
-
-
-def quote_json(config):
-    data = json.dumps(config)
-    for ch in ['\\', '"', '$', '`']:
-        data = data.replace(ch, '\\\\' + ch)
-    return '"' + data + '"'
-
-
-def link_in_nginx(id_):
-    urlmap_path = env['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
-    nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
-    put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
-
-
-class VagrantDeploymentTest(unittest.TestCase):
+class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        sudo("mkdir '%(sarge-home)s'" % env)
-        sudo("chown vagrant: '%(sarge-home)s'" % env)
-        run("mkdir '%(sarge-home)s'/etc" % env)
-        put_json({'plugins': ['sarge:NginxPlugin', 'sarge:ListenPlugin']},
-                 env['sarge-home'] / 'etc' / 'sarge.yaml',
-                 use_sudo=True)
-        sarge_cmd("init")
-        run("'%(sarge-venv)s'/bin/supervisord "
-            "-c '%(sarge-home)s'/etc/supervisor.conf" % env)
+        run("{sarge-home}/bin/supervisord".format(**env))
 
     def tearDown(self):
-        supervisorctl_cmd("shutdown")
-        sudo("rm -rf '%(sarge-home)s'" % env)
+        run("{sarge-home}/bin/supervisorctl shutdown".format(**env))
 
     def test_ping(self):
-        assert run('pwd') == '/home/vagrant'
-
-    def test_deploy_static_site(self):
-        cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
-        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
-
-        with cd(str(env['sarge-home'] / instance_id)):
-            run("echo 'hello static!' > hello.html")
-            run("mkdir sub")
-            run("echo 'submarine' > sub/marine.txt")
-
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
-
-        self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
-                         "hello static!\n")
-
-        self.assertEqual(get_url('http://192.168.13.13:8013/sub/marine.txt'),
-                         "submarine\n")
-
-    def test_start_server_using_default_executable_name(self):
-        cfg = {'urlmap': [{'type': 'proxy',
-                           'url': '/',
-                           'upstream_url': 'http://localhost:43423'}]}
-        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
-
-        app_py = ('#!/usr/bin/env python\n'
-                  'from wsgiref.simple_server import make_server\n'
-                  'def theapp(environ, start_response):\n'
-                  '    start_response("200 OK", [])\n'
-                  '    return ["hello sarge!\\n"]\n'
-                  'make_server("0", 43423, theapp).serve_forever()\n')
-        put(StringIO(app_py),
-            str(env['sarge-home'] / instance_id / 'server'),
-            mode=0755)
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
-
-        self.assertEqual(get_url('http://192.168.13.13:8013/'),
-                         "hello sarge!\n")
-
-    def test_list_instances_contains_enough_info_to_clean_up(self):
-        sarge_cmd("new " + quote_json({'application_name': 'testy'}))
-        report_1 = json.loads(sarge_cmd("list"))
-        self.assertEqual(len(report_1['instances']), 1)
-        instance_id = report_1['instances'][0]['id']
-        sarge_cmd("destroy " + instance_id)
-        report_2 = json.loads(sarge_cmd("list"))
-        self.assertEqual(len(report_2['instances']), 0)
+        return
+        import pdb; pdb.set_trace()
