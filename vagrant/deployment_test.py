@@ -94,11 +94,14 @@ make_server("0", {port}, theapp).serve_forever()
 """
 
 
-DEPLOY_SCRIPT = """#!/bin/bash
+DEPLOY_SCRIPT = """#!/usr/bin/env python
+import sys, subprocess
 SARGE_HOME='{sarge-home}'
-INSTANCE_ID=`$SARGE_HOME/bin/sarge new '{{"application_name": "web"}}'`
-tar xf "$1" -C "$INSTANCE_ID"
-$SARGE_HOME/bin/sarge start $INSTANCE_ID
+instance_id = subprocess.Popen([SARGE_HOME + '/bin/sarge', 'new',
+                                '{{"application_name": "web"}}'],
+                               stdout=subprocess.PIPE).communicate()[0].strip()
+subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
+subprocess.check_call([SARGE_HOME + '/bin/sarge', 'start', instance_id])
 """
 
 
