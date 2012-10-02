@@ -115,6 +115,8 @@ def retry(exceptions, func, *args, **kwargs):
             if not isinstance(e, tuple(exceptions)):
                 raise
         sleep(.1)
+    else:
+        raise RuntimeError("Function keeps failing after trying for 5 seconds")
 
 
 class DeploymentTest(unittest.TestCase):
