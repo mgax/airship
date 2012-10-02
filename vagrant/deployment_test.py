@@ -1,6 +1,7 @@
 import os
 import unittest
 import subprocess
+import tempfile
 from StringIO import StringIO
 from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
@@ -93,6 +94,14 @@ make_server("0", {port}, theapp).serve_forever()
 """
 
 
+DEPLOY_SCRIPT = """#!/bin/bash
+SARGE_HOME='{sarge-home}'
+INSTANCE_ID=`$SARGE_HOME/bin/sarge new '{{"application_name": "web"}}'`
+tar xf "$1" -C "$INSTANCE_ID"
+$SARGE_HOME/bin/sarge start $INSTANCE_ID
+"""
+
+
 def retry(exceptions, func, *args, **kwargs):
     from time import time, sleep
     t0 = time()
@@ -117,16 +126,24 @@ class DeploymentTest(unittest.TestCase):
             'response_data': "hello sarge!",
             'port': 5005,
         }
+
+        tmp = path(tempfile.mkdtemp())
+        self.addCleanup(tmp.rmtree)
+        (tmp / 'server').write_text(SIMPLE_APP.format(**testdata))
+        (tmp / 'server').chmod(0755)
+        app_tar = subprocess.check_output(['tar cf - *'], shell=True, cwd=tmp)
+
         with cd(env['sarge-home']):
-            instance_id = run('bin/sarge new \'{"application_name": "web"}\' '
-                              '2> /dev/null')
-            _destroy = ('{sarge-home}/bin/sarge destroy {instance_id}'
-                        .format(instance_id=instance_id, **env))
+            put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
+            self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
+
+            put(StringIO(app_tar), '_app.tar')
+            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
+
+            run('bin/deploy _app.tar web')
+
+            _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
-            with cd(env['sarge-home'] / instance_id):
-                code = SIMPLE_APP.format(**testdata)
-                put(StringIO(code), 'server', mode=0755)
-            run('bin/sarge start web')
 
         url = 'http://192.168.13.13:{port}/'.format(**testdata)
         response = retry([requests.ConnectionError], requests.get, url)
