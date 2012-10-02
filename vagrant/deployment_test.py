@@ -85,7 +85,7 @@ def tearDownModule(self):
     disconnect_all()
 
 
-SIMPLE_APP = """#!/usr/bin/env python
+SIMPLE_APP = """\
 from wsgiref.simple_server import make_server
 def theapp(environ, start_response):
     start_response("200 OK", [])
@@ -95,12 +95,18 @@ make_server("0", {port}, theapp).serve_forever()
 
 
 DEPLOY_SCRIPT = """#!/usr/bin/env python
-import sys, subprocess
+import os, sys, subprocess
 SARGE_HOME='{sarge-home}'
 instance_id = subprocess.Popen([SARGE_HOME + '/bin/sarge', 'new',
                                 '{{"application_name": "web"}}'],
                                stdout=subprocess.PIPE).communicate()[0].strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
+with open(instance_id + '/Procfile', 'rb') as f:
+    procs = dict((k.strip(), v.strip()) for k, v in
+                 (l.split(':', 1) for l in f))
+with open(instance_id + '/server', 'wb') as f:
+    f.write(procs['web'] + '\\n')
+    os.chmod(f.name, 0755)
 subprocess.check_call([SARGE_HOME + '/bin/sarge', 'start', instance_id])
 """
 
@@ -134,8 +140,8 @@ class DeploymentTest(unittest.TestCase):
 
         tmp = path(tempfile.mkdtemp())
         self.addCleanup(tmp.rmtree)
-        (tmp / 'server').write_text(SIMPLE_APP.format(**testdata))
-        (tmp / 'server').chmod(0755)
+        (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
+        (tmp / 'Procfile').write_text("web: python theapp.py\n")
         app_tar = subprocess.check_output(['tar cf - *'], shell=True, cwd=tmp)
 
         with cd(env['sarge-home']):
