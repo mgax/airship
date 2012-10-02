@@ -101,10 +101,6 @@ class DeploymentTest(unittest.TestCase):
     def tearDown(self):
         run("{sarge-home}/bin/supervisorctl shutdown".format(**env))
 
-    def test_ping(self):
-        return
-        import pdb; pdb.set_trace()
-
     def test_deploy_sarge_instance_answers_to_http(self):
         testdata = {
             'response_data': "hello sarge!",
