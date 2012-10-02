@@ -93,6 +93,18 @@ make_server("0", {port}, theapp).serve_forever()
 """
 
 
+def retry(exceptions, func, *args, **kwargs):
+    from time import time, sleep
+    t0 = time()
+    while time() - t0 < 5:
+        try:
+            return func(*args, **kwargs)
+        except Exception, e:
+            if not isinstance(e, tuple(exceptions)):
+                raise
+        sleep(.1)
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -114,9 +126,8 @@ class DeploymentTest(unittest.TestCase):
                 put(StringIO(code), 'server', mode=0755)
             run('bin/sarge start web')
 
-        import time; time.sleep(0.5)
-        response = requests.get('http://192.168.13.13:{port}/'
-                                .format(**testdata))
+        url = 'http://192.168.13.13:{port}/'.format(**testdata)
+        response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, testdata['response_data'])
 
         with cd(env['sarge-home']):
