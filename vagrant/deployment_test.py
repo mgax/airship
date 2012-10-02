@@ -109,9 +109,8 @@ class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
         run("{sarge-home}/bin/supervisord".format(**env))
-
-    def tearDown(self):
-        run("{sarge-home}/bin/supervisorctl shutdown".format(**env))
+        _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
+        self.addCleanup(run, _shutdown)
 
     def test_deploy_sarge_instance_answers_to_http(self):
         testdata = {
@@ -121,6 +120,9 @@ class DeploymentTest(unittest.TestCase):
         with cd(env['sarge-home']):
             instance_id = run('bin/sarge new \'{"application_name": "web"}\' '
                               '2> /dev/null')
+            _destroy = ('{sarge-home}/bin/sarge destroy {instance_id}'
+                        .format(instance_id=instance_id, **env))
+            self.addCleanup(run, _destroy)
             with cd(env['sarge-home'] / instance_id):
                 code = SIMPLE_APP.format(**testdata)
                 put(StringIO(code), 'server', mode=0755)
@@ -129,6 +131,3 @@ class DeploymentTest(unittest.TestCase):
         url = 'http://192.168.13.13:{port}/'.format(**testdata)
         response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, testdata['response_data'])
-
-        with cd(env['sarge-home']):
-            run('bin/sarge destroy web'.format(**env))
