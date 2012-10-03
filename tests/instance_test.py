@@ -107,6 +107,12 @@ class InstanceTest(SargeTestCase):
         instance = sarge.new_instance()
         self.assertTrue(1024 <= instance.port < 65536)
 
+    def test_new_instances_have_different_ports(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        self.assertNotEqual(instance1.port, instance2.port)
+
 
 class InstanceListingTest(SargeTestCase):
 

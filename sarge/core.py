@@ -154,6 +154,21 @@ class Sarge(object):
         else:
             raise RuntimeError("Failed to generate unique instance ID")
 
+    PORT_RANGE = (5000, 5099)
+
+    def _open_ports_db(self):
+        import kv
+        return kv.KV(self.home_path / 'etc' / 'ports.db')
+
+    def _allocate_port(self, instance_id):
+        ports_db = self._open_ports_db()
+        with ports_db.lock():
+            for port in xrange(*self.PORT_RANGE):
+                if port in ports_db:
+                    continue
+                ports_db[port] = instance_id
+                return port
+
     def new_instance(self, config={}):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
@@ -169,7 +184,7 @@ class Sarge(object):
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
                 'meta': meta,
-                'port': 5001,
+                'port': self._allocate_port(instance_id),
             }, f)
         instance = self._get_instance_by_id(instance_id)
         instance._new()
