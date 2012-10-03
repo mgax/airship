@@ -81,7 +81,10 @@ class Supervisor(object):
 
     def remove_instance(self, instance_id):
         self._instance_cfg(instance_id).unlink_p()
-        self.ctl(['update'])
+        try:
+            self.ctl(['update'])
+        except subprocess.CalledProcessError:
+            pass  # maybe supervisord is stopped
 
     def ctl(self, cmd_args):
         if os.environ.get('SARGE_NO_SUPERVISORCTL'):
