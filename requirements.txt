@@ -3,4 +3,4 @@ supervisor==3.0a12
 blinker==1.2
 path.py==2.2.2
 PyYAML==3.10
--e git+git@github.com:mgax/kv.git@16e38014091bb517bbbd3935b53d5bc3ecb9055b#egg=kv-dev
+kv==0.1
