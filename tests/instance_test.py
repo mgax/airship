@@ -102,6 +102,9 @@ class InstanceTest(SargeTestCase):
         instance = sarge.new_instance({'application_name': 'testy'})
         self.assertTrue(instance.id_.startswith('testy-'))
 
+
+class InstancePortAllocationTest(SargeTestCase):
+
     def test_new_instance_allocates_port(self):
         sarge = self.sarge()
         instance = sarge.new_instance()
