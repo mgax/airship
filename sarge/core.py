@@ -181,7 +181,9 @@ class Sarge(object):
 
     def _free_port(self, instance):
         ports_db = self._open_ports_db()
-        assert ports_db.pop(instance.port) == instance.id_
+        port = ports_db.pop(instance.port, None)
+        if port is not None:
+            assert port == instance.id_
 
     def new_instance(self, config={}):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
