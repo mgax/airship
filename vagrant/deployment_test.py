@@ -136,6 +136,11 @@ class DeploymentTest(unittest.TestCase):
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
 
+    def insall_deploy_script(self):
+        with cd(env['sarge-home']):
+            put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
+            self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
+
     def test_deploy_sarge_instance_answers_to_http(self):
         testdata = {
             'response_data': "hello sarge!",
@@ -146,10 +151,9 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        with cd(env['sarge-home']):
-            put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
-            self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
+        self.insall_deploy_script()
 
+        with cd(env['sarge-home']):
             put(tar_file, '_app.tar')
             self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
 
