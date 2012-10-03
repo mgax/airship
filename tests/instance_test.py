@@ -131,26 +131,23 @@ class InstanceListingTest(SargeTestCase):
         self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')
 
 
-class InstanceConfigTest(SargeTestCase):
+class InstanceRunTest(SargeTestCase):
+
+    def setUp(self):
+        self.os = self.patch('sarge.core.os')
+        self.os.environ = {}
+        self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
 
     def test_run_prepares_environ_from_etc_app_config(self):
-        os = self.patch('sarge.core.os')
-        os.environ = {}
         (self.tmp / 'etc' / 'app').mkdir_p()
         with (self.tmp / 'etc' / 'app' / 'config.json').open('wb') as f:
             json.dump({'SOME_CONFIG_VALUE': "hello there!"}, f)
-        sarge = self.sarge()
-        sarge.new_instance().run(None)
-        [execve_call] = os.execve.mock_calls
-        environ = execve_call[1][2]
+        self.sarge().new_instance().run(None)
+        environ = self.get_environ()
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 
     def test_run_inserts_port_in_environ(self):
-        os = self.patch('sarge.core.os')
-        os.environ = {}
-        sarge = self.sarge()
-        instance = sarge.new_instance()
+        instance = self.sarge().new_instance()
         instance.run(None)
-        [execve_call] = os.execve.mock_calls
-        environ = execve_call[1][2]
+        environ = self.get_environ()
         self.assertEqual(environ['PORT'], str(instance.port))
