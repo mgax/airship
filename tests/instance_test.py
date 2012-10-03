@@ -103,6 +103,52 @@ class InstanceTest(SargeTestCase):
         self.assertTrue(instance.id_.startswith('testy-'))
 
 
+class InstancePortAllocationTest(SargeTestCase):
+
+    def test_new_instance_allocates_port(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance()
+        self.assertTrue(1024 <= instance.port < 65536)
+
+    def test_new_instances_have_different_ports(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        self.assertNotEqual(instance1.port, instance2.port)
+
+    def test_destroyed_instances_free_their_ports(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        allocated = lambda: set(sarge._open_ports_db()) - set(['next'])
+        self.assertItemsEqual(allocated(), [instance1.port, instance2.port])
+        instance1.destroy()
+        self.assertItemsEqual(allocated(), [instance2.port])
+
+    def test_ports_allocated_sequentially_even_after_instance_destroyed(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        instance1.destroy()
+        instance3 = sarge.new_instance()
+        self.assertEqual(instance3.port, instance2.port + 1)
+
+    def test_port_allocation_wraps_when_it_reaches_interval_end(self):
+        sarge = self.sarge()
+        sarge.PORT_RANGE = (5000, 5009)
+        i0_i1 = [sarge.new_instance() for c in range(2)]
+        i2_i7 = [sarge.new_instance() for c in range(6)]
+        for instance in i0_i1:
+            instance.destroy()
+        i8_i9 = [sarge.new_instance() for c in range(2)]
+        for instance in i8_i9:
+            instance.destroy()
+        i10_i13 = [sarge.new_instance() for c in range(4)]
+        self.assertEqual([i.port for i in i10_i13],
+                         [5000, 5001, 5008, 5009])
+        self.assertRaises(RuntimeError, sarge.new_instance)  # no more ports
+
+
 class InstanceListingTest(SargeTestCase):
 
     def test_listing_with_no_instances_returns_empty_list(self):
@@ -126,16 +172,23 @@ class InstanceListingTest(SargeTestCase):
         self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')
 
 
-class InstanceConfigTest(SargeTestCase):
+class InstanceRunTest(SargeTestCase):
+
+    def setUp(self):
+        self.os = self.patch('sarge.core.os')
+        self.os.environ = {}
+        self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
 
     def test_run_prepares_environ_from_etc_app_config(self):
-        os = self.patch('sarge.core.os')
-        os.environ = {}
         (self.tmp / 'etc' / 'app').mkdir_p()
         with (self.tmp / 'etc' / 'app' / 'config.json').open('wb') as f:
             json.dump({'SOME_CONFIG_VALUE': "hello there!"}, f)
-        sarge = self.sarge()
-        sarge.new_instance().run(None)
-        [execve_call] = os.execve.mock_calls
-        environ = execve_call[1][2]
+        self.sarge().new_instance().run(None)
+        environ = self.get_environ()
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
+
+    def test_run_inserts_port_in_environ(self):
+        instance = self.sarge().new_instance()
+        instance.run(None)
+        environ = self.get_environ()
+        self.assertEqual(environ['PORT'], str(instance.port))
