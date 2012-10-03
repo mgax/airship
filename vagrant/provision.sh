@@ -8,7 +8,7 @@ EOF
 
 
 apt-get update
-apt-get install -y vim python-virtualenv nginx php5-cgi spawn-fcgi curl
+apt-get install -y vim python-virtualenv nginx curl libyaml-dev python-dev
 
 
 if [ ! -d /home/vagrant/.pip ]; then

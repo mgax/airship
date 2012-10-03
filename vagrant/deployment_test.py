@@ -17,13 +17,12 @@ PACKAGE_FILENAMES = [
     "pip-1.2.1.post1.zip",
     "wheel-0.9.7.tar.gz",
     "markerlib-0.5.2.tar.gz",
-    "PyYAML-3.10-cp26-none-linux_i686.whl",
-    "blinker-1.2-py26-none-any.whl",
-    "importlib-1.0.2-py26-none-any.whl",
-    "meld3-0.6.9-py26-none-any.whl",
-    "path.py-2.4-py26-none-any.whl",
-    "supervisor-3.0b1-py26-none-any.whl",
-    "argparse-1.2.1-py26-none-any.whl",
+    "PyYAML-3.10-cp27-none-linux_x86_64.whl",
+    "blinker-1.2-py27-none-any.whl",
+    "meld3-0.6.9-py27-none-any.whl",
+    "path.py-2.4-py27-none-any.whl",
+    "supervisor-3.0b1-py27-none-any.whl",
+    "kv-0.1-py27-none-any.whl",
 ]
 VAGRANT_HOME = path('/home/vagrant')
 
