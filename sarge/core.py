@@ -45,6 +45,10 @@ class Instance(object):
     def meta(self):
         return self.config['meta']
 
+    @property
+    def port(self):
+        return self.config['port']
+
     def _new(self):
         self.sarge.daemons.configure_instance_stopped(self)
 
@@ -164,6 +168,7 @@ class Sarge(object):
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
                 'meta': meta,
+                'port': 5001,
             }, f)
         instance = self._get_instance_by_id(instance_id)
         instance._new()
