@@ -132,7 +132,7 @@ def tar_maker():
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        run("{sarge-home}/bin/supervisord".format(**env))
+        run("{sarge-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
 
