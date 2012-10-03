@@ -162,12 +162,22 @@ class Sarge(object):
         return kv.KV(self.home_path / 'etc' / 'ports.db')
 
     def _allocate_port(self, instance_id):
+        from itertools import chain
+        start_port = self.PORT_RANGE[0]
+        end_port = self.PORT_RANGE[1] + 1
+
         ports_db = self._open_ports_db()
         with ports_db.lock():
-            port = ports_db.get('next', self.PORT_RANGE[0])
-            ports_db[port] = instance_id
-            ports_db['next'] = port + 1
-            return port
+            next_port = ports_db.get('next', start_port)
+            queue = chain(xrange(next_port, end_port),
+                          xrange(start_port, next_port-1))
+            for port in queue:
+                if port not in ports_db:
+                    ports_db[port] = instance_id
+                    ports_db['next'] = port + 1
+                    return port
+            else:
+                raise RuntimeError("No ports free to allocate")
 
     def _free_port(self, instance):
         ports_db = self._open_ports_db()

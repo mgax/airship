@@ -133,6 +133,21 @@ class InstancePortAllocationTest(SargeTestCase):
         instance3 = sarge.new_instance()
         self.assertEqual(instance3.port, instance2.port + 1)
 
+    def test_port_allocation_wraps_when_it_reaches_interval_end(self):
+        sarge = self.sarge()
+        sarge.PORT_RANGE = (5000, 5009)
+        i0_i1 = [sarge.new_instance() for c in range(2)]
+        i2_i7 = [sarge.new_instance() for c in range(6)]
+        for instance in i0_i1:
+            instance.destroy()
+        i8_i9 = [sarge.new_instance() for c in range(2)]
+        for instance in i8_i9:
+            instance.destroy()
+        i10_i13 = [sarge.new_instance() for c in range(4)]
+        self.assertEqual([i.port for i in i10_i13],
+                         [5000, 5001, 5008, 5009])
+        self.assertRaises(RuntimeError, sarge.new_instance)  # no more ports
+
 
 class InstanceListingTest(SargeTestCase):
 
