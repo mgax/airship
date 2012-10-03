@@ -221,6 +221,7 @@ class Sarge(object):
             instances.append({
                 'id': instance.id_,
                 'meta': instance.meta,
+                'port': instance.port,
             })
         return {'instances': instances}
 

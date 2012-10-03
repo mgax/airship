@@ -171,6 +171,13 @@ class InstanceListingTest(SargeTestCase):
         [instance_data] = report['instances']
         self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')
 
+    def test_listing_contains_port(self):
+        sarge = self.sarge()
+        instance = sarge.new_instance()
+        report = sarge.list_instances()
+        [instance_data] = report['instances']
+        self.assertEqual(instance_data['port'], instance.port)
+
 
 class InstanceRunTest(SargeTestCase):
 
