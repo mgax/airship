@@ -27,7 +27,7 @@ PACKAGE_FILENAMES = [
 VAGRANT_HOME = path('/home/vagrant')
 
 env['sarge-home'] = path('/var/local/sarge-test')
-env['sarge-src'] = VAGRANT_HOME / 'sarge'
+env['sarge-src'] = '/sarge-src'
 env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
 env['index-url'] = 'file://' + env['index-dir']
 
@@ -42,15 +42,6 @@ def update_virtualenv():
 SARGE_REPO = path(__file__).parent.parent
 
 
-def upload_src():
-    src = subprocess.check_output(['git', 'archive', 'HEAD'], cwd=SARGE_REPO)
-    run("rm -rf {sarge-src}; mkdir -p {sarge-src}".format(**env))
-    with cd(env['sarge-src']):
-        put(StringIO(src), '_src.tar')
-        run("tar xf _src.tar")
-        run("rm _src.tar")
-
-
 def install_sarge():
     sudo("mkdir {sarge-home}".format(**env))
     with cd(env['sarge-home']):
@@ -63,7 +54,6 @@ def install_sarge():
         run("opt/sarge-venv/bin/pip install wheel "
             "--no-index --find-links={index-url} "
             .format(**env))
-        upload_src()
         run("opt/sarge-venv/bin/pip install "
             "--use-wheel --no-index --find-links={index-url} "
             "-e {sarge-src}"
