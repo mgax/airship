@@ -3,6 +3,7 @@ import unittest
 import subprocess
 import tempfile
 from StringIO import StringIO
+from contextlib import contextmanager
 from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
 from path import path
@@ -115,6 +116,19 @@ def retry(exceptions, func, *args, **kwargs):
         raise RuntimeError("Function keeps failing after trying for 5 seconds")
 
 
+@contextmanager
+def tar_maker():
+    tmp = path(tempfile.mkdtemp())
+    tar_file = StringIO()
+    try:
+        yield tmp, tar_file
+        tar_data = subprocess.check_output(['tar cf - *'], shell=True, cwd=tmp)
+        tar_file.write(tar_data)
+        tar_file.seek(0)
+    finally:
+        tmp.rmtree()
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -128,17 +142,15 @@ class DeploymentTest(unittest.TestCase):
             'port': 5005,
         }
 
-        tmp = path(tempfile.mkdtemp())
-        self.addCleanup(tmp.rmtree)
-        (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
-        (tmp / 'Procfile').write_text("web: python theapp.py\n")
-        app_tar = subprocess.check_output(['tar cf - *'], shell=True, cwd=tmp)
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
         with cd(env['sarge-home']):
             put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
             self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
-            put(StringIO(app_tar), '_app.tar')
+            put(tar_file, '_app.tar')
             self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
 
             run('bin/deploy _app.tar web')
