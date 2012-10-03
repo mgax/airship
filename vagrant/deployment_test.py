@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 from StringIO import StringIO
 from contextlib import contextmanager
+import json
 from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
 from path import path
@@ -76,11 +77,12 @@ def tearDownModule(self):
 
 
 SIMPLE_APP = """\
+import os
 from wsgiref.simple_server import make_server
 def theapp(environ, start_response):
     start_response("200 OK", [])
     return ["{response_data}"]
-make_server("0", {port}, theapp).serve_forever()
+make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 """
 
 
@@ -141,10 +143,7 @@ class DeploymentTest(unittest.TestCase):
             self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
     def test_deploy_sarge_instance_answers_to_http(self):
-        testdata = {
-            'response_data': "hello sarge!",
-            'port': 5005,
-        }
+        testdata = {'response_data': "hello sarge!"}
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
@@ -161,6 +160,8 @@ class DeploymentTest(unittest.TestCase):
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
-        url = 'http://192.168.13.13:{port}/'.format(**testdata)
+        port = json.loads(run('{sarge-home}/bin/sarge list'
+                              .format(**env)))['instances'][0]['port']
+        url = 'http://192.168.13.13:{port}/'.format(port=port, **testdata)
         response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, testdata['response_data'])
