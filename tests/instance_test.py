@@ -144,3 +144,13 @@ class InstanceConfigTest(SargeTestCase):
         [execve_call] = os.execve.mock_calls
         environ = execve_call[1][2]
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
+
+    def test_run_inserts_port_in_environ(self):
+        os = self.patch('sarge.core.os')
+        os.environ = {}
+        sarge = self.sarge()
+        instance = sarge.new_instance()
+        instance.run(None)
+        [execve_call] = os.execve.mock_calls
+        environ = execve_call[1][2]
+        self.assertEqual(environ['PORT'], str(instance.port))

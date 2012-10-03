@@ -86,6 +86,7 @@ class Instance(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self._get_config())
+        environ['PORT'] = str(self.port)
         shell_args = ['/bin/bash']
         if command:
             environ['BASH_ENV'] = RUN_RC_NAME
