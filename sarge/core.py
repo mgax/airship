@@ -164,11 +164,10 @@ class Sarge(object):
     def _allocate_port(self, instance_id):
         ports_db = self._open_ports_db()
         with ports_db.lock():
-            for port in xrange(*self.PORT_RANGE):
-                if port in ports_db:
-                    continue
-                ports_db[port] = instance_id
-                return port
+            port = ports_db.get('next', self.PORT_RANGE[0])
+            ports_db[port] = instance_id
+            ports_db['next'] = port + 1
+            return port
 
     def _free_port(self, instance):
         ports_db = self._open_ports_db()

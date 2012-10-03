@@ -120,10 +120,18 @@ class InstancePortAllocationTest(SargeTestCase):
         sarge = self.sarge()
         instance1 = sarge.new_instance()
         instance2 = sarge.new_instance()
-        allocated = lambda: list(sarge._open_ports_db())
+        allocated = lambda: set(sarge._open_ports_db()) - set(['next'])
         self.assertItemsEqual(allocated(), [instance1.port, instance2.port])
         instance1.destroy()
         self.assertItemsEqual(allocated(), [instance2.port])
+
+    def test_ports_allocated_sequentially_even_after_instance_destroyed(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        instance1.destroy()
+        instance3 = sarge.new_instance()
+        self.assertEqual(instance3.port, instance2.port + 1)
 
 
 class InstanceListingTest(SargeTestCase):
