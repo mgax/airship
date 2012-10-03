@@ -105,7 +105,7 @@ with open(instance_id + '/Procfile', 'rb') as f:
     procs = dict((k.strip(), v.strip()) for k, v in
                  (l.split(':', 1) for l in f))
 with open(instance_id + '/server', 'wb') as f:
-    f.write(procs['web'] + '\\n')
+    f.write('exec %s\\n' % procs['web'])
     os.chmod(f.name, 0755)
 subprocess.check_call([SARGE_HOME + '/bin/sarge', 'start', instance_id])
 """
