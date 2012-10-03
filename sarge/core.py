@@ -45,6 +45,10 @@ class Instance(object):
     def meta(self):
         return self.config['meta']
 
+    @property
+    def port(self):
+        return self.config['port']
+
     def _new(self):
         self.sarge.daemons.configure_instance_stopped(self)
 
@@ -69,6 +73,7 @@ class Instance(object):
         if self.folder.isdir():
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
+        self.sarge._free_port(self)
 
     def _get_config(self):
         config_json = self.sarge.home_path / 'etc' / 'app' / 'config.json'
@@ -82,6 +87,7 @@ class Instance(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self._get_config())
+        environ['PORT'] = str(self.port)
         shell_args = ['/bin/bash']
         if command:
             environ['BASH_ENV'] = RUN_RC_NAME
@@ -149,6 +155,34 @@ class Sarge(object):
         else:
             raise RuntimeError("Failed to generate unique instance ID")
 
+    PORT_RANGE = (5000, 5099)
+
+    def _open_ports_db(self):
+        import kv
+        return kv.KV(self.home_path / 'etc' / 'ports.db')
+
+    def _allocate_port(self, instance_id):
+        from itertools import chain
+        start_port = self.PORT_RANGE[0]
+        end_port = self.PORT_RANGE[1] + 1
+
+        ports_db = self._open_ports_db()
+        with ports_db.lock():
+            next_port = ports_db.get('next', start_port)
+            queue = chain(xrange(next_port, end_port),
+                          xrange(start_port, next_port-1))
+            for port in queue:
+                if port not in ports_db:
+                    ports_db[port] = instance_id
+                    ports_db['next'] = port + 1
+                    return port
+            else:
+                raise RuntimeError("No ports free to allocate")
+
+    def _free_port(self, instance):
+        ports_db = self._open_ports_db()
+        assert ports_db.pop(instance.port) == instance.id_
+
     def new_instance(self, config={}):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
@@ -164,6 +198,7 @@ class Sarge(object):
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
                 'meta': meta,
+                'port': self._allocate_port(instance_id),
             }, f)
         instance = self._get_instance_by_id(instance_id)
         instance._new()
