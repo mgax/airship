@@ -113,6 +113,15 @@ class InstanceTest(SargeTestCase):
         instance2 = sarge.new_instance()
         self.assertNotEqual(instance1.port, instance2.port)
 
+    def test_destroyed_instances_free_their_ports(self):
+        sarge = self.sarge()
+        instance1 = sarge.new_instance()
+        instance2 = sarge.new_instance()
+        allocated = lambda: list(sarge._open_ports_db())
+        self.assertItemsEqual(allocated(), [instance1.port, instance2.port])
+        instance1.destroy()
+        self.assertItemsEqual(allocated(), [instance2.port])
+
 
 class InstanceListingTest(SargeTestCase):
 

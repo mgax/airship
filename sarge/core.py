@@ -73,6 +73,7 @@ class Instance(object):
         if self.folder.isdir():
             self.folder.rmtree()
         self.sarge._instance_config_path(self.id_).unlink_p()
+        self.sarge._free_port(self)
 
     def _get_config(self):
         config_json = self.sarge.home_path / 'etc' / 'app' / 'config.json'
@@ -168,6 +169,10 @@ class Sarge(object):
                     continue
                 ports_db[port] = instance_id
                 return port
+
+    def _free_port(self, instance):
+        ports_db = self._open_ports_db()
+        assert ports_db.pop(instance.port) == instance.id_
 
     def new_instance(self, config={}):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
