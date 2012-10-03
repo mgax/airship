@@ -81,7 +81,7 @@ import os
 from wsgiref.simple_server import make_server
 def theapp(environ, start_response):
     start_response("200 OK", [])
-    return ["{response_data}"]
+    return ["{msg}"]
 make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 """
 
@@ -143,10 +143,10 @@ class DeploymentTest(unittest.TestCase):
             self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
     def test_deploy_sarge_instance_answers_to_http(self):
-        testdata = {'response_data': "hello sarge!"}
+        msg = "hello sarge!"
 
         with tar_maker() as (tmp, tar_file):
-            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(**testdata))
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
         self.insall_deploy_script()
@@ -162,6 +162,6 @@ class DeploymentTest(unittest.TestCase):
 
         port = json.loads(run('{sarge-home}/bin/sarge list'
                               .format(**env)))['instances'][0]['port']
-        url = 'http://192.168.13.13:{port}/'.format(port=port, **testdata)
+        url = 'http://192.168.13.13:{port}/'.format(port=port)
         response = retry([requests.ConnectionError], requests.get, url)
-        self.assertEqual(response.text, testdata['response_data'])
+        self.assertEqual(response.text, msg)
