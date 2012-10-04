@@ -121,6 +121,9 @@ class Sarge(object):
     def _instance_config_path(self, instance_id):
         return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + YAML_EXT)
 
+    def initialize(self):
+        self.generate_supervisord_configuration()
+
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
 
@@ -254,7 +257,7 @@ def init_cmd(sarge, args):
     (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / 'var' / 'run').mkdir_p()
     (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
-    sarge.generate_supervisord_configuration()
+    sarge.initialize()
 
     sarge_bin = sarge.home_path / 'bin'
     sarge_bin.makedirs()
