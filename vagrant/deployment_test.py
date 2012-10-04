@@ -222,6 +222,7 @@ class DeploymentTest(unittest.TestCase):
         run("{sarge-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
+        self.insall_deploy_script()
 
     def insall_deploy_script(self):
         with cd(env['sarge-home']):
@@ -239,8 +240,6 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        self.insall_deploy_script()
-
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
             self.add_instance_cleanup('web')
@@ -254,19 +253,15 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        self.insall_deploy_script()
-
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
+            self.add_instance_cleanup('web')
             port1 = get_port('web')
 
             deploy(tar_file, 'web')
             port2 = get_port('web')
 
-        self.add_instance_cleanup('web')
-
         self.assertNotEqual(port1, port2)
-
         self.assertEqual(get_from_port(port2).text, msg)
 
     def test_deploy_non_web_process_does_not_clobber_web_process(self):
@@ -277,14 +272,12 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'Procfile').write_text("web: python theapp.py\n"
                                           "otherweb: python theapp.py\n")
 
-        self.insall_deploy_script()
-
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            deploy(tar_file, 'otherweb')
+            self.add_instance_cleanup('web')
 
-        self.add_instance_cleanup('web')
-        self.add_instance_cleanup('otherweb')
+            deploy(tar_file, 'otherweb')
+            self.add_instance_cleanup('otherweb')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
@@ -302,13 +295,11 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'Procfile').write_text("web: python theapp.py\n"
                                           "otherweb: python theapp.py\n")
 
-        self.insall_deploy_script()
-
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            deploy(tar_file, 'otherweb')
-
             self.add_instance_cleanup('web')
+
+            deploy(tar_file, 'otherweb')
             self.add_instance_cleanup('otherweb')
 
         self.assertEqual(get_from_port(4998).text, msg)
