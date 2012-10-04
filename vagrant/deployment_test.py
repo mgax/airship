@@ -118,10 +118,12 @@ make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 DEPLOY_SCRIPT = """#!/usr/bin/env python
 import os, sys, subprocess
 import json
+from path import path
 os.chdir('{sarge-home}')
+var_haproxy = path('var/haproxy')
 def update_haproxy():
     subprocess.check_call(['cat bits/* > haproxy.cfg'],
-                          shell=True, cwd='var/haproxy')
+                          shell=True, cwd=var_haproxy)
     subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
@@ -130,8 +132,9 @@ for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
         print '=== destroying', instance_info['id']
         sarge('destroy', instance_info['id'])
-        if proc_name == 'web':
-            subprocess.check_call(['rm', 'var/haproxy/bits/' + proc_name])
+        haproxy_bit = var_haproxy / 'bits' / proc_name
+        if haproxy_bit.isfile():
+            subprocess.check_call(['rm', haproxy_bit])
             update_haproxy()
 instance_cfg = {{'application_name': proc_name}}
 instance_id = sarge('new', json.dumps(instance_cfg)).strip()
@@ -145,11 +148,11 @@ with open(instance_id + '/server', 'wb') as f:
 sarge('start', instance_id)
 if proc_name == 'web':
     port = json.loads(sarge('list'))['instances'][0]['port']
-    with open('var/haproxy/bits/web', 'wb') as f:
-        f.write('listen web\\n')
+    with open(var_haproxy / 'bits' / proc_name, 'wb') as f:
+        f.write('listen {{proc_name}}\\n'.format(proc_name=proc_name))
         f.write('  bind *:4999\\n')
-        f.write('  server web1 127.0.0.1:{{port}} maxconn 32\\n'
-                .format(port=port))
+        f.write('  server {{proc_name}}1 127.0.0.1:{{port}} maxconn 32\\n'
+                .format(port=port, proc_name=proc_name))
     update_haproxy()
 """
 
@@ -202,7 +205,8 @@ def get_from_port(port):
 def deploy(tar_file, proc_name):
     with cd(env['sarge-home']):
         put(tar_file, '_app.tar')
-        run('bin/deploy _app.tar {proc_name}'.format(proc_name=proc_name))
+        run('opt/sarge-venv/bin/python bin/deploy _app.tar {proc_name}'
+            .format(proc_name=proc_name))
         run('rm _app.tar')
 
 
