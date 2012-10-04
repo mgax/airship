@@ -186,6 +186,14 @@ def get_instances():
     return json.loads(json_list)['instances']
 
 
+def get_port(proc_name):
+    for i in get_instances():
+        if i['meta']['APPLICATION_NAME'] == proc_name:
+            return i['port']
+    else:
+        raise RuntimeError("No process found with name %r" % proc_name)
+
+
 def get_from_port(port):
     url = 'http://192.168.13.13:{port}/'.format(port=port)
     return retry([requests.ConnectionError], requests.get, url)
@@ -221,7 +229,7 @@ class DeploymentTest(unittest.TestCase):
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
-        self.assertEqual(get_from_port(get_instances()[0]['port']).text, msg)
+        self.assertEqual(get_from_port(get_port('web')).text, msg)
 
     def test_deploy_new_version_answers_on_different_port(self):
         msg = "hello sarge!"
@@ -237,10 +245,10 @@ class DeploymentTest(unittest.TestCase):
             self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
 
             run('bin/deploy _app.tar web')
-            port1 = get_instances()[0]['port']
+            port1 = get_port('web')
 
             run('bin/deploy _app.tar web')
-            port2 = get_instances()[0]['port']
+            port2 = get_port('web')
 
         _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
         self.addCleanup(run, _destroy)
@@ -271,14 +279,6 @@ class DeploymentTest(unittest.TestCase):
 
         _destroy = '{sarge-home}/bin/sarge destroy otherweb'.format(**env)
         self.addCleanup(run, _destroy)
-
-        def get_port(proc_name):
-            for i in get_instances():
-                if i['meta']['APPLICATION_NAME'] == proc_name:
-                    return i['port']
-
-            else:
-                raise RuntimeError("No process found with name %r" % proc_name)
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
