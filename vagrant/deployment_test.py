@@ -88,10 +88,11 @@ make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 
 DEPLOY_SCRIPT = """#!/usr/bin/env python
 import os, sys, subprocess
+import json
 SARGE_HOME='{sarge-home}'
-instance_id = subprocess.Popen([SARGE_HOME + '/bin/sarge', 'new',
-                                '{{"application_name": "web"}}'],
-                               stdout=subprocess.PIPE).communicate()[0].strip()
+def sarge(*cmd):
+    return subprocess.check_output([SARGE_HOME + '/bin/sarge'] + list(cmd))
+instance_id = sarge('new', '{{"application_name": "web"}}').strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
 with open(instance_id + '/Procfile', 'rb') as f:
     procs = dict((k.strip(), v.strip()) for k, v in
@@ -99,7 +100,7 @@ with open(instance_id + '/Procfile', 'rb') as f:
 with open(instance_id + '/server', 'wb') as f:
     f.write('exec %s\\n' % procs['web'])
     os.chmod(f.name, 0755)
-subprocess.check_call([SARGE_HOME + '/bin/sarge', 'start', instance_id])
+sarge('start', instance_id)
 """
 
 
