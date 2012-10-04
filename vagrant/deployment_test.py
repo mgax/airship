@@ -97,7 +97,6 @@ for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
         print '=== destroying', instance_info['id']
         sarge('destroy', instance_info['id'])
-        subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 instance_cfg = {'application_name': proc_name}
 instance_id = sarge('new', json.dumps(instance_cfg)).strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
@@ -108,7 +107,6 @@ with open(instance_id + '/server', 'wb') as f:
     f.write('exec %s\n' % procs[proc_name])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
-subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 """
 
 

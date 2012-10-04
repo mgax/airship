@@ -1,3 +1,8 @@
+import blinker
+
+
+configuration_update = blinker.Signal()
+
 SUPERVISORD_HAPROXY = """\
 [program:haproxy]
 redirect_stderr = true
@@ -71,4 +76,4 @@ class Haproxy(object):
         bits = self.etc_haproxy / 'bits'
         haproxy_cfg = '\n'.join(f.text() for f in sorted(bits.listdir()))
         (self.etc_haproxy / 'haproxy.cfg').write_text(haproxy_cfg)
-        # TODO restart haproxy process
+        configuration_update.send(self)

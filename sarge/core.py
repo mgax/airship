@@ -110,6 +110,8 @@ class Sarge(object):
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
         self.haproxy = Haproxy(self.home_path, config.get('port_map', {}))
+        from routing import configuration_update
+        configuration_update.connect(self._haproxy_update, self.haproxy)
 
     @property
     def cfg_links_folder(self):
@@ -125,6 +127,9 @@ class Sarge(object):
         self.generate_supervisord_configuration()
         haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
         haproxy_program.write_text(self.haproxy.supervisord_config())
+
+    def _haproxy_update(self, sender, **extra):
+        self.daemons.ctl(['restart', 'haproxy'])
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)

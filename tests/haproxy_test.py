@@ -1,3 +1,4 @@
+from mock import patch, call
 from common import SargeTestCase
 
 
@@ -36,3 +37,10 @@ class HaproxyConfigurationTest(SargeTestCase):
         self.assertEqual(get_routes(cfg_file.text()), {8743: instance.port})
         instance.stop()
         self.assertEqual(get_routes(cfg_file.text()), {})
+
+    def test_haproxy_reconfiguration_triggers_haproxy_restart(self):
+        with patch('sarge.daemons.Supervisor.ctl') as ctl:
+            sarge = self.create_sarge({'port_map': {'testy': 8743}})
+            instance = sarge.new_instance({'application_name': 'testy'})
+            instance.start()
+        self.assertIn(call(['restart', 'haproxy']), ctl.mock_calls)
