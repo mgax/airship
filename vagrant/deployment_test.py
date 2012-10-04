@@ -43,18 +43,6 @@ def update_virtualenv():
 SARGE_REPO = path(__file__).parent.parent
 
 
-HAPROXY_GLOBAL = """\
-global
-    maxconn 256
-
-defaults
-    timeout connect  5000ms
-    timeout client  50000ms
-    timeout server  50000ms
-
-"""
-
-
 SUPERVISORD_HAPROXY = """\
 [program:haproxy]
 redirect_stderr = true
@@ -62,7 +50,7 @@ stdout_logfile = /var/local/sarge-test/var/log/haproxy.log
 startsecs = 0
 startretries = 1
 autostart = true
-command = /usr/sbin/haproxy -f /var/local/sarge-test/var/haproxy/haproxy.cfg
+command = /usr/sbin/haproxy -f /var/local/sarge-test/etc/haproxy/haproxy.cfg
 """
 
 
@@ -83,10 +71,6 @@ def install_sarge():
             "-e {sarge-src}"
             .format(**env))
         run("opt/sarge-venv/bin/sarge . init")
-        run("mkdir var/haproxy")
-        run("mkdir var/haproxy/bits")
-        put(StringIO(HAPROXY_GLOBAL), "var/haproxy/bits/0-global")
-        put(StringIO(HAPROXY_GLOBAL), "var/haproxy/haproxy.cfg")
         put(StringIO(SUPERVISORD_HAPROXY), "etc/supervisor.d/haproxy")
 
 
@@ -118,7 +102,7 @@ DEPLOY_SCRIPT = r"""#!/usr/bin/env python
 import os, sys, subprocess
 import json
 from path import path
-var_haproxy = path('var/haproxy')
+var_haproxy = path('etc/haproxy')
 def update_haproxy():
     subprocess.check_call(['cat bits/* > haproxy.cfg'],
                           shell=True, cwd=var_haproxy)

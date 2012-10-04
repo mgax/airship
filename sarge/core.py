@@ -9,6 +9,7 @@ from importlib import import_module
 from path import path
 import yaml
 from .daemons import Supervisor
+from .routing import Haproxy
 
 
 log = logging.getLogger(__name__)
@@ -106,6 +107,7 @@ class Sarge(object):
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
+        self.haproxy = Haproxy(self.home_path)
 
     @property
     def cfg_links_folder(self):
