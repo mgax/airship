@@ -4,7 +4,7 @@ from common import SargeTestCase
 class WorkflowTest(SargeTestCase):
 
     def setUp(self):
-        self.instance = self.sarge().new_instance()
+        self.instance = self.create_sarge().new_instance()
 
     def test_new_instance_creates_runtime_folder(self):
         self.instance.start()

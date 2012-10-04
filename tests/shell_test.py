@@ -22,37 +22,37 @@ class ShellTest(SargeTestCase):
 
     @patch('sarge.core.Instance.configure')
     def test_configure_instance_calls_api_method(self, configure):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'configure', instance.id_])
         self.assertEqual(configure.mock_calls, [call()])
 
     @patch('sarge.core.Instance.start')
     def test_start_instance_calls_api_method(self, start):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'start', instance.id_])
         self.assertEqual(start.mock_calls, [call()])
 
     @patch('sarge.core.Instance.stop')
     def test_stop_instance_calls_api_method(self, stop):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'stop', instance.id_])
         self.assertEqual(stop.mock_calls, [call()])
 
     @patch('sarge.core.Instance.trigger')
     def test_trigger_instance_calls_api_method(self, trigger):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'trigger', instance.id_])
         self.assertEqual(trigger.mock_calls, [call()])
 
     @patch('sarge.core.Instance.destroy')
     def test_destroy_instance_calls_api_method(self, destroy):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'destroy', instance.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
     @patch('sarge.core.Instance.run')
     def test_run_instance_calls_api_method_with_args(self, run):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         imp('sarge.core').main([str(self.tmp), 'run', instance.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 

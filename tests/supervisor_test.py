@@ -35,7 +35,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        self.sarge().generate_supervisord_configuration()
+        self.create_sarge().generate_supervisord_configuration()
 
         config_path = self.tmp / 'etc' / 'supervisor.conf'
         eq_config = config_file_checker(config_path)
@@ -57,7 +57,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         return self.tmp / 'etc' / 'supervisor.d' / instance.id_
 
     def test_generate_supervisord_cfg_with_run_command(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
 
         eq_config = config_file_checker(self.instance_cfg(instance))
@@ -71,7 +71,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startretries', '1')
 
     def test_instance_start_changes_autostart_to_true(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
 
         section = 'program:%s' % instance.id_
@@ -80,7 +80,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startsecs', '2')
 
     def test_instance_stop_changes_autostart_to_false(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
         instance.stop()
 
@@ -91,14 +91,14 @@ class SupervisorConfigurationTest(SargeTestCase):
         eq_config(section, 'startsecs', '0')
 
     def test_instance_start_triggers_supervisord_update(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         self.mock_supervisorctl.reset_mock()
         instance.start()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
     def test_instance_stop_triggers_supervisord_update(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
         self.mock_supervisorctl.reset_mock()
         instance.stop()
@@ -106,7 +106,7 @@ class SupervisorConfigurationTest(SargeTestCase):
                          [call(['update'])])
 
     def test_instance_destroy_triggers_supervisord_update(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
         instance.stop()
         self.mock_supervisorctl.reset_mock()
@@ -115,7 +115,7 @@ class SupervisorConfigurationTest(SargeTestCase):
                          [call(['update'])])
 
     def test_destroy_instance_removes_its_supervisor_configuration(self):
-        instance = self.sarge().new_instance()
+        instance = self.create_sarge().new_instance()
         instance.start()
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
         self.assertTrue(cfg_path.isfile())
@@ -127,7 +127,7 @@ class SupervisorInvocationTest(SargeTestCase):
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
-        self.sarge().daemons.ctl(['hello', 'world!'])
+        self.create_sarge().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
         cfg_path = self.tmp / 'etc' / 'supervisor.conf'
