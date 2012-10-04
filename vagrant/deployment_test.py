@@ -48,7 +48,6 @@ global
     maxconn 256
 
 defaults
-    mode http
     timeout connect  5000ms
     timeout client  50000ms
     timeout server  50000ms
