@@ -127,6 +127,7 @@ def update_haproxy():
     subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
+public_ports = {{'web': 4999}}
 proc_name = sys.argv[2]
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
@@ -146,13 +147,14 @@ with open(instance_id + '/server', 'wb') as f:
     f.write('exec %s\\n' % procs[proc_name])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
-if proc_name == 'web':
+if proc_name in public_ports:
     port = json.loads(sarge('list'))['instances'][0]['port']
+    public_port = public_ports[proc_name]
     with open(var_haproxy / 'bits' / proc_name, 'wb') as f:
-        f.write('listen {{proc_name}}\\n'.format(proc_name=proc_name))
-        f.write('  bind *:4999\\n')
+        f.write('listen {{proc_name}}\\n'.format(**locals()))
+        f.write('  bind *:{{public_port}}\\n'.format(**locals()))
         f.write('  server {{proc_name}}1 127.0.0.1:{{port}} maxconn 32\\n'
-                .format(port=port, proc_name=proc_name))
+                .format(**locals()))
     update_haproxy()
 """
 
