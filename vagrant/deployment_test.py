@@ -125,27 +125,32 @@ def update_haproxy():
     subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
+proc_name = sys.argv[2]
 for instance_info in json.loads(sarge('list'))['instances']:
-    if instance_info['meta']['APPLICATION_NAME'] == 'web':
+    if instance_info['meta']['APPLICATION_NAME'] == proc_name:
         print '=== destroying', instance_info['id']
         sarge('destroy', instance_info['id'])
-        subprocess.check_call(['rm', 'var/haproxy/bits/web'])
-        update_haproxy()
-instance_id = sarge('new', '{{"application_name": "web"}}').strip()
+        if proc_name == 'web':
+            subprocess.check_call(['rm', 'var/haproxy/bits/' + proc_name])
+            update_haproxy()
+instance_cfg = {{'application_name': proc_name}}
+instance_id = sarge('new', json.dumps(instance_cfg)).strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
 with open(instance_id + '/Procfile', 'rb') as f:
     procs = dict((k.strip(), v.strip()) for k, v in
                  (l.split(':', 1) for l in f))
 with open(instance_id + '/server', 'wb') as f:
-    f.write('exec %s\\n' % procs['web'])
+    f.write('exec %s\\n' % procs[proc_name])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
-port = json.loads(sarge('list'))['instances'][0]['port']
-with open('var/haproxy/bits/web', 'wb') as f:
-    f.write('listen web\\n')
-    f.write('  bind *:4999\\n')
-    f.write('  server web1 127.0.0.1:{{port}} maxconn 32\\n'.format(port=port))
-update_haproxy()
+if proc_name == 'web':
+    port = json.loads(sarge('list'))['instances'][0]['port']
+    with open('var/haproxy/bits/web', 'wb') as f:
+        f.write('listen web\\n')
+        f.write('  bind *:4999\\n')
+        f.write('  server web1 127.0.0.1:{{port}} maxconn 32\\n'
+                .format(port=port))
+    update_haproxy()
 """
 
 
@@ -243,6 +248,40 @@ class DeploymentTest(unittest.TestCase):
         self.assertNotEqual(port1, port2)
 
         self.assertEqual(get_from_port(port2).text, msg)
+
+    def test_deploy_non_web_process_does_not_clobber_web_process(self):
+        msg = "hello sarge!"
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n"
+                                          "otherweb: python theapp.py\n")
+
+        self.insall_deploy_script()
+
+        with cd(env['sarge-home']):
+            put(tar_file, '_app.tar')
+            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
+
+            run('bin/deploy _app.tar web')
+            run('bin/deploy _app.tar otherweb')
+
+        _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
+        self.addCleanup(run, _destroy)
+
+        _destroy = '{sarge-home}/bin/sarge destroy otherweb'.format(**env)
+        self.addCleanup(run, _destroy)
+
+        def get_port(proc_name):
+            for i in get_instances():
+                if i['meta']['APPLICATION_NAME'] == proc_name:
+                    return i['port']
+
+            else:
+                raise RuntimeError("No process found with name %r" % proc_name)
+
+        self.assertEqual(get_from_port(get_port('web')).text, msg)
+        self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
 
     def test_app_answers_on_haproxy_port(self):
         msg = "hello sarge!"
