@@ -43,17 +43,6 @@ def update_virtualenv():
 SARGE_REPO = path(__file__).parent.parent
 
 
-SUPERVISORD_HAPROXY = """\
-[program:haproxy]
-redirect_stderr = true
-stdout_logfile = /var/local/sarge-test/var/log/haproxy.log
-startsecs = 0
-startretries = 1
-autostart = true
-command = /usr/sbin/haproxy -f /var/local/sarge-test/etc/haproxy/haproxy.cfg
-"""
-
-
 def install_sarge():
     sudo("mkdir {sarge-home}".format(**env))
     with cd(env['sarge-home']):
@@ -71,7 +60,6 @@ def install_sarge():
             "-e {sarge-src}"
             .format(**env))
         run("opt/sarge-venv/bin/sarge . init")
-        put(StringIO(SUPERVISORD_HAPROXY), "etc/supervisor.d/haproxy")
 
 
 def setUpModule(self):

@@ -123,6 +123,8 @@ class Sarge(object):
 
     def initialize(self):
         self.generate_supervisord_configuration()
+        haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
+        haproxy_program.write_text(self.haproxy.supervisord_config())
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)

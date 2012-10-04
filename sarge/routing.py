@@ -1,3 +1,14 @@
+SUPERVISORD_HAPROXY = """\
+[program:haproxy]
+redirect_stderr = true
+stdout_logfile = {sarge_home}/var/log/haproxy.log
+startsecs = 0
+startretries = 1
+autostart = true
+command = /usr/sbin/haproxy -f {sarge_home}/etc/haproxy/haproxy.cfg
+"""
+
+
 HAPROXY_GLOBAL = """\
 global
     maxconn 256
@@ -33,6 +44,9 @@ class Haproxy(object):
         (self.etc_haproxy / 'bits').makedirs()
         (self.etc_haproxy / 'bits' / '0-global').write_text(HAPROXY_GLOBAL)
         (self.etc_haproxy / 'haproxy.cfg').write_text(HAPROXY_GLOBAL)
+
+    def supervisord_config(self):
+        return SUPERVISORD_HAPROXY.format(sarge_home=self.sarge_home)
 
     def configure_instance(self, instance):
         proc_name = instance.meta.get('APPLICATION_NAME')
