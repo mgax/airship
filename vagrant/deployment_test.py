@@ -228,6 +228,10 @@ class DeploymentTest(unittest.TestCase):
             put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
             self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
+    def add_instance_cleanup(self, proc_name):
+        self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
+                              .format(proc_name=proc_name, **env)))
+
     def test_deploy_sarge_instance_answers_to_http(self):
         msg = "hello sarge!"
 
@@ -239,8 +243,7 @@ class DeploymentTest(unittest.TestCase):
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
-            self.addCleanup(run, _destroy)
+            self.add_instance_cleanup('web')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
 
@@ -260,8 +263,7 @@ class DeploymentTest(unittest.TestCase):
             deploy(tar_file, 'web')
             port2 = get_port('web')
 
-        _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
-        self.addCleanup(run, _destroy)
+        self.add_instance_cleanup('web')
 
         self.assertNotEqual(port1, port2)
 
@@ -281,11 +283,8 @@ class DeploymentTest(unittest.TestCase):
             deploy(tar_file, 'web')
             deploy(tar_file, 'otherweb')
 
-        _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
-        self.addCleanup(run, _destroy)
-
-        _destroy = '{sarge-home}/bin/sarge destroy otherweb'.format(**env)
-        self.addCleanup(run, _destroy)
+        self.add_instance_cleanup('web')
+        self.add_instance_cleanup('otherweb')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
@@ -309,11 +308,8 @@ class DeploymentTest(unittest.TestCase):
             deploy(tar_file, 'web')
             deploy(tar_file, 'otherweb')
 
-            _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
-            self.addCleanup(run, _destroy)
-
-            _destroy = '{sarge-home}/bin/sarge destroy otherweb'.format(**env)
-            self.addCleanup(run, _destroy)
+            self.add_instance_cleanup('web')
+            self.add_instance_cleanup('otherweb')
 
         self.assertEqual(get_from_port(4998).text, msg)
         self.assertEqual(get_from_port(4999).text, msg)
