@@ -60,6 +60,7 @@ class Instance(object):
         log.info("Activating instance %r", self.id_)
         self.configure()
         self.sarge.daemons.configure_instance_running(self)
+        self.sarge.haproxy.configure_instance(self)
 
     def stop(self):
         self.sarge.daemons.configure_instance_stopped(self)
@@ -107,7 +108,7 @@ class Sarge(object):
         self.home_path = config['home']
         self.config = config
         self.daemons = Supervisor(self.home_path / 'etc')
-        self.haproxy = Haproxy(self.home_path)
+        self.haproxy = Haproxy(self.home_path, config.get('port_map', {}))
 
     @property
     def cfg_links_folder(self):

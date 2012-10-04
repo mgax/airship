@@ -109,11 +109,6 @@ def update_haproxy():
     subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
-public_ports_path = path('etc/public_ports.json')
-if public_ports_path.isfile():
-    public_ports = json.loads(public_ports_path.bytes())
-else:
-    public_ports = {}
 proc_name = sys.argv[2]
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
@@ -133,15 +128,7 @@ with open(instance_id + '/server', 'wb') as f:
     f.write('exec %s\n' % procs[proc_name])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
-if proc_name in public_ports:
-    port = json.loads(sarge('list'))['instances'][0]['port']
-    public_port = public_ports[proc_name]
-    with open(var_haproxy / 'bits' / proc_name, 'wb') as f:
-        f.write('listen {proc_name}\n'.format(**locals()))
-        f.write('  bind *:{public_port}\n'.format(**locals()))
-        f.write('  server {proc_name}1 127.0.0.1:{port} maxconn 32\n'
-                .format(**locals()))
-    update_haproxy()
+subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 """
 
 
@@ -205,6 +192,7 @@ class DeploymentTest(unittest.TestCase):
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
         self.insall_deploy_script()
+        run("echo '{{}}' > {sarge-home}/etc/sarge.yaml".format(**env))
 
     def insall_deploy_script(self):
         with cd(env['sarge-home']):
@@ -267,10 +255,8 @@ class DeploymentTest(unittest.TestCase):
     def test_apps_answer_on_configured_haproxy_ports(self):
         msg = "hello sarge!"
 
-        public_ports_path = env['sarge-home'] / 'etc' / 'public_ports.json'
-        public_ports = {'web': 4998, 'otherweb': 4999}
-        put(StringIO(json.dumps(public_ports)), str(public_ports_path))
-        self.addCleanup(run, 'rm ' + public_ports_path)
+        put(StringIO(json.dumps({'port_map': {'web': 4998, 'otherweb': 4999}})),
+            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
