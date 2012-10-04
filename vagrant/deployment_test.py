@@ -89,9 +89,9 @@ make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 DEPLOY_SCRIPT = """#!/usr/bin/env python
 import os, sys, subprocess
 import json
-SARGE_HOME='{sarge-home}'
+os.chdir('{sarge-home}')
 def sarge(*cmd):
-    return subprocess.check_output([SARGE_HOME + '/bin/sarge'] + list(cmd))
+    return subprocess.check_output(['bin/sarge'] + list(cmd))
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == 'web':
         print '=== destroying', instance_info['id']
