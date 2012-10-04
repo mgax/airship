@@ -21,6 +21,8 @@ class Haproxy(object):
         return self.sarge_home / 'etc' / 'haproxy'
 
     def _initialize(self):
-        (self.etc_haproxy / 'bits').makedirs_p()
+        if self.etc_haproxy.isdir():
+            return
+        (self.etc_haproxy / 'bits').makedirs()
         (self.etc_haproxy / 'bits' / '0-global').write_text(HAPROXY_GLOBAL)
         (self.etc_haproxy / 'haproxy.cfg').write_text(HAPROXY_GLOBAL)
