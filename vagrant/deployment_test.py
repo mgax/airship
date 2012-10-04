@@ -199,6 +199,13 @@ def get_from_port(port):
     return retry([requests.ConnectionError], requests.get, url)
 
 
+def deploy(tar_file, proc_name):
+    with cd(env['sarge-home']):
+        put(tar_file, '_app.tar')
+        run('bin/deploy _app.tar {proc_name}'.format(proc_name=proc_name))
+        run('rm _app.tar')
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -221,11 +228,7 @@ class DeploymentTest(unittest.TestCase):
         self.insall_deploy_script()
 
         with cd(env['sarge-home']):
-            put(tar_file, '_app.tar')
-            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
-
-            run('bin/deploy _app.tar web')
-
+            deploy(tar_file, 'web')
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
@@ -241,13 +244,10 @@ class DeploymentTest(unittest.TestCase):
         self.insall_deploy_script()
 
         with cd(env['sarge-home']):
-            put(tar_file, '_app.tar')
-            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
-
-            run('bin/deploy _app.tar web')
+            deploy(tar_file, 'web')
             port1 = get_port('web')
 
-            run('bin/deploy _app.tar web')
+            deploy(tar_file, 'web')
             port2 = get_port('web')
 
         _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
@@ -268,11 +268,8 @@ class DeploymentTest(unittest.TestCase):
         self.insall_deploy_script()
 
         with cd(env['sarge-home']):
-            put(tar_file, '_app.tar')
-            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
-
-            run('bin/deploy _app.tar web')
-            run('bin/deploy _app.tar otherweb')
+            deploy(tar_file, 'web')
+            deploy(tar_file, 'otherweb')
 
         _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
         self.addCleanup(run, _destroy)
@@ -293,10 +290,7 @@ class DeploymentTest(unittest.TestCase):
         self.insall_deploy_script()
 
         with cd(env['sarge-home']):
-            put(tar_file, '_app.tar')
-            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
-
-            run('bin/deploy _app.tar web')
+            deploy(tar_file, 'web')
 
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
