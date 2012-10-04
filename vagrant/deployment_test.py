@@ -181,6 +181,11 @@ def get_instances():
     return json.loads(json_list)['instances']
 
 
+def get_from_port(port):
+    url = 'http://192.168.13.13:{port}/'.format(port=port)
+    return retry([requests.ConnectionError], requests.get, url)
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -211,10 +216,7 @@ class DeploymentTest(unittest.TestCase):
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
-        port = get_instances()[0]['port']
-        url = 'http://192.168.13.13:{port}/'.format(port=port)
-        response = retry([requests.ConnectionError], requests.get, url)
-        self.assertEqual(response.text, msg)
+        self.assertEqual(get_from_port(get_instances()[0]['port']).text, msg)
 
     def test_deploy_new_version_answers_on_different_port(self):
         msg = "hello sarge!"
@@ -240,9 +242,7 @@ class DeploymentTest(unittest.TestCase):
 
         self.assertNotEqual(port1, port2)
 
-        url = 'http://192.168.13.13:{port}/'.format(port=port2)
-        response = retry([requests.ConnectionError], requests.get, url)
-        self.assertEqual(response.text, msg)
+        self.assertEqual(get_from_port(port2).text, msg)
 
     def test_app_answers_on_haproxy_port(self):
         msg = "hello sarge!"
@@ -262,6 +262,4 @@ class DeploymentTest(unittest.TestCase):
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
-        url = 'http://192.168.13.13:4999/'
-        response = retry([requests.ConnectionError], requests.get, url)
-        self.assertEqual(response.text, msg)
+        self.assertEqual(get_from_port(4999).text, msg)
