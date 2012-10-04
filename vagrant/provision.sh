@@ -8,7 +8,7 @@ EOF
 
 
 apt-get update
-apt-get install -y vim python-virtualenv nginx curl libyaml-dev python-dev
+apt-get install -y vim python-virtualenv nginx curl libyaml-dev python-dev haproxy
 
 
 if [ ! -d /home/vagrant/.pip ]; then

@@ -43,6 +43,30 @@ def update_virtualenv():
 SARGE_REPO = path(__file__).parent.parent
 
 
+HAPROXY_GLOBAL = """\
+global
+    maxconn 256
+
+defaults
+    mode http
+    timeout connect  5000ms
+    timeout client  50000ms
+    timeout server  50000ms
+
+"""
+
+
+SUPERVISORD_HAPROXY = """\
+[program:haproxy]
+redirect_stderr = true
+stdout_logfile = /var/local/sarge-test/var/log/haproxy.log
+startsecs = 0
+startretries = 1
+autostart = true
+command = /usr/sbin/haproxy -f /var/local/sarge-test/var/haproxy/haproxy.cfg
+"""
+
+
 def install_sarge():
     sudo("mkdir {sarge-home}".format(**env))
     with cd(env['sarge-home']):
@@ -60,6 +84,11 @@ def install_sarge():
             "-e {sarge-src}"
             .format(**env))
         run("opt/sarge-venv/bin/sarge . init")
+        run("mkdir var/haproxy")
+        run("mkdir var/haproxy/bits")
+        put(StringIO(HAPROXY_GLOBAL), "var/haproxy/bits/0-global")
+        put(StringIO(HAPROXY_GLOBAL), "var/haproxy/haproxy.cfg")
+        put(StringIO(SUPERVISORD_HAPROXY), "etc/supervisor.d/haproxy")
 
 
 def setUpModule(self):
@@ -90,12 +119,18 @@ DEPLOY_SCRIPT = """#!/usr/bin/env python
 import os, sys, subprocess
 import json
 os.chdir('{sarge-home}')
+def update_haproxy():
+    subprocess.check_call(['cat bits/* > haproxy.cfg'],
+                          shell=True, cwd='var/haproxy')
+    subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == 'web':
         print '=== destroying', instance_info['id']
         sarge('destroy', instance_info['id'])
+        subprocess.check_call(['rm', 'var/haproxy/bits/web'])
+        update_haproxy()
 instance_id = sarge('new', '{{"application_name": "web"}}').strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
 with open(instance_id + '/Procfile', 'rb') as f:
@@ -105,6 +140,12 @@ with open(instance_id + '/server', 'wb') as f:
     f.write('exec %s\\n' % procs['web'])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
+port = json.loads(sarge('list'))['instances'][0]['port']
+with open('var/haproxy/bits/web', 'wb') as f:
+    f.write('listen web\\n')
+    f.write('  bind *:4999\\n')
+    f.write('  server web1 127.0.0.1:{{port}} maxconn 32\\n'.format(port=port))
+update_haproxy()
 """
 
 
@@ -200,5 +241,27 @@ class DeploymentTest(unittest.TestCase):
         self.assertNotEqual(port1, port2)
 
         url = 'http://192.168.13.13:{port}/'.format(port=port2)
+        response = retry([requests.ConnectionError], requests.get, url)
+        self.assertEqual(response.text, msg)
+
+    def test_app_answers_on_haproxy_port(self):
+        msg = "hello sarge!"
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
+
+        self.insall_deploy_script()
+
+        with cd(env['sarge-home']):
+            put(tar_file, '_app.tar')
+            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
+
+            run('bin/deploy _app.tar web')
+
+            _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
+            self.addCleanup(run, _destroy)
+
+        url = 'http://192.168.13.13:4999/'
         response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, msg)
