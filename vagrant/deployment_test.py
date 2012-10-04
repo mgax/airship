@@ -130,6 +130,11 @@ def tar_maker():
         tmp.rmtree()
 
 
+def get_instances():
+    json_list = run('{sarge-home}/bin/sarge list'.format(**env))
+    return json.loads(json_list)['instances']
+
+
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
@@ -160,8 +165,7 @@ class DeploymentTest(unittest.TestCase):
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
-        port = json.loads(run('{sarge-home}/bin/sarge list'
-                              .format(**env)))['instances'][0]['port']
+        port = get_instances()[0]['port']
         url = 'http://192.168.13.13:{port}/'.format(port=port)
         response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, msg)
