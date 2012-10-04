@@ -92,6 +92,10 @@ import json
 SARGE_HOME='{sarge-home}'
 def sarge(*cmd):
     return subprocess.check_output([SARGE_HOME + '/bin/sarge'] + list(cmd))
+for instance_info in json.loads(sarge('list'))['instances']:
+    if instance_info['meta']['APPLICATION_NAME'] == 'web':
+        print '=== destroying', instance_info['id']
+        sarge('destroy', instance_info['id'])
 instance_id = sarge('new', '{{"application_name": "web"}}').strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
 with open(instance_id + '/Procfile', 'rb') as f:
@@ -168,5 +172,33 @@ class DeploymentTest(unittest.TestCase):
 
         port = get_instances()[0]['port']
         url = 'http://192.168.13.13:{port}/'.format(port=port)
+        response = retry([requests.ConnectionError], requests.get, url)
+        self.assertEqual(response.text, msg)
+
+    def test_deploy_new_version_answers_on_different_port(self):
+        msg = "hello sarge!"
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
+
+        self.insall_deploy_script()
+
+        with cd(env['sarge-home']):
+            put(tar_file, '_app.tar')
+            self.addCleanup(run, 'rm {sarge-home}/_app.tar'.format(**env))
+
+            run('bin/deploy _app.tar web')
+            port1 = get_instances()[0]['port']
+
+            run('bin/deploy _app.tar web')
+            port2 = get_instances()[0]['port']
+
+        _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
+        self.addCleanup(run, _destroy)
+
+        self.assertNotEqual(port1, port2)
+
+        url = 'http://192.168.13.13:{port}/'.format(port=port2)
         response = retry([requests.ConnectionError], requests.get, url)
         self.assertEqual(response.text, msg)
