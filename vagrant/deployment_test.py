@@ -127,7 +127,11 @@ def update_haproxy():
     subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
-public_ports = {{'web': 4999}}
+public_ports_path = path('etc/public_ports.json')
+if public_ports_path.isfile():
+    public_ports = json.loads(public_ports_path.bytes())
+else:
+    public_ports = {{}}
 proc_name = sys.argv[2]
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
@@ -288,6 +292,10 @@ class DeploymentTest(unittest.TestCase):
 
     def test_app_answers_on_haproxy_port(self):
         msg = "hello sarge!"
+
+        public_ports_path = env['sarge-home'] / 'etc' / 'public_ports.json'
+        put(StringIO(json.dumps({'web': 4999})), str(public_ports_path))
+        self.addCleanup(run, 'rm ' + public_ports_path)
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
