@@ -102,11 +102,6 @@ DEPLOY_SCRIPT = r"""#!/usr/bin/env python
 import os, sys, subprocess
 import json
 from path import path
-var_haproxy = path('etc/haproxy')
-def update_haproxy():
-    subprocess.check_call(['cat bits/* > haproxy.cfg'],
-                          shell=True, cwd=var_haproxy)
-    subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 def sarge(*cmd):
     return subprocess.check_output(['bin/sarge'] + list(cmd))
 proc_name = sys.argv[2]
@@ -114,10 +109,7 @@ for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
         print '=== destroying', instance_info['id']
         sarge('destroy', instance_info['id'])
-        haproxy_bit = var_haproxy / 'bits' / proc_name
-        if haproxy_bit.isfile():
-            subprocess.check_call(['rm', haproxy_bit])
-            update_haproxy()
+        subprocess.check_call(['bin/supervisorctl', 'restart', 'haproxy'])
 instance_cfg = {'application_name': proc_name}
 instance_id = sarge('new', json.dumps(instance_cfg)).strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])

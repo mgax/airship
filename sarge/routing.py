@@ -44,6 +44,15 @@ class Haproxy(object):
         (self.etc_haproxy / 'bits' / proc_name).write_text(haproxy_route_cfg)
         self.update_haproxy()
 
+    def remove_instance(self, instance):
+        proc_name = instance.meta.get('APPLICATION_NAME')
+        if proc_name not in self.port_map:
+            return
+        bit_file = self.etc_haproxy / 'bits' / proc_name
+        if bit_file.isfile():
+            bit_file.unlink()
+            self.update_haproxy()
+
     def update_haproxy(self):
         bits = self.etc_haproxy / 'bits'
         haproxy_cfg = '\n'.join(f.text() for f in sorted(bits.listdir()))

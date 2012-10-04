@@ -63,6 +63,7 @@ class Instance(object):
         self.sarge.haproxy.configure_instance(self)
 
     def stop(self):
+        self.sarge.haproxy.remove_instance(self)
         self.sarge.daemons.configure_instance_stopped(self)
 
     def trigger(self):

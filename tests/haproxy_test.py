@@ -27,3 +27,12 @@ class HaproxyConfigurationTest(SargeTestCase):
         instance.start()
         cfg = (self.tmp / 'etc' / 'haproxy' / 'haproxy.cfg').text()
         self.assertEqual(get_routes(cfg), {8743: instance.port})
+
+    def test_stopped_instance_is_removed_from_haproxy(self):
+        sarge = self.create_sarge({'port_map': {'testy': 8743}})
+        instance = sarge.new_instance({'application_name': 'testy'})
+        instance.start()
+        cfg_file = (self.tmp / 'etc' / 'haproxy' / 'haproxy.cfg')
+        self.assertEqual(get_routes(cfg_file.text()), {8743: instance.port})
+        instance.stop()
+        self.assertEqual(get_routes(cfg_file.text()), {})
