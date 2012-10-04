@@ -290,23 +290,30 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
 
-    def test_app_answers_on_haproxy_port(self):
+    def test_apps_answer_on_configured_haproxy_ports(self):
         msg = "hello sarge!"
 
         public_ports_path = env['sarge-home'] / 'etc' / 'public_ports.json'
-        put(StringIO(json.dumps({'web': 4999})), str(public_ports_path))
+        public_ports = {'web': 4998, 'otherweb': 4999}
+        put(StringIO(json.dumps(public_ports)), str(public_ports_path))
         self.addCleanup(run, 'rm ' + public_ports_path)
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
-            (tmp / 'Procfile').write_text("web: python theapp.py\n")
+            (tmp / 'Procfile').write_text("web: python theapp.py\n"
+                                          "otherweb: python theapp.py\n")
 
         self.insall_deploy_script()
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
+            deploy(tar_file, 'otherweb')
 
             _destroy = '{sarge-home}/bin/sarge destroy web'.format(**env)
             self.addCleanup(run, _destroy)
 
+            _destroy = '{sarge-home}/bin/sarge destroy otherweb'.format(**env)
+            self.addCleanup(run, _destroy)
+
+        self.assertEqual(get_from_port(4998).text, msg)
         self.assertEqual(get_from_port(4999).text, msg)
