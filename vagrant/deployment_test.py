@@ -115,11 +115,10 @@ make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 """
 
 
-DEPLOY_SCRIPT = """#!/usr/bin/env python
+DEPLOY_SCRIPT = r"""#!/usr/bin/env python
 import os, sys, subprocess
 import json
 from path import path
-os.chdir('{sarge-home}')
 var_haproxy = path('var/haproxy')
 def update_haproxy():
     subprocess.check_call(['cat bits/* > haproxy.cfg'],
@@ -131,7 +130,7 @@ public_ports_path = path('etc/public_ports.json')
 if public_ports_path.isfile():
     public_ports = json.loads(public_ports_path.bytes())
 else:
-    public_ports = {{}}
+    public_ports = {}
 proc_name = sys.argv[2]
 for instance_info in json.loads(sarge('list'))['instances']:
     if instance_info['meta']['APPLICATION_NAME'] == proc_name:
@@ -141,23 +140,23 @@ for instance_info in json.loads(sarge('list'))['instances']:
         if haproxy_bit.isfile():
             subprocess.check_call(['rm', haproxy_bit])
             update_haproxy()
-instance_cfg = {{'application_name': proc_name}}
+instance_cfg = {'application_name': proc_name}
 instance_id = sarge('new', json.dumps(instance_cfg)).strip()
 subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
 with open(instance_id + '/Procfile', 'rb') as f:
     procs = dict((k.strip(), v.strip()) for k, v in
                  (l.split(':', 1) for l in f))
 with open(instance_id + '/server', 'wb') as f:
-    f.write('exec %s\\n' % procs[proc_name])
+    f.write('exec %s\n' % procs[proc_name])
     os.chmod(f.name, 0755)
 sarge('start', instance_id)
 if proc_name in public_ports:
     port = json.loads(sarge('list'))['instances'][0]['port']
     public_port = public_ports[proc_name]
     with open(var_haproxy / 'bits' / proc_name, 'wb') as f:
-        f.write('listen {{proc_name}}\\n'.format(**locals()))
-        f.write('  bind *:{{public_port}}\\n'.format(**locals()))
-        f.write('  server {{proc_name}}1 127.0.0.1:{{port}} maxconn 32\\n'
+        f.write('listen {proc_name}\n'.format(**locals()))
+        f.write('  bind *:{public_port}\n'.format(**locals()))
+        f.write('  server {proc_name}1 127.0.0.1:{port} maxconn 32\n'
                 .format(**locals()))
     update_haproxy()
 """
@@ -226,7 +225,7 @@ class DeploymentTest(unittest.TestCase):
 
     def insall_deploy_script(self):
         with cd(env['sarge-home']):
-            put(StringIO(DEPLOY_SCRIPT.format(**env)), 'bin/deploy', mode=0755)
+            put(StringIO(DEPLOY_SCRIPT), 'bin/deploy', mode=0755)
             self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
     def add_instance_cleanup(self, proc_name):
