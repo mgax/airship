@@ -27,7 +27,7 @@ defaults
 
 HAPROXY_ROUTE = """\
 listen {proc_name}
-    bind *:{stable_port}
+    bind 127.0.0.1:{stable_port}
     server {proc_name}1 127.0.0.1:{port} maxconn 32
 """
 
