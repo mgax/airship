@@ -79,4 +79,4 @@ class ShellTest(SargeTestCase):
         self.assertTrue((other_tmp / core.DEPLOYMENT_CFG_DIR).isdir())
         sarge_yaml_path = other_tmp / 'etc' / 'sarge.yaml'
         self.assertTrue(sarge_yaml_path.isfile())
-        self.assertEqual(json.loads(sarge_yaml_path.text()), {})
+        self.assertIsNotNone(json.loads(sarge_yaml_path.text()))

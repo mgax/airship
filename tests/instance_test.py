@@ -134,8 +134,7 @@ class InstancePortAllocationTest(SargeTestCase):
         self.assertEqual(instance3.port, instance2.port + 1)
 
     def test_port_allocation_wraps_when_it_reaches_interval_end(self):
-        sarge = self.create_sarge()
-        sarge.PORT_RANGE = (5000, 5009)
+        sarge = self.create_sarge({'port_range': [5000, 5009]})
         i0_i1 = [sarge.new_instance() for c in range(2)]
         i2_i7 = [sarge.new_instance() for c in range(6)]
         for instance in i0_i1:

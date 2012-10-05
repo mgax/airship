@@ -170,16 +170,15 @@ class Sarge(object):
         else:
             raise RuntimeError("Failed to generate unique instance ID")
 
-    PORT_RANGE = (5000, 5099)
-
     def _open_ports_db(self):
         import kv
         return kv.KV(self.home_path / 'etc' / 'ports.db')
 
     def _allocate_port(self, instance_id):
         from itertools import chain
-        start_port = self.PORT_RANGE[0]
-        end_port = self.PORT_RANGE[1] + 1
+        port_range = self.config.get('port_range', [5000, 5099])
+        start_port = port_range[0]
+        end_port = port_range[1] + 1
 
         ports_db = self._open_ports_db()
         with ports_db.lock():
@@ -260,7 +259,7 @@ def init_cmd(sarge, args):
     sarge_yaml_path = sarge.home_path / 'etc' / 'sarge.yaml'
     if not sarge_yaml_path.isfile():
         with sarge_yaml_path.open('wb') as f:
-            f.write('{}\n')
+            f.write('{"port_range": [5000, 5100]}\n')
     (sarge.home_path / 'var').mkdir_p()
     (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / 'var' / 'run').mkdir_p()
