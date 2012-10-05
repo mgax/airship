@@ -10,6 +10,7 @@ from path import path
 import yaml
 from .daemons import Supervisor
 from .routing import Haproxy
+from . import deployer
 
 
 log = logging.getLogger(__name__)
@@ -316,6 +317,10 @@ def run_cmd(sarge, args):
     sarge.get_instance(args.id).run(args.command)
 
 
+def deploy_cmd(sarge, args):
+    deployer.deploy(sarge, args.tarfile, args.procname)
+
+
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
@@ -347,6 +352,10 @@ def build_args_parser():
     run_parser.set_defaults(func=run_cmd)
     run_parser.add_argument('id')
     run_parser.add_argument('command', nargs='?')
+    deploy_parser = subparsers.add_parser('deploy')
+    deploy_parser.set_defaults(func=deploy_cmd)
+    deploy_parser.add_argument('tarfile')
+    deploy_parser.add_argument('procname')
     return parser
 
 

@@ -86,30 +86,6 @@ make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 """
 
 
-DEPLOY_SCRIPT = r"""#!/usr/bin/env python
-import os, sys, subprocess
-import json
-from path import path
-def sarge(*cmd):
-    return subprocess.check_output(['bin/sarge'] + list(cmd))
-proc_name = sys.argv[2]
-for instance_info in json.loads(sarge('list'))['instances']:
-    if instance_info['meta']['APPLICATION_NAME'] == proc_name:
-        print '=== destroying', instance_info['id']
-        sarge('destroy', instance_info['id'])
-instance_cfg = {'application_name': proc_name}
-instance_id = sarge('new', json.dumps(instance_cfg)).strip()
-subprocess.check_call(['tar', 'xf', sys.argv[1], '-C', instance_id])
-with open(instance_id + '/Procfile', 'rb') as f:
-    procs = dict((k.strip(), v.strip()) for k, v in
-                 (l.split(':', 1) for l in f))
-with open(instance_id + '/server', 'wb') as f:
-    f.write('exec %s\n' % procs[proc_name])
-    os.chmod(f.name, 0755)
-sarge('start', instance_id)
-"""
-
-
 def retry(exceptions, func, *args, **kwargs):
     from time import time, sleep
     t0 = time()
@@ -158,7 +134,7 @@ def get_from_port(port):
 def deploy(tar_file, proc_name):
     with cd(env['sarge-home']):
         put(tar_file, '_app.tar')
-        run('opt/sarge-venv/bin/python bin/deploy _app.tar {proc_name}'
+        run('bin/sarge deploy _app.tar {proc_name}'
             .format(proc_name=proc_name))
         run('rm _app.tar')
 
@@ -169,13 +145,7 @@ class DeploymentTest(unittest.TestCase):
         run("{sarge-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
-        self.insall_deploy_script()
         run("echo '{{}}' > {sarge-home}/etc/sarge.yaml".format(**env))
-
-    def insall_deploy_script(self):
-        with cd(env['sarge-home']):
-            put(StringIO(DEPLOY_SCRIPT), 'bin/deploy', mode=0755)
-            self.addCleanup(run, 'rm {sarge-home}/bin/deploy'.format(**env))
 
     def add_instance_cleanup(self, proc_name):
         self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
