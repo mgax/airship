@@ -203,7 +203,8 @@ class DeploymentTest(unittest.TestCase):
     def test_apps_answer_on_configured_haproxy_ports(self):
         msg = "hello sarge!"
 
-        put(StringIO(json.dumps({'port_map': {'web': 4998, 'otherweb': 4999}})),
+        sarge_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
+        put(StringIO(json.dumps(sarge_yaml)),
             str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
 
         with tar_maker() as (tmp, tar_file):

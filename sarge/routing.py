@@ -27,7 +27,7 @@ defaults
 
 HAPROXY_ROUTE = """\
 listen {proc_name}
-    bind 127.0.0.1:{stable_port}
+    bind {port_bind}
     server {proc_name}1 127.0.0.1:{port} maxconn 32
 """
 
@@ -61,7 +61,7 @@ class Haproxy(object):
         if proc_name not in self.port_map:
             return
         port = instance.port
-        stable_port = self.port_map[proc_name]
+        port_bind = self.port_map[proc_name]
         haproxy_route_cfg = HAPROXY_ROUTE.format(**locals())
         (self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name).write_text(haproxy_route_cfg)
         self.update_haproxy()
