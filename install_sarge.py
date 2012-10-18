@@ -1,5 +1,5 @@
 """ Sarge automated installation script
-usage: python <(curl -fsSL raw.github.com/mgax/sarge/master/deploy/bootstrap-sarge.py) path/to/sarge
+usage: python <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) path/to/sarge
 """
 
 import os
