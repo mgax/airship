@@ -10,7 +10,7 @@ stdout_logfile = {sarge_home}/var/log/haproxy.log
 startsecs = 0
 startretries = 1
 autostart = true
-command = /usr/sbin/haproxy -f {sarge_home}/etc/haproxy/haproxy.cfg
+command = {haproxy_bin} -f {sarge_home}/etc/haproxy/haproxy.cfg
 """
 
 
@@ -53,8 +53,10 @@ class Haproxy(object):
         (self.etc_haproxy / HAPROXY_FRAGMENTS / '0-global').write_text(HAPROXY_GLOBAL)
         (self.etc_haproxy / 'haproxy.cfg').write_text(HAPROXY_GLOBAL)
 
-    def supervisord_config(self):
-        return SUPERVISORD_HAPROXY.format(sarge_home=self.sarge_home)
+    def supervisord_config(self, sarge):
+        haproxy_bin = sarge.config.get('haproxy_bin', 'haproxy')
+        return SUPERVISORD_HAPROXY.format(haproxy_bin=haproxy_bin,
+                                          sarge_home=self.sarge_home)
 
     def configure_bucket(self, bucket):
         proc_name = bucket.meta.get('APPLICATION_NAME')

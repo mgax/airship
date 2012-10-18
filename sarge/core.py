@@ -130,7 +130,7 @@ class Sarge(object):
     def initialize(self):
         self.generate_supervisord_configuration()
         haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
-        haproxy_program.write_text(self.haproxy.supervisord_config())
+        haproxy_program.write_text(self.haproxy.supervisord_config(self))
 
     def _haproxy_update(self, sender, **extra):
         self.daemons.ctl(['restart', 'haproxy'])
