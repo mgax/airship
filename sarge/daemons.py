@@ -26,7 +26,7 @@ files = %(include_files)s
 
 
 # autorestart is disabled because otherwise it would keep restarting
-# triggered instances when they exit
+# triggered buckets when they exit
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(name)s]
@@ -36,7 +36,7 @@ startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 autorestart = false
-command = bin/sarge run %(instance_id)s ./_run_process
+command = bin/sarge run %(bucket_id)s ./_run_process
 """
 
 
@@ -57,8 +57,8 @@ class Supervisor(object):
     def config_dir(self):
         return self.etc / 'supervisor.d'
 
-    def _instance_cfg(self, instance_id):
-        return self.config_dir / instance_id
+    def _bucket_cfg(self, bucket_id):
+        return self.config_dir / bucket_id
 
     def configure(self, home_path):
         with open(self.config_path, 'wb') as f:
@@ -67,20 +67,20 @@ class Supervisor(object):
                 'include_files': self.etc / 'supervisor.d' / '*',
             })
 
-    def _configure_instance(self, instance, autostart):
-        with self._instance_cfg(instance.id_).open('wb') as f:
+    def _configure_bucket(self, bucket, autostart):
+        with self._bucket_cfg(bucket.id_).open('wb') as f:
             f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                'name': instance.id_,
-                'directory': instance.folder,
-                'run': instance.run_folder,
-                'log': instance.log_path,
-                'instance_id': instance.id_,
+                'name': bucket.id_,
+                'directory': bucket.folder,
+                'run': bucket.run_folder,
+                'log': bucket.log_path,
+                'bucket_id': bucket.id_,
                 'autostart': 'true' if autostart else 'false',
                 'startsecs': 2 if autostart else 0,
             })
 
-    def remove_instance(self, instance_id):
-        self._instance_cfg(instance_id).unlink_p()
+    def remove_bucket(self, bucket_id):
+        self._bucket_cfg(bucket_id).unlink_p()
         try:
             self.ctl(['update'])
         except subprocess.CalledProcessError:
@@ -92,13 +92,13 @@ class Supervisor(object):
         base_args = [self.ctl_path, '-c', self.config_path]
         return subprocess.check_call(base_args + cmd_args, stdout=sys.stderr)
 
-    def configure_instance_running(self, instance):
-        self._configure_instance(instance, True)
+    def configure_bucket_running(self, bucket):
+        self._configure_bucket(bucket, True)
         self.ctl(['update'])
 
-    def configure_instance_stopped(self, instance):
-        self._configure_instance(instance, False)
+    def configure_bucket_stopped(self, bucket):
+        self._configure_bucket(bucket, False)
         self.ctl(['update'])
 
-    def trigger_instance(self, instance):
-        self.ctl(['start', instance.id_])
+    def trigger_bucket(self, bucket):
+        self.ctl(['start', bucket.id_])

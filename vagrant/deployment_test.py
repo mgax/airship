@@ -113,13 +113,13 @@ def tar_maker():
         tmp.rmtree()
 
 
-def get_instances():
+def get_buckets():
     json_list = run('{sarge-home}/bin/sarge list'.format(**env))
-    return json.loads(json_list)['instances']
+    return json.loads(json_list)['buckets']
 
 
 def get_port(proc_name):
-    for i in get_instances():
+    for i in get_buckets():
         if i['meta']['APPLICATION_NAME'] == proc_name:
             return i['port']
     else:
@@ -147,11 +147,11 @@ class DeploymentTest(unittest.TestCase):
         self.addCleanup(run, _shutdown)
         run("echo '{{}}' > {sarge-home}/etc/sarge.yaml".format(**env))
 
-    def add_instance_cleanup(self, proc_name):
+    def add_bucket_cleanup(self, proc_name):
         self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
                               .format(proc_name=proc_name, **env)))
 
-    def test_deploy_sarge_instance_answers_to_http(self):
+    def test_deploy_sarge_bucket_answers_to_http(self):
         msg = "hello sarge!"
 
         with tar_maker() as (tmp, tar_file):
@@ -160,7 +160,7 @@ class DeploymentTest(unittest.TestCase):
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            self.add_instance_cleanup('web')
+            self.add_bucket_cleanup('web')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
 
@@ -173,7 +173,7 @@ class DeploymentTest(unittest.TestCase):
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            self.add_instance_cleanup('web')
+            self.add_bucket_cleanup('web')
             port1 = get_port('web')
 
             deploy(tar_file, 'web')
@@ -192,10 +192,10 @@ class DeploymentTest(unittest.TestCase):
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            self.add_instance_cleanup('web')
+            self.add_bucket_cleanup('web')
 
             deploy(tar_file, 'otherweb')
-            self.add_instance_cleanup('otherweb')
+            self.add_bucket_cleanup('otherweb')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
@@ -214,10 +214,10 @@ class DeploymentTest(unittest.TestCase):
 
         with cd(env['sarge-home']):
             deploy(tar_file, 'web')
-            self.add_instance_cleanup('web')
+            self.add_bucket_cleanup('web')
 
             deploy(tar_file, 'otherweb')
-            self.add_instance_cleanup('otherweb')
+            self.add_bucket_cleanup('otherweb')
 
         self.assertEqual(get_from_port(4998).text, msg)
         self.assertEqual(get_from_port(4999).text, msg)

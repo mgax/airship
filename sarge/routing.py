@@ -56,18 +56,18 @@ class Haproxy(object):
     def supervisord_config(self):
         return SUPERVISORD_HAPROXY.format(sarge_home=self.sarge_home)
 
-    def configure_instance(self, instance):
-        proc_name = instance.meta.get('APPLICATION_NAME')
+    def configure_bucket(self, bucket):
+        proc_name = bucket.meta.get('APPLICATION_NAME')
         if proc_name not in self.port_map:
             return
-        port = instance.port
+        port = bucket.port
         port_bind = self.port_map[proc_name]
         haproxy_route_cfg = HAPROXY_ROUTE.format(**locals())
         (self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name).write_text(haproxy_route_cfg)
         self.update_haproxy()
 
-    def remove_instance(self, instance):
-        proc_name = instance.meta.get('APPLICATION_NAME')
+    def remove_bucket(self, bucket):
+        proc_name = bucket.meta.get('APPLICATION_NAME')
         if proc_name not in self.port_map:
             return
         bit_file = self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name

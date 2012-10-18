@@ -37,19 +37,19 @@ class ShellTest(SargeTestCase):
                              stderr=subprocess.STDOUT)
         return p.communicate(stdin)[0]
 
-    def test_instance_run_opens_shell_which_executes_commands(self):
-        instance_id = self.sargebin('new', '{}').strip()
-        directory = self.sargebin('run', instance_id, stdin="pwd\n").strip()
-        self.assertEqual(directory, (self.tmp / instance_id).realpath())
+    def test_bucket_run_opens_shell_which_executes_commands(self):
+        bucket_id = self.sargebin('new', '{}').strip()
+        directory = self.sargebin('run', bucket_id, stdin="pwd\n").strip()
+        self.assertEqual(directory, (self.tmp / bucket_id).realpath())
 
-    def test_instance_run_with_arguments_executes_them_in_shell(self):
-        instance_id = self.sargebin('new', '{}').strip()
-        directory = self.sargebin('run', instance_id, 'pwd').strip()
-        self.assertEqual(directory, (self.tmp / instance_id).realpath())
+    def test_bucket_run_with_arguments_executes_them_in_shell(self):
+        bucket_id = self.sargebin('new', '{}').strip()
+        directory = self.sargebin('run', bucket_id, 'pwd').strip()
+        self.assertEqual(directory, (self.tmp / bucket_id).realpath())
 
     def test_shell_loads_rc_file(self):
         from sarge.core import RUN_RC_NAME
-        instance_id = self.sargebin('new', '{}').strip()
-        (self.tmp / instance_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
-        out = self.sargebin('run', instance_id, "echo $MYVAR").strip()
+        bucket_id = self.sargebin('new', '{}').strip()
+        (self.tmp / bucket_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
+        out = self.sargebin('run', bucket_id, "echo $MYVAR").strip()
         self.assertEqual(out, "asdf")

@@ -53,73 +53,73 @@ class SupervisorConfigurationTest(SargeTestCase):
                   'unix://' + self.tmp / 'var' / 'run' / 'supervisor.sock')
         eq_config('include', 'files', self.tmp / 'etc/supervisor.d/*')
 
-    def instance_cfg(self, instance):
-        return self.tmp / 'etc' / 'supervisor.d' / instance.id_
+    def bucket_cfg(self, bucket):
+        return self.tmp / 'etc' / 'supervisor.d' / bucket.id_
 
     def test_generate_supervisord_cfg_with_run_command(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
 
-        eq_config = config_file_checker(self.instance_cfg(instance))
-        section = 'program:%s' % instance.id_
+        eq_config = config_file_checker(self.bucket_cfg(bucket))
+        section = 'program:%s' % bucket.id_
 
         eq_config(section, 'command',
-                  'bin/sarge run {0} ./_run_process'.format(instance.id_))
+                  'bin/sarge run {0} ./_run_process'.format(bucket.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
-                  self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
+                  self.tmp / 'var' / 'log' / (bucket.id_ + '.log'))
         eq_config(section, 'startretries', '1')
 
-    def test_instance_start_changes_autostart_to_true(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
+    def test_bucket_start_changes_autostart_to_true(self):
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
 
-        section = 'program:%s' % instance.id_
-        eq_config = config_file_checker(self.instance_cfg(instance))
+        section = 'program:%s' % bucket.id_
+        eq_config = config_file_checker(self.bucket_cfg(bucket))
         eq_config(section, 'autostart', 'true')
         eq_config(section, 'startsecs', '2')
 
-    def test_instance_stop_changes_autostart_to_false(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
-        instance.stop()
+    def test_bucket_stop_changes_autostart_to_false(self):
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
+        bucket.stop()
 
-        section = 'program:%s' % instance.id_
-        eq_config = config_file_checker(self.instance_cfg(instance))
+        section = 'program:%s' % bucket.id_
+        eq_config = config_file_checker(self.bucket_cfg(bucket))
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'autorestart', 'false')
         eq_config(section, 'startsecs', '0')
 
-    def test_instance_start_triggers_supervisord_update(self):
-        instance = self.create_sarge().new_instance()
+    def test_bucket_start_triggers_supervisord_update(self):
+        bucket = self.create_sarge().new_bucket()
         self.mock_supervisorctl.reset_mock()
-        instance.start()
+        bucket.start()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
-    def test_instance_stop_triggers_supervisord_update(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
+    def test_bucket_stop_triggers_supervisord_update(self):
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
         self.mock_supervisorctl.reset_mock()
-        instance.stop()
+        bucket.stop()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
-    def test_instance_destroy_triggers_supervisord_update(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
-        instance.stop()
+    def test_bucket_destroy_triggers_supervisord_update(self):
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
+        bucket.stop()
         self.mock_supervisorctl.reset_mock()
-        instance.destroy()
+        bucket.destroy()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
-    def test_destroy_instance_removes_its_supervisor_configuration(self):
-        instance = self.create_sarge().new_instance()
-        instance.start()
-        cfg_path = self.tmp / 'etc' / 'supervisor.d' / instance.id_
+    def test_destroy_bucket_removes_its_supervisor_configuration(self):
+        bucket = self.create_sarge().new_bucket()
+        bucket.start()
+        cfg_path = self.tmp / 'etc' / 'supervisor.d' / bucket.id_
         self.assertTrue(cfg_path.isfile())
-        instance.destroy()
+        bucket.destroy()
         self.assertFalse(cfg_path.isfile())
 
 

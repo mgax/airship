@@ -9,176 +9,176 @@ class ProgramsRecorder(object):
     def __init__(self):
         self.programs = []
 
-    def __call__(self, instance_id, programs):
+    def __call__(self, bucket_id, programs):
         self.programs.extend([{'name': name, 'command': p['command']}
                               for name, p in programs])
 
 
-class InstanceTest(SargeTestCase):
+class BucketTest(SargeTestCase):
 
-    def test_new_instance_creates_instance_folder(self):
+    def test_new_bucket_creates_bucket_folder(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance()
-        self.assertTrue(instance.folder.isdir())
+        bucket = sarge.new_bucket()
+        self.assertTrue(bucket.folder.isdir())
 
-    def test_get_instance_returns_instance_with_correct_folder(self):
+    def test_get_bucket_returns_bucket_with_correct_folder(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance()
-        same_instance = sarge.get_instance(instance.id_)
-        self.assertEqual(instance.folder, same_instance.folder)
+        bucket = sarge.new_bucket()
+        same_bucket = sarge.get_bucket(bucket.id_)
+        self.assertEqual(bucket.folder, same_bucket.folder)
 
-    def test_get_instance_with_app_name_returns_instance(self):
+    def test_get_bucket_with_app_name_returns_bucket(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance({'application_name': 'jack'})
-        same_instance = sarge.get_instance('jack')
-        self.assertEqual(instance.folder, same_instance.folder)
+        bucket = sarge.new_bucket({'application_name': 'jack'})
+        same_bucket = sarge.get_bucket('jack')
+        self.assertEqual(bucket.folder, same_bucket.folder)
 
-    def test_get_instance_with_invalid_name_raises_keyerror(self):
+    def test_get_bucket_with_invalid_name_raises_keyerror(self):
         with self.assertRaises(KeyError):
-            self.create_sarge().get_instance('nonesuch')
+            self.create_sarge().get_bucket('nonesuch')
 
-    def test_new_instance_configures_daemon_to_stopped(self):
+    def test_new_bucket_configures_daemon_to_stopped(self):
         sarge = self.create_sarge()
         sarge.daemons = Mock()
-        instance = sarge.new_instance()
-        self.assertEqual(sarge.daemons.configure_instance_stopped.mock_calls,
-                         [call(instance)])
+        bucket = sarge.new_bucket()
+        self.assertEqual(sarge.daemons.configure_bucket_stopped.mock_calls,
+                         [call(bucket)])
 
-    def test_start_instance_configures_daemon_to_running(self):
+    def test_start_bucket_configures_daemon_to_running(self):
         sarge = self.create_sarge()
         sarge.daemons = Mock()
-        instance = sarge.new_instance()
-        instance.start()
-        self.assertEqual(sarge.daemons.configure_instance_running.mock_calls,
-                         [call(instance)])
+        bucket = sarge.new_bucket()
+        bucket.start()
+        self.assertEqual(sarge.daemons.configure_bucket_running.mock_calls,
+                         [call(bucket)])
 
-    def test_trigger_instance_calls_daemon_start(self):
+    def test_trigger_bucket_calls_daemon_start(self):
         sarge = self.create_sarge()
         sarge.daemons = Mock()
-        instance = sarge.new_instance()
-        instance.trigger()
-        self.assertEqual(sarge.daemons.trigger_instance.mock_calls,
-                         [call(instance)])
+        bucket = sarge.new_bucket()
+        bucket.trigger()
+        self.assertEqual(sarge.daemons.trigger_bucket.mock_calls,
+                         [call(bucket)])
 
-    def test_service_is_configured_at_instance_creation(self):
+    def test_service_is_configured_at_bucket_creation(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance({'services': {
+        bucket = sarge.new_bucket({'services': {
             'something': {'foo': 'bar'},
         }})
 
-        services = instance.config['require-services']
+        services = bucket.config['require-services']
         self.assertEqual(services['something'], {'foo': 'bar'})
 
-    def test_two_instances_have_different_paths_and_ids(self):
+    def test_two_buckets_have_different_paths_and_ids(self):
         sarge = self.create_sarge()
-        instance_1 = sarge.new_instance()
-        instance_2 = sarge.new_instance()
-        self.assertNotEqual(instance_1.folder, instance_2.folder)
-        self.assertNotEqual(instance_1.id_, instance_2.id_)
+        bucket_1 = sarge.new_bucket()
+        bucket_2 = sarge.new_bucket()
+        self.assertNotEqual(bucket_1.folder, bucket_2.folder)
+        self.assertNotEqual(bucket_1.id_, bucket_2.id_)
 
-    def test_unlucky_instance_id_generator_gives_up(self):
+    def test_unlucky_bucket_id_generator_gives_up(self):
         sarge = self.create_sarge()
         with patch('sarge.core.random') as random:
             random.choice.return_value = 'z'
-            sarge.new_instance()
+            sarge.new_bucket()
             with self.assertRaises(RuntimeError):
-                sarge.new_instance()
+                sarge.new_bucket()
 
-    def test_instance_metadata_contains_creation_time(self):
+    def test_bucket_metadata_contains_creation_time(self):
         sarge = self.create_sarge()
         t0 = datetime.utcnow().isoformat()
-        instance = sarge.new_instance()
+        bucket = sarge.new_bucket()
         t1 = datetime.utcnow().isoformat()
-        creation = instance.meta['CREATION_TIME']
+        creation = bucket.meta['CREATION_TIME']
         self.assertTrue(t0 <= creation <= t1)
 
-    def test_instance_metadata_contains_app_name(self):
+    def test_bucket_metadata_contains_app_name(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance({'application_name': 'testy'})
-        self.assertEqual(instance.meta['APPLICATION_NAME'], 'testy')
+        bucket = sarge.new_bucket({'application_name': 'testy'})
+        self.assertEqual(bucket.meta['APPLICATION_NAME'], 'testy')
 
-    def test_instance_id_starts_with_app_name(self):
+    def test_bucket_id_starts_with_app_name(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance({'application_name': 'testy'})
-        self.assertTrue(instance.id_.startswith('testy-'))
+        bucket = sarge.new_bucket({'application_name': 'testy'})
+        self.assertTrue(bucket.id_.startswith('testy-'))
 
 
-class InstancePortAllocationTest(SargeTestCase):
+class BucketPortAllocationTest(SargeTestCase):
 
-    def test_new_instance_allocates_port(self):
+    def test_new_bucket_allocates_port(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance()
-        self.assertTrue(1024 <= instance.port < 65536)
+        bucket = sarge.new_bucket()
+        self.assertTrue(1024 <= bucket.port < 65536)
 
-    def test_new_instances_have_different_ports(self):
+    def test_new_buckets_have_different_ports(self):
         sarge = self.create_sarge()
-        instance1 = sarge.new_instance()
-        instance2 = sarge.new_instance()
-        self.assertNotEqual(instance1.port, instance2.port)
+        bucket1 = sarge.new_bucket()
+        bucket2 = sarge.new_bucket()
+        self.assertNotEqual(bucket1.port, bucket2.port)
 
-    def test_destroyed_instances_free_their_ports(self):
+    def test_destroyed_buckets_free_their_ports(self):
         sarge = self.create_sarge()
-        instance1 = sarge.new_instance()
-        instance2 = sarge.new_instance()
+        bucket1 = sarge.new_bucket()
+        bucket2 = sarge.new_bucket()
         allocated = lambda: set(sarge._open_ports_db()) - set(['next'])
-        self.assertItemsEqual(allocated(), [instance1.port, instance2.port])
-        instance1.destroy()
-        self.assertItemsEqual(allocated(), [instance2.port])
+        self.assertItemsEqual(allocated(), [bucket1.port, bucket2.port])
+        bucket1.destroy()
+        self.assertItemsEqual(allocated(), [bucket2.port])
 
-    def test_ports_allocated_sequentially_even_after_instance_destroyed(self):
+    def test_ports_allocated_sequentially_even_after_bucket_destroyed(self):
         sarge = self.create_sarge()
-        instance1 = sarge.new_instance()
-        instance2 = sarge.new_instance()
-        instance1.destroy()
-        instance3 = sarge.new_instance()
-        self.assertEqual(instance3.port, instance2.port + 1)
+        bucket1 = sarge.new_bucket()
+        bucket2 = sarge.new_bucket()
+        bucket1.destroy()
+        bucket3 = sarge.new_bucket()
+        self.assertEqual(bucket3.port, bucket2.port + 1)
 
     def test_port_allocation_wraps_when_it_reaches_interval_end(self):
         sarge = self.create_sarge({'port_range': [5000, 5009]})
-        i0_i1 = [sarge.new_instance() for c in range(2)]
-        i2_i7 = [sarge.new_instance() for c in range(6)]
-        for instance in i0_i1:
-            instance.destroy()
-        i8_i9 = [sarge.new_instance() for c in range(2)]
-        for instance in i8_i9:
-            instance.destroy()
-        i10_i13 = [sarge.new_instance() for c in range(4)]
+        i0_i1 = [sarge.new_bucket() for c in range(2)]
+        i2_i7 = [sarge.new_bucket() for c in range(6)]
+        for bucket in i0_i1:
+            bucket.destroy()
+        i8_i9 = [sarge.new_bucket() for c in range(2)]
+        for bucket in i8_i9:
+            bucket.destroy()
+        i10_i13 = [sarge.new_bucket() for c in range(4)]
         self.assertEqual([i.port for i in i10_i13],
                          [5000, 5001, 5008, 5009])
-        self.assertRaises(RuntimeError, sarge.new_instance)  # no more ports
+        self.assertRaises(RuntimeError, sarge.new_bucket)  # no more ports
 
 
-class InstanceListingTest(SargeTestCase):
+class BucketListingTest(SargeTestCase):
 
-    def test_listing_with_no_instances_returns_empty_list(self):
+    def test_listing_with_no_buckets_returns_empty_list(self):
         sarge = self.create_sarge()
-        report = sarge.list_instances()
-        self.assertEqual(report['instances'], [])
+        report = sarge.list_buckets()
+        self.assertEqual(report['buckets'], [])
 
-    def test_listing_with_two_instances_contains_their_ids(self):
+    def test_listing_with_two_buckets_contains_their_ids(self):
         sarge = self.create_sarge()
-        instance_1 = sarge.new_instance()
-        instance_2 = sarge.new_instance()
-        report = sarge.list_instances()
-        self.assertItemsEqual([i['id'] for i in report['instances']],
-                              [instance_1.id_, instance_2.id_])
+        bucket_1 = sarge.new_bucket()
+        bucket_2 = sarge.new_bucket()
+        report = sarge.list_buckets()
+        self.assertItemsEqual([i['id'] for i in report['buckets']],
+                              [bucket_1.id_, bucket_2.id_])
 
     def test_listing_contains_metadata(self):
         sarge = self.create_sarge()
-        sarge.new_instance({'application_name': 'testy'})
-        report = sarge.list_instances()
-        [instance_data] = report['instances']
-        self.assertEqual(instance_data['meta']['APPLICATION_NAME'], 'testy')
+        sarge.new_bucket({'application_name': 'testy'})
+        report = sarge.list_buckets()
+        [bucket_data] = report['buckets']
+        self.assertEqual(bucket_data['meta']['APPLICATION_NAME'], 'testy')
 
     def test_listing_contains_port(self):
         sarge = self.create_sarge()
-        instance = sarge.new_instance()
-        report = sarge.list_instances()
-        [instance_data] = report['instances']
-        self.assertEqual(instance_data['port'], instance.port)
+        bucket = sarge.new_bucket()
+        report = sarge.list_buckets()
+        [bucket_data] = report['buckets']
+        self.assertEqual(bucket_data['port'], bucket.port)
 
 
-class InstanceRunTest(SargeTestCase):
+class BucketRunTest(SargeTestCase):
 
     def setUp(self):
         self.os = self.patch('sarge.core.os')
@@ -189,12 +189,12 @@ class InstanceRunTest(SargeTestCase):
         (self.tmp / 'etc' / 'app').mkdir_p()
         with (self.tmp / 'etc' / 'app' / 'config.json').open('wb') as f:
             json.dump({'SOME_CONFIG_VALUE': "hello there!"}, f)
-        self.create_sarge().new_instance().run(None)
+        self.create_sarge().new_bucket().run(None)
         environ = self.get_environ()
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 
     def test_run_inserts_port_in_environ(self):
-        instance = self.create_sarge().new_instance()
-        instance.run(None)
+        bucket = self.create_sarge().new_bucket()
+        bucket.run(None)
         environ = self.get_environ()
-        self.assertEqual(environ['PORT'], str(instance.port))
+        self.assertEqual(environ['PORT'], str(bucket.port))

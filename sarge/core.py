@@ -32,13 +32,13 @@ def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
     return ''.join(random.choice(vocabulary) for c in range(size))
 
 
-class Instance(object):
+class Bucket(object):
 
     def __init__(self, id_, sarge, config):
         self.id_ = id_
         self.sarge = sarge
         self.config = config
-        self.folder = self.sarge._instance_folder(id_)
+        self.folder = self.sarge._bucket_folder(id_)
         var = self.sarge.home_path / 'var'
         self.run_folder = var / 'run' / id_
         self.log_path = var / 'log' / (self.id_ + '.log')
@@ -52,31 +52,31 @@ class Instance(object):
         return self.config['port']
 
     def _new(self):
-        self.sarge.daemons.configure_instance_stopped(self)
+        self.sarge.daemons.configure_bucket_stopped(self)
 
     def configure(self):
         self.run_folder.makedirs_p()
 
     def start(self):
-        log.info("Activating instance %r", self.id_)
+        log.info("Activating bucket %r", self.id_)
         self.configure()
-        self.sarge.daemons.configure_instance_running(self)
-        self.sarge.haproxy.configure_instance(self)
+        self.sarge.daemons.configure_bucket_running(self)
+        self.sarge.haproxy.configure_bucket(self)
 
     def stop(self):
-        self.sarge.haproxy.remove_instance(self)
-        self.sarge.daemons.configure_instance_stopped(self)
+        self.sarge.haproxy.remove_bucket(self)
+        self.sarge.daemons.configure_bucket_stopped(self)
 
     def trigger(self):
-        self.sarge.daemons.trigger_instance(self)
+        self.sarge.daemons.trigger_bucket(self)
 
     def destroy(self):
-        self.sarge.daemons.remove_instance(self.id_)
+        self.sarge.daemons.remove_bucket(self.id_)
         if self.run_folder.isdir():
             self.run_folder.rmtree()
         if self.folder.isdir():
             self.folder.rmtree()
-        self.sarge._instance_config_path(self.id_).unlink_p()
+        self.sarge._bucket_config_path(self.id_).unlink_p()
         self.sarge._free_port(self)
 
     def _get_config(self):
@@ -121,8 +121,8 @@ class Sarge(object):
             folder.makedirs()
         return folder
 
-    def _instance_config_path(self, instance_id):
-        return self.home_path / DEPLOYMENT_CFG_DIR / (instance_id + YAML_EXT)
+    def _bucket_config_path(self, bucket_id):
+        return self.home_path / DEPLOYMENT_CFG_DIR / (bucket_id + YAML_EXT)
 
     def initialize(self):
         self.generate_supervisord_configuration()
@@ -135,46 +135,46 @@ class Sarge(object):
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
 
-    def _get_instance_by_id(self, instance_id):
-        config_path = self._instance_config_path(instance_id)
+    def _get_bucket_by_id(self, bucket_id):
+        config_path = self._bucket_config_path(bucket_id)
         if not config_path.isfile():
             raise KeyError
 
-        return Instance(instance_id, self, yaml.load(config_path.bytes()))
+        return Bucket(bucket_id, self, yaml.load(config_path.bytes()))
 
-    def get_instance(self, name):
+    def get_bucket(self, name):
         try:
-            return self._get_instance_by_id(name)
+            return self._get_bucket_by_id(name)
 
         except KeyError:
-            for instance_id in self._iter_instance_ids():
-                instance = self._get_instance_by_id(instance_id)
-                if name == instance.meta.get('APPLICATION_NAME'):
-                    return instance
+            for bucket_id in self._iter_bucket_ids():
+                bucket = self._get_bucket_by_id(bucket_id)
+                if name == bucket.meta.get('APPLICATION_NAME'):
+                    return bucket
 
             else:
                 raise KeyError
 
-    def _instance_folder(self, id_):
+    def _bucket_folder(self, id_):
         return self.home_path / id_
 
-    def _generate_instance_id(self, id_prefix):
+    def _generate_bucket_id(self, id_prefix):
         for c in range(10):
             id_ = id_prefix + random_id()
             try:
-                self._instance_folder(id_).mkdir()
+                self._bucket_folder(id_).mkdir()
             except OSError:
                 continue
             else:
                 return id_
         else:
-            raise RuntimeError("Failed to generate unique instance ID")
+            raise RuntimeError("Failed to generate unique bucket ID")
 
     def _open_ports_db(self):
         import kv
         return kv.KV(self.home_path / 'etc' / 'ports.db')
 
-    def _allocate_port(self, instance_id):
+    def _allocate_port(self, bucket_id):
         from itertools import chain
         port_range = self.config.get('port_range', [5000, 5099])
         start_port = port_range[0]
@@ -187,19 +187,19 @@ class Sarge(object):
                           xrange(start_port, next_port-1))
             for port in queue:
                 if port not in ports_db:
-                    ports_db[port] = instance_id
+                    ports_db[port] = bucket_id
                     ports_db['next'] = port + 1
                     return port
             else:
                 raise RuntimeError("No ports free to allocate")
 
-    def _free_port(self, instance):
+    def _free_port(self, bucket):
         ports_db = self._open_ports_db()
-        port = ports_db.pop(instance.port, None)
+        port = ports_db.pop(bucket.port, None)
         if port is not None:
-            assert port == instance.id_
+            assert port == bucket.id_
 
-    def new_instance(self, config={}):
+    def new_bucket(self, config={}):
         (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = config.get('application_name')
@@ -208,19 +208,19 @@ class Sarge(object):
             id_prefix = app_name + '-'
         else:
             id_prefix = ''
-        instance_id = self._generate_instance_id(id_prefix)
-        with open(self._instance_config_path(instance_id), 'wb') as f:
+        bucket_id = self._generate_bucket_id(id_prefix)
+        with open(self._bucket_config_path(bucket_id), 'wb') as f:
             json.dump({
                 'require-services': config.get('services', {}),
                 'urlmap': config.get('urlmap', []),
                 'meta': meta,
-                'port': self._allocate_port(instance_id),
+                'port': self._allocate_port(bucket_id),
             }, f)
-        instance = self._get_instance_by_id(instance_id)
-        instance._new()
-        return instance
+        bucket = self._get_bucket_by_id(bucket_id)
+        bucket._new()
+        return bucket
 
-    def _iter_instance_ids(self):
+    def _iter_bucket_ids(self):
         deployment_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
         if not deployment_cfg_dir.exists():
             return
@@ -228,16 +228,16 @@ class Sarge(object):
             assert cfg_name.endswith(YAML_EXT)
             yield cfg_name[:-len(YAML_EXT)]
 
-    def list_instances(self):
-        instances = []
-        for instance_id in self._iter_instance_ids():
-            instance = self._get_instance_by_id(instance_id)
-            instances.append({
-                'id': instance.id_,
-                'meta': instance.meta,
-                'port': instance.port,
+    def list_buckets(self):
+        buckets = []
+        for bucket_id in self._iter_bucket_ids():
+            bucket = self._get_bucket_by_id(bucket_id)
+            buckets.append({
+                'id': bucket.id_,
+                'meta': bucket.meta,
+                'port': bucket.port,
             })
-        return {'instances': instances}
+        return {'buckets': buckets}
 
 
 SARGE_SCRIPT = """#!/bin/bash
@@ -285,35 +285,35 @@ def init_cmd(sarge, args):
 
 
 def new_cmd(sarge, args):
-    print sarge.new_instance(json.loads(args.config)).id_
+    print sarge.new_bucket(json.loads(args.config)).id_
 
 
 def list_cmd(sarge, args):
-    print json.dumps(sarge.list_instances(), indent=2)
+    print json.dumps(sarge.list_buckets(), indent=2)
 
 
 def configure_cmd(sarge, args):
-    sarge.get_instance(args.id).configure()
+    sarge.get_bucket(args.id).configure()
 
 
 def start_cmd(sarge, args):
-    sarge.get_instance(args.id).start()
+    sarge.get_bucket(args.id).start()
 
 
 def stop_cmd(sarge, args):
-    sarge.get_instance(args.id).stop()
+    sarge.get_bucket(args.id).stop()
 
 
 def trigger_cmd(sarge, args):
-    sarge.get_instance(args.id).trigger()
+    sarge.get_bucket(args.id).trigger()
 
 
 def destroy_cmd(sarge, args):
-    sarge.get_instance(args.id).destroy()
+    sarge.get_bucket(args.id).destroy()
 
 
 def run_cmd(sarge, args):
-    sarge.get_instance(args.id).run(args.command)
+    sarge.get_bucket(args.id).run(args.command)
 
 
 def deploy_cmd(sarge, args):

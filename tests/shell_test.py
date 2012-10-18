@@ -11,59 +11,59 @@ class ShellTest(SargeTestCase):
     def setUp(self):
         (self.tmp / 'etc' / 'sarge.yaml').write_text('{}')
 
-    @patch('sarge.core.Sarge.new_instance')
-    def test_new_instance_calls_api_and_returns_path(self, new_instance):
-        new_instance.return_value = Mock(id_="instance-id")
+    @patch('sarge.core.Sarge.new_bucket')
+    def test_new_bucket_calls_api_and_returns_path(self, new_bucket):
+        new_bucket.return_value = Mock(id_="bucket-id")
         with patch('sys.stdout', StringIO()) as stdout:
             config = json.dumps({'hello': "world"})
             imp('sarge.core').main([str(self.tmp), 'new', config])
-        self.assertEqual(new_instance.mock_calls, [call({'hello': "world"})])
-        self.assertEqual(stdout.getvalue().strip(), "instance-id")
+        self.assertEqual(new_bucket.mock_calls, [call({'hello': "world"})])
+        self.assertEqual(stdout.getvalue().strip(), "bucket-id")
 
-    @patch('sarge.core.Instance.configure')
-    def test_configure_instance_calls_api_method(self, configure):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'configure', instance.id_])
+    @patch('sarge.core.Bucket.configure')
+    def test_configure_bucket_calls_api_method(self, configure):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'configure', bucket.id_])
         self.assertEqual(configure.mock_calls, [call()])
 
-    @patch('sarge.core.Instance.start')
-    def test_start_instance_calls_api_method(self, start):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'start', instance.id_])
+    @patch('sarge.core.Bucket.start')
+    def test_start_bucket_calls_api_method(self, start):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'start', bucket.id_])
         self.assertEqual(start.mock_calls, [call()])
 
-    @patch('sarge.core.Instance.stop')
-    def test_stop_instance_calls_api_method(self, stop):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'stop', instance.id_])
+    @patch('sarge.core.Bucket.stop')
+    def test_stop_bucket_calls_api_method(self, stop):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'stop', bucket.id_])
         self.assertEqual(stop.mock_calls, [call()])
 
-    @patch('sarge.core.Instance.trigger')
-    def test_trigger_instance_calls_api_method(self, trigger):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'trigger', instance.id_])
+    @patch('sarge.core.Bucket.trigger')
+    def test_trigger_bucket_calls_api_method(self, trigger):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'trigger', bucket.id_])
         self.assertEqual(trigger.mock_calls, [call()])
 
-    @patch('sarge.core.Instance.destroy')
-    def test_destroy_instance_calls_api_method(self, destroy):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'destroy', instance.id_])
+    @patch('sarge.core.Bucket.destroy')
+    def test_destroy_bucket_calls_api_method(self, destroy):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'destroy', bucket.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
-    @patch('sarge.core.Instance.run')
-    def test_run_instance_calls_api_method_with_args(self, run):
-        instance = self.create_sarge().new_instance()
-        imp('sarge.core').main([str(self.tmp), 'run', instance.id_, 'a'])
+    @patch('sarge.core.Bucket.run')
+    def test_run_bucket_calls_api_method_with_args(self, run):
+        bucket = self.create_sarge().new_bucket()
+        imp('sarge.core').main([str(self.tmp), 'run', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 
-    @patch('sarge.core.Sarge.list_instances')
-    def test_destroy_instance_calls_api_method(self, list_instances):
+    @patch('sarge.core.Sarge.list_buckets')
+    def test_destroy_bucket_calls_api_method(self, list_buckets):
         data = {'some': ['json', 'data']}
-        list_instances.return_value = data
+        list_buckets.return_value = data
         with patch('sys.stdout', StringIO()) as stdout:
             config = json.dumps({'hello': "world"})
             imp('sarge.core').main([str(self.tmp), 'list'])
-        self.assertEqual(list_instances.mock_calls, [call()])
+        self.assertEqual(list_buckets.mock_calls, [call()])
         self.assertEqual(json.loads(stdout.getvalue()), data)
 
     def test_init_creates_configuration_and_bin_scripts(self):
