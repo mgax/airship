@@ -221,3 +221,30 @@ class DeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_from_port(4998).text, msg)
         self.assertEqual(get_from_port(4999).text, msg)
+
+    def test_requirements_installed_in_virtualenv(self):
+        sarge_yaml = {'wheel_index_dir': env['index-dir']}
+        put(StringIO(json.dumps(sarge_yaml)),
+            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(
+                'import os\n'
+                'from wsgiref.simple_server import make_server\n'
+                'from path import path\n'
+                'msg = path.__doc__.split(".")[0].strip()\n'
+                'def theapp(environ, start_response):\n'
+                '    start_response("200 OK", [])\n'
+                '    return [msg]\n'
+                'port = int(os.environ["PORT"])\n'
+                'make_server("0", port, theapp).serve_forever()\n'
+            )
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
+            (tmp / 'requirements.txt').write_text("path.py==2.4\n")
+
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
+
+        self.assertEqual(get_from_port(get_port('web')).text,
+                         "Represents a filesystem path")

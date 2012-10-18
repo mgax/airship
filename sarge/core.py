@@ -92,6 +92,9 @@ class Bucket(object):
         environ = dict(os.environ)
         environ.update(self._get_config())
         environ['PORT'] = str(self.port)
+        venv = self.folder / '_virtualenv'
+        if venv.isdir():
+            environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
         if command:
             environ['BASH_ENV'] = RUN_RC_NAME
