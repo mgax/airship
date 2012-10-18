@@ -8,12 +8,7 @@ def get_procs(instance):
 
 
 def deploy(sarge, tarfile, procname):
-    for instance_info in sarge.list_instances()['instances']:
-        if instance_info['meta']['APPLICATION_NAME'] == procname:
-            sarge.get_instance(instance_info['id']).destroy()
-
     instance = sarge.new_instance({'application_name': procname})
-    instance_id = instance.id_
 
     subprocess.check_call(['tar', 'xf', tarfile, '-C', instance.folder])
     procs = get_procs(instance)
@@ -21,5 +16,11 @@ def deploy(sarge, tarfile, procname):
     server_script = instance.folder / 'server'
     server_script.write_text('exec %s\n' % procs[procname])
     server_script.chmod(0755)
+
+    for instance_info in sarge.list_instances()['instances']:
+        if instance_info['meta']['APPLICATION_NAME'] == procname:
+            if instance_info['id'] == instance.id_:
+                continue
+            sarge.get_instance(instance_info['id']).destroy()
 
     instance.start()
