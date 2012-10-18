@@ -33,7 +33,7 @@ env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
 env['index-url'] = 'file://' + env['index-dir']
 
 
-def update_virtualenv():
+def update_index_dir():
     run("mkdir -p {index-dir}".format(**env))
     with cd(env['index-dir']):
         for name in PACKAGE_FILENAMES:
@@ -65,9 +65,8 @@ def install_sarge():
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    update_virtualenv()
-    if os.environ.get("SARGE_TEST_REINSTALL") or not exists(env['sarge-home']):
-        sudo("rm -rf {sarge-home}".format(**env))
+    update_index_dir()
+    if not exists(env['sarge-home']):
         install_sarge()
 
 
