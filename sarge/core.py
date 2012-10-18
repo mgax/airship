@@ -175,7 +175,7 @@ class Sarge(object):
 
     def _open_ports_db(self):
         import kv
-        return kv.KV(self.home_path / 'etc' / 'ports.db')
+        return kv.KV(self.home_path / 'etc' / 'buckets.db', table='port')
 
     def _allocate_port(self, bucket_id):
         from itertools import chain
