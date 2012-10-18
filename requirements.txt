@@ -3,4 +3,4 @@ supervisor==3.0a12
 blinker==1.2
 path.py==2.2.2
 PyYAML==3.10
-kv==0.1
+kv==0.2

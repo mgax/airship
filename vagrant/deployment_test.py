@@ -1,146 +1,249 @@
+import os
 import unittest
+import subprocess
+import tempfile
 from StringIO import StringIO
+from contextlib import contextmanager
 import json
-import urllib
-from fabric.api import env, run, sudo, put, cd
+from fabric.api import env, run, sudo, cd, put
 from fabric.contrib.files import exists
 from path import path
+import requests
 
 
-env['sarge-home'] = path('/var/local/sarge')
-env['sarge-venv'] = path('/var/local/sarge-sandbox')
+WEB_INDEX_URL = "http://grep.ro/quickpub/pypkg/"
+PACKAGE_FILENAMES = [
+    "virtualenv.py",
+    "distribute-0.6.28.tar.gz",
+    "pip-1.2.1.post1.zip",
+    "wheel-0.9.7.tar.gz",
+    "markerlib-0.5.2.tar.gz",
+    "PyYAML-3.10-cp27-none-linux_x86_64.whl",
+    "blinker-1.2-py27-none-any.whl",
+    "meld3-0.6.9-py27-none-any.whl",
+    "path.py-2.4-py27-none-any.whl",
+    "supervisor-3.0b1-py27-none-any.whl",
+    "kv-0.2.zip",
+]
+VAGRANT_HOME = path('/home/vagrant')
+
+env['sarge-home'] = path('/var/local/sarge-test')
+env['sarge-src'] = '/sarge-src'
+env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
+env['index-url'] = 'file://' + env['index-dir']
 
 
-def provision():
-    sudo("virtualenv '%(sarge-venv)s' --no-site-packages" % env)
-    sudo("'%(sarge-venv)s'/bin/pip install -e /sarge-src" % env)
-    sudo("'%(sarge-venv)s'/bin/pip install flup" % env)
+def update_index_dir():
+    run("mkdir -p {index-dir}".format(**env))
+    with cd(env['index-dir']):
+        for name in PACKAGE_FILENAMES:
+            if not exists(name):
+                run("curl -O {url}".format(url=WEB_INDEX_URL + name))
+
+SARGE_REPO = path(__file__).parent.parent
+
+
+def install_sarge():
+    sudo("mkdir {sarge-home}".format(**env))
+    with cd(env['sarge-home']):
+        sudo("chown vagrant: .")
+        run("mkdir opt")
+        run("python {index-dir}/virtualenv.py --distribute "
+            "--extra-search-dir={index-dir} --never-download "
+            "opt/sarge-venv"
+            .format(**env))
+        run("opt/sarge-venv/bin/pip install wheel "
+            "--no-index --find-links={index-url} "
+            .format(**env))
+        run("opt/sarge-venv/bin/pip install "
+            "--use-wheel --no-index --find-links={index-url} "
+            "-e {sarge-src}"
+            .format(**env))
+        run("opt/sarge-venv/bin/sarge . init")
 
 
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
-    if not exists(env['sarge-venv']):
-        provision()
-
-    sudo("rm -rf '%(sarge-home)s'" % env)
-    self._nginx_symlink = '/etc/nginx/sites-enabled/testy'
+    update_index_dir()
+    if not exists(env['sarge-home']):
+        install_sarge()
 
 
 def tearDownModule(self):
-    sudo("rm -f %s" % self._nginx_symlink)
     from fabric.network import disconnect_all
     disconnect_all()
 
 
-def sarge_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/sarge '%(sarge-home)s' " % env)
-    return run(base + cmd)
+SIMPLE_APP = """\
+import os
+from wsgiref.simple_server import make_server
+def theapp(environ, start_response):
+    start_response("200 OK", [])
+    return ["{msg}"]
+make_server("0", int(os.environ['PORT']), theapp).serve_forever()
+"""
 
 
-def supervisorctl_cmd(cmd):
-    base = ("'%(sarge-venv)s'/bin/supervisorctl "
-            "-c '%(sarge-home)s'/etc/supervisor.conf " % env)
-    return run(base + cmd)
+def retry(exceptions, func, *args, **kwargs):
+    from time import time, sleep
+    t0 = time()
+    while time() - t0 < 5:
+        try:
+            return func(*args, **kwargs)
+        except Exception, e:
+            if not isinstance(e, tuple(exceptions)):
+                raise
+        sleep(.1)
+    else:
+        raise RuntimeError("Function keeps failing after trying for 5 seconds")
 
 
-def remote_listdir(name):
-    cmd = ("python -c 'import json,os; "
-           "print json.dumps(os.listdir(\"%s\"))'" % name)
-    return json.loads(run(cmd))
-
-
-def put_json(data, remote_path, **kwargs):
-    return put(StringIO(json.dumps(data)), str(remote_path), **kwargs)
-
-
-def get_url(url):
-    f = urllib.urlopen(url)
+@contextmanager
+def tar_maker():
+    tmp = path(tempfile.mkdtemp())
+    tar_file = StringIO()
     try:
-        return f.read()
+        yield tmp, tar_file
+        tar_data = subprocess.check_output(['tar cf - *'], shell=True, cwd=tmp)
+        tar_file.write(tar_data)
+        tar_file.seek(0)
     finally:
-        f.close()
+        tmp.rmtree()
 
 
-def quote_json(config):
-    data = json.dumps(config)
-    for ch in ['\\', '"', '$', '`']:
-        data = data.replace(ch, '\\\\' + ch)
-    return '"' + data + '"'
+def get_buckets():
+    json_list = run('{sarge-home}/bin/sarge list'.format(**env))
+    return json.loads(json_list)['buckets']
 
 
-def link_in_nginx(id_):
-    urlmap_path = env['sarge-home'] / 'etc' / 'nginx' / (id_ + '-urlmap')
-    nginx_cfg = "server { listen 8013; include %s; }\n" % urlmap_path
-    put(StringIO(nginx_cfg), _nginx_symlink, use_sudo=True)
+def get_port(proc_name):
+    for i in get_buckets():
+        if i['meta']['APPLICATION_NAME'] == proc_name:
+            return i['port']
+    else:
+        raise RuntimeError("No process found with name %r" % proc_name)
 
 
-class VagrantDeploymentTest(unittest.TestCase):
+def get_from_port(port):
+    url = 'http://192.168.13.13:{port}/'.format(port=port)
+    return retry([requests.ConnectionError], requests.get, url)
+
+
+def deploy(tar_file, proc_name):
+    with cd(env['sarge-home']):
+        put(tar_file, '_app.tar')
+        run('bin/sarge deploy _app.tar {proc_name}'
+            .format(proc_name=proc_name))
+        run('rm _app.tar')
+
+
+class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        sudo("mkdir '%(sarge-home)s'" % env)
-        sudo("chown vagrant: '%(sarge-home)s'" % env)
-        run("mkdir '%(sarge-home)s'/etc" % env)
-        put_json({'plugins': ['sarge:NginxPlugin', 'sarge:ListenPlugin']},
-                 env['sarge-home'] / 'etc' / 'sarge.yaml',
-                 use_sudo=True)
-        sarge_cmd("init")
-        run("'%(sarge-venv)s'/bin/supervisord "
-            "-c '%(sarge-home)s'/etc/supervisor.conf" % env)
+        run("{sarge-home}/bin/supervisord".format(**env), pty=False)
+        _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
+        self.addCleanup(run, _shutdown)
+        run("echo '{{}}' > {sarge-home}/etc/sarge.yaml".format(**env))
 
-    def tearDown(self):
-        supervisorctl_cmd("shutdown")
-        sudo("rm -rf '%(sarge-home)s'" % env)
+    def add_bucket_cleanup(self, proc_name):
+        self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
+                              .format(proc_name=proc_name, **env)))
 
-    def test_ping(self):
-        assert run('pwd') == '/home/vagrant'
+    def test_deploy_sarge_bucket_answers_to_http(self):
+        msg = "hello sarge!"
 
-    def test_deploy_static_site(self):
-        cfg = {'urlmap': [{'type': 'static', 'url': '/', 'path': ''}]}
-        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        with cd(str(env['sarge-home'] / instance_id)):
-            run("echo 'hello static!' > hello.html")
-            run("mkdir sub")
-            run("echo 'submarine' > sub/marine.txt")
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
 
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
+        self.assertEqual(get_from_port(get_port('web')).text, msg)
 
-        self.assertEqual(get_url('http://192.168.13.13:8013/hello.html'),
-                         "hello static!\n")
+    def test_deploy_new_version_answers_on_different_port(self):
+        msg = "hello sarge!"
 
-        self.assertEqual(get_url('http://192.168.13.13:8013/sub/marine.txt'),
-                         "submarine\n")
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-    def test_start_server_using_default_executable_name(self):
-        cfg = {'urlmap': [{'type': 'proxy',
-                           'url': '/',
-                           'upstream_url': 'http://localhost:43423'}]}
-        instance_id = sarge_cmd("new " + quote_json(cfg)).strip()
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
+            port1 = get_port('web')
 
-        app_py = ('#!/usr/bin/env python\n'
-                  'from wsgiref.simple_server import make_server\n'
-                  'def theapp(environ, start_response):\n'
-                  '    start_response("200 OK", [])\n'
-                  '    return ["hello sarge!\\n"]\n'
-                  'make_server("0", 43423, theapp).serve_forever()\n')
-        put(StringIO(app_py),
-            str(env['sarge-home'] / instance_id / 'server'),
-            mode=0755)
-        sarge_cmd("start '%s'" % instance_id)
-        link_in_nginx(instance_id)
-        sudo("service nginx reload")
+            deploy(tar_file, 'web')
+            port2 = get_port('web')
 
-        self.assertEqual(get_url('http://192.168.13.13:8013/'),
-                         "hello sarge!\n")
+        self.assertNotEqual(port1, port2)
+        self.assertEqual(get_from_port(port2).text, msg)
 
-    def test_list_instances_contains_enough_info_to_clean_up(self):
-        sarge_cmd("new " + quote_json({'application_name': 'testy'}))
-        report_1 = json.loads(sarge_cmd("list"))
-        self.assertEqual(len(report_1['instances']), 1)
-        instance_id = report_1['instances'][0]['id']
-        sarge_cmd("destroy " + instance_id)
-        report_2 = json.loads(sarge_cmd("list"))
-        self.assertEqual(len(report_2['instances']), 0)
+    def test_deploy_non_web_process_does_not_clobber_web_process(self):
+        msg = "hello sarge!"
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n"
+                                          "otherweb: python theapp.py\n")
+
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
+
+            deploy(tar_file, 'otherweb')
+            self.add_bucket_cleanup('otherweb')
+
+        self.assertEqual(get_from_port(get_port('web')).text, msg)
+        self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
+
+    def test_apps_answer_on_configured_haproxy_ports(self):
+        msg = "hello sarge!"
+
+        sarge_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
+        put(StringIO(json.dumps(sarge_yaml)),
+            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'Procfile').write_text("web: python theapp.py\n"
+                                          "otherweb: python theapp.py\n")
+
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
+
+            deploy(tar_file, 'otherweb')
+            self.add_bucket_cleanup('otherweb')
+
+        self.assertEqual(get_from_port(4998).text, msg)
+        self.assertEqual(get_from_port(4999).text, msg)
+
+    def test_requirements_installed_in_virtualenv(self):
+        sarge_yaml = {'wheel_index_dir': env['index-dir']}
+        put(StringIO(json.dumps(sarge_yaml)),
+            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
+
+        with tar_maker() as (tmp, tar_file):
+            (tmp / 'theapp.py').write_text(
+                'import os\n'
+                'from wsgiref.simple_server import make_server\n'
+                'from path import path\n'
+                'msg = path.__doc__.split(".")[0].strip()\n'
+                'def theapp(environ, start_response):\n'
+                '    start_response("200 OK", [])\n'
+                '    return [msg]\n'
+                'port = int(os.environ["PORT"])\n'
+                'make_server("0", port, theapp).serve_forever()\n'
+            )
+            (tmp / 'Procfile').write_text("web: python theapp.py\n")
+            (tmp / 'requirements.txt').write_text("path.py==2.4\n")
+
+        with cd(env['sarge-home']):
+            deploy(tar_file, 'web')
+            self.add_bucket_cleanup('web')
+
+        self.assertEqual(get_from_port(get_port('web')).text,
+                         "Represents a filesystem path")

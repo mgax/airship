@@ -28,7 +28,7 @@ class HandyTestCase(unittest.TestCase):
 
 class SargeTestCase(HandyTestCase):
 
-    def sarge(self, config=None):
+    def create_sarge(self, config=None):
         if config is None:
             config = {}
         cfg_path = self.tmp / 'etc' / 'sarge.yaml'
