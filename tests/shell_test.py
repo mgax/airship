@@ -72,11 +72,10 @@ class ShellTest(SargeTestCase):
 
         core = imp('sarge.core')
         core.main([str(other_tmp), 'init'])
-        expected = [core.DEPLOYMENT_CFG_DIR, 'bin', 'etc', 'var']
+        expected = ['bin', 'etc', 'var']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertItemsEqual([f.name for f in (other_tmp / 'bin').listdir()],
                               ['sarge', 'supervisord', 'supervisorctl'])
-        self.assertTrue((other_tmp / core.DEPLOYMENT_CFG_DIR).isdir())
         sarge_yaml_path = other_tmp / 'etc' / 'sarge.yaml'
         self.assertTrue(sarge_yaml_path.isfile())
         self.assertIsNotNone(json.loads(sarge_yaml_path.text()))

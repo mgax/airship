@@ -8,6 +8,7 @@ from datetime import datetime
 from importlib import import_module
 from path import path
 import yaml
+from kv import KV
 from .daemons import Supervisor
 from .routing import Haproxy
 from . import deployer
@@ -16,7 +17,6 @@ from . import deployer
 log = logging.getLogger(__name__)
 
 
-DEPLOYMENT_CFG_DIR = 'deployments'
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
 RUN_RC_NAME = '.runrc'
@@ -76,7 +76,7 @@ class Bucket(object):
             self.run_folder.rmtree()
         if self.folder.isdir():
             self.folder.rmtree()
-        self.sarge._bucket_config_path(self.id_).unlink_p()
+        self.sarge.buckets_db.pop(self.id_, None)
         self.sarge._free_port(self)
 
     def _get_config(self):
@@ -112,7 +112,10 @@ class Sarge(object):
     def __init__(self, config):
         self.home_path = config['home']
         self.config = config
-        self.daemons = Supervisor(self.home_path / 'etc')
+        etc = self.home_path / 'etc'
+        etc.mkdir_p()
+        self.buckets_db = KV(etc / 'buckets.db', table='bucket')
+        self.daemons = Supervisor(etc)
         self.haproxy = Haproxy(self.home_path, config.get('port_map', {}))
         from routing import configuration_update
         configuration_update.connect(self._haproxy_update, self.haproxy)
@@ -123,9 +126,6 @@ class Sarge(object):
         if not folder.isdir():
             folder.makedirs()
         return folder
-
-    def _bucket_config_path(self, bucket_id):
-        return self.home_path / DEPLOYMENT_CFG_DIR / (bucket_id + YAML_EXT)
 
     def initialize(self):
         self.generate_supervisord_configuration()
@@ -139,18 +139,15 @@ class Sarge(object):
         self.daemons.configure(self.home_path)
 
     def _get_bucket_by_id(self, bucket_id):
-        config_path = self._bucket_config_path(bucket_id)
-        if not config_path.isfile():
-            raise KeyError
-
-        return Bucket(bucket_id, self, yaml.load(config_path.bytes()))
+        config = self.buckets_db[bucket_id]
+        return Bucket(bucket_id, self, config)
 
     def get_bucket(self, name):
         try:
             return self._get_bucket_by_id(name)
 
         except KeyError:
-            for bucket_id in self._iter_bucket_ids():
+            for bucket_id in self.buckets_db:
                 bucket = self._get_bucket_by_id(bucket_id)
                 if name == bucket.meta.get('APPLICATION_NAME'):
                     return bucket
@@ -174,8 +171,7 @@ class Sarge(object):
             raise RuntimeError("Failed to generate unique bucket ID")
 
     def _open_ports_db(self):
-        import kv
-        return kv.KV(self.home_path / 'etc' / 'buckets.db', table='port')
+        return KV(self.home_path / 'etc' / 'buckets.db', table='port')
 
     def _allocate_port(self, bucket_id):
         from itertools import chain
@@ -203,7 +199,6 @@ class Sarge(object):
             assert port == bucket.id_
 
     def new_bucket(self, config={}):
-        (self.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = config.get('application_name')
         if app_name:
@@ -212,28 +207,19 @@ class Sarge(object):
         else:
             id_prefix = ''
         bucket_id = self._generate_bucket_id(id_prefix)
-        with open(self._bucket_config_path(bucket_id), 'wb') as f:
-            json.dump({
-                'require-services': config.get('services', {}),
-                'urlmap': config.get('urlmap', []),
-                'meta': meta,
-                'port': self._allocate_port(bucket_id),
-            }, f)
+        self.buckets_db[bucket_id] = {
+            'require-services': config.get('services', {}),
+            'urlmap': config.get('urlmap', []),
+            'meta': meta,
+            'port': self._allocate_port(bucket_id),
+        }
         bucket = self._get_bucket_by_id(bucket_id)
         bucket._new()
         return bucket
 
-    def _iter_bucket_ids(self):
-        deployment_cfg_dir = self.home_path / DEPLOYMENT_CFG_DIR
-        if not deployment_cfg_dir.exists():
-            return
-        for cfg_name in [p.name for p in deployment_cfg_dir.listdir()]:
-            assert cfg_name.endswith(YAML_EXT)
-            yield cfg_name[:-len(YAML_EXT)]
-
     def list_buckets(self):
         buckets = []
-        for bucket_id in self._iter_bucket_ids():
+        for bucket_id in self.buckets_db:
             bucket = self._get_bucket_by_id(bucket_id)
             buckets.append({
                 'id': bucket.id_,
@@ -258,7 +244,6 @@ exec '{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
 
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
-    (sarge.home_path / 'etc').mkdir_p()
     sarge_yaml_path = sarge.home_path / 'etc' / 'sarge.yaml'
     if not sarge_yaml_path.isfile():
         with sarge_yaml_path.open('wb') as f:
@@ -266,7 +251,6 @@ def init_cmd(sarge, args):
     (sarge.home_path / 'var').mkdir_p()
     (sarge.home_path / 'var' / 'log').mkdir_p()
     (sarge.home_path / 'var' / 'run').mkdir_p()
-    (sarge.home_path / DEPLOYMENT_CFG_DIR).mkdir_p()
     sarge.initialize()
 
     sarge_bin = sarge.home_path / 'bin'
