@@ -23,7 +23,7 @@ PACKAGE_FILENAMES = [
     "meld3-0.6.9-py27-none-any.whl",
     "path.py-2.4-py27-none-any.whl",
     "supervisor-3.0b1-py27-none-any.whl",
-    "kv-0.1-py27-none-any.whl",
+    "kv-0.2.zip",
 ]
 VAGRANT_HOME = path('/home/vagrant')
 
