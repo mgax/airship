@@ -36,7 +36,7 @@ startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 autorestart = false
-command = bin/sarge run %(instance_id)s ./server
+command = bin/sarge run %(instance_id)s ./_run_process
 """
 
 

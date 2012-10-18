@@ -13,7 +13,7 @@ def deploy(sarge, tarfile, procname):
     subprocess.check_call(['tar', 'xf', tarfile, '-C', instance.folder])
     procs = get_procs(instance)
 
-    server_script = instance.folder / 'server'
+    server_script = instance.folder / '_run_process'
     server_script.write_text('exec %s\n' % procs[procname])
     server_script.chmod(0755)
 

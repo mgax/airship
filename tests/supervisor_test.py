@@ -64,7 +64,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         section = 'program:%s' % instance.id_
 
         eq_config(section, 'command',
-                  'bin/sarge run {0} ./server'.format(instance.id_))
+                  'bin/sarge run {0} ./_run_process'.format(instance.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (instance.id_ + '.log'))
