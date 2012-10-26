@@ -18,8 +18,9 @@ def deploy(sarge, tarfile, procname):
         index_dir = sarge.config['wheel_index_dir']
         venv = bucket.folder / '_virtualenv'
         pip = venv / 'bin' / 'pip'
+        python = sarge.config.get('virtualenv_python_bin', 'python')
 
-        subprocess.check_call(['virtualenv', venv,
+        subprocess.check_call(['virtualenv', venv, '--python=' + python,
                                '--distribute', '--never-download',
                                '--extra-search-dir=' + index_dir])
         subprocess.check_call([pip, 'install', 'wheel', '--no-index',
