@@ -7,7 +7,7 @@ SUPERVISORD_HAPROXY = """\
 [program:haproxy]
 redirect_stderr = true
 stdout_logfile = {sarge_home}/var/log/haproxy.log
-startsecs = 0
+startsecs = 1
 startretries = 1
 autostart = true
 command = {haproxy_bin} -f {sarge_home}/etc/haproxy/haproxy.cfg
