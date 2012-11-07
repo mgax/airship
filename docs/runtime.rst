@@ -37,3 +37,18 @@ effectively activates the virtualenv.
 .. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://www.pip-installer.org/
 .. _wheel: http://wheel.readthedocs.org/
+
+
+Persistence
+-----------
+The bucket (deployment) folder is temporary. With every new deployment,
+a new folder is created, and the old one removed. So how do you save
+persistent information?
+
+The simple way is to use separate services. The application talks to
+them over the network, using configuration variables to figure out the
+host and port.
+
+Alternatively, the application can use a persistent folder on the
+filesystem. You can create a subfolder in ``$SARGE_HOME/var`` and write
+its absolute path to a configuration variable.
