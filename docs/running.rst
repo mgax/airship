@@ -31,3 +31,26 @@ help of haproxy_. Stable public ports are configured in ``sarge.yaml``
 and proxied (at the TCP level) to the port of the running process.
 
 .. _haproxy: http://haproxy.1wt.eu/
+
+
+Logging
+-------
+A process should write log messages to its `stdout` or `stderr` file.
+They are collected by `supervisord` and saved to
+``$SARGE_HOME/var/log/$BUCKET_ID``.
+
+Although `supervisord` has a limit on logfile size, it's a good idea to
+rotate them using `logrotate`. Here is an example configuration::
+
+    /var/local/myapp/var/log/*.log {
+        missingok
+        weekly
+        rotate 4
+        dateext
+        delaycompress
+
+        sharedscripts
+        postrotate
+            kill -USR2 `cat /var/local/myapp/var/run/supervisor.pid`
+        endscript
+    }
