@@ -22,5 +22,7 @@ Contents:
    :maxdepth: 2
 
    usage
+   environment
+   running
    development
    reference

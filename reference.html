@@ -72,30 +72,49 @@ the place to activate a virtualenv or set environment variables.</dd>
 web-jCCbfV</pre>
 </div>
 </div>
+<div class="section" id="sarge-run">
+<h3>sarge run<a class="headerlink" href="#sarge-run" title="Permalink to this headline">¶</a></h3>
+<p>Open a bash shell in the instance&#8217;s folder. The <tt class="docutils literal"><span class="pre">prerun</span></tt> script, if
+any, is executed as <cite>rc</cite> file. <cite>run</cite> accepts an optional argument, a
+command to be run in the shell. With this option it behaves like <tt class="docutils literal"><span class="pre">bash</span>
+<span class="pre">-c</span> <span class="pre">&lt;command&gt;</span></tt>.</p>
+<div class="highlight-python"><pre>$ bin/sarge run web-jCCbfV 'echo "hello from instance in" `pwd`'</pre>
+</div>
+</div>
 <div class="section" id="sarge-start">
 <h3>sarge start<a class="headerlink" href="#sarge-start" title="Permalink to this headline">¶</a></h3>
 <p>Start an instance. This simply configures the <tt class="docutils literal"><span class="pre">./server</span></tt> script,
 inside the instance&#8217;s folder, as a supervisor <cite>program</cite>.</p>
+<div class="highlight-python"><pre>$ bin/sarge start web-jCCbfV</pre>
+</div>
 </div>
 <div class="section" id="sarge-stop">
 <h3>sarge stop<a class="headerlink" href="#sarge-stop" title="Permalink to this headline">¶</a></h3>
 <p>Stops an instance. This simply removes the relevant <cite>program</cite> from
 supervisor.</p>
+<div class="highlight-python"><pre>$ bin/sarge stop web-jCCbfV</pre>
+</div>
 </div>
 <div class="section" id="sarge-destroy">
 <h3>sarge destroy<a class="headerlink" href="#sarge-destroy" title="Permalink to this headline">¶</a></h3>
 <p>Remove the instance (its folder and configuration files). Calls <cite>stop</cite>
 first, in case the instance was running.</p>
+<div class="highlight-python"><pre>$ bin/sarge destroy web-jCCbfV</pre>
+</div>
 </div>
 <div class="section" id="supervisord">
 <h3>supervisord<a class="headerlink" href="#supervisord" title="Permalink to this headline">¶</a></h3>
 <p>Start the <cite>supervisord</cite> daemon. See <a class="reference external" href="http://supervisord.org/running.html#running-supervisord">the supervisord documentation</a> for
 details.</p>
+<div class="highlight-python"><pre>$ bin/supervisord</pre>
+</div>
 </div>
 <div class="section" id="supervisorctl">
 <h3>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h3>
 <p>Interact with <cite>supervisord</cite>. Type <cite>help</cite> at the prompt to see what it
 can do.</p>
+<div class="highlight-python"><pre>$ bin/supervisorctl</pre>
+</div>
 </div>
 </div>
 </div>
@@ -111,6 +130,7 @@ can do.</p>
 <li><a class="reference internal" href="#">Reference</a><ul>
 <li><a class="reference internal" href="#commands">Commands</a><ul>
 <li><a class="reference internal" href="#sarge-new">sarge new</a></li>
+<li><a class="reference internal" href="#sarge-run">sarge run</a></li>
 <li><a class="reference internal" href="#sarge-start">sarge start</a></li>
 <li><a class="reference internal" href="#sarge-stop">sarge stop</a></li>
 <li><a class="reference internal" href="#sarge-destroy">sarge destroy</a></li>
