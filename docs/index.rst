@@ -23,5 +23,6 @@ Contents:
 
    usage
    environment
+   running
    development
    reference
