@@ -18,6 +18,11 @@ PIP_URL = 'https://github.com/dholth/pip/zipball/e0f3535'  # wheel_build branch
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
+
+def filename(url):
+    return url.split('/')[-1]
+
+
 def install(sarge_home, python_bin):
     username = os.popen('whoami').read().strip()
     virtualenv_path = sarge_home / 'opt' / 'sarge-venv'
@@ -56,7 +61,8 @@ def install(sarge_home, python_bin):
     print
 
 
-def download_to(url, file_path):
+def download_to(url, parent_folder):
+    file_path = os.path.join(parent_folder, filename(url))
     print "downloading {url} to {file_path}".format(**locals())
     http = urllib.urlopen(url)
     with open(file_path, 'wb') as f:
@@ -70,11 +76,11 @@ if __name__ == '__main__':
     if not os.path.isdir(dist):
         os.makedirs(dist)
 
-    download_to(PATH_PY_URL, os.path.join(dist, 'path.py'))
-    download_to(VIRTUALENV_URL, os.path.join(dist, 'virtualenv.py'))
-    download_to(DISTRIBUTE_URL, os.path.join(dist, 'distribute-0.6.28.tar.gz'))
-    download_to(PIP_URL, os.path.join(dist, 'pip-1.2.1.post1.zip'))
-    download_to(WHEEL_URL, os.path.join(dist, 'wheel-0.14.0.tar.gz'))
+    download_to(PATH_PY_URL, dist)
+    download_to(VIRTUALENV_URL, dist)
+    download_to(DISTRIBUTE_URL, dist)
+    download_to(PIP_URL, dist)
+    download_to(WHEEL_URL, dist)
 
     sys.path[0:0] = [dist]
     from path import path
