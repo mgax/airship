@@ -15,6 +15,8 @@ VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'
                   'd/distribute/distribute-0.6.28.tar.gz')
 PIP_URL = 'https://github.com/dholth/pip/zipball/e0f3535'  # wheel_build branch
+WHEEL_URL = ('http://pypi.python.org/packages/source/'
+             'w/wheel/wheel-0.14.0.tar.gz')
 
 def install(sarge_home, python_bin):
     username = os.popen('whoami').read().strip()
@@ -72,6 +74,7 @@ if __name__ == '__main__':
     download_to(VIRTUALENV_URL, os.path.join(dist, 'virtualenv.py'))
     download_to(DISTRIBUTE_URL, os.path.join(dist, 'distribute-0.6.28.tar.gz'))
     download_to(PIP_URL, os.path.join(dist, 'pip-1.2.1.post1.zip'))
+    download_to(WHEEL_URL, os.path.join(dist, 'wheel-0.14.0.tar.gz'))
 
     sys.path[0:0] = [dist]
     from path import path
