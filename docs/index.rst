@@ -1,19 +1,20 @@
 Welcome to Sarge's documentation!
 =================================
 
-Sarge is a server-side tool for deploying applications inspired by the
-`twelve-factor methodology`_. It's a wrapper around supervisor_, with
-logic to set up and tear down application instances, and plugins to
-configure services for each instance (e.g. persistence). Take a look at
-the `example deployment scripts`_ to get a feel for the deployment process.
+Sarge is a server-side tool, for deploying applications, inspired by the
+`twelve-factor methodology`_. It's a wrapper around supervisor_,
+virtualenv_, pip_ and haproxy_ which can install, start, monitor and
+tear down successive versions of an application's process types.
 
 .. _twelve-factor methodology: http://www.12factor.net/
 .. _supervisor: http://supervisord.org/
-.. _example deployment scripts: https://github.com/mgax/sarge/tree/master/deploy
+.. _virtualenv: http://www.virtualenv.org/
+.. _pip: http://www.pip-installer.org/
+.. _haproxy: http://haproxy.1wt.eu/
 
 
 The source code is maintained on GitHub:
-https://github.com/mgax/Sarge.
+https://github.com/mgax/sarge.
 
 
 Contents:
