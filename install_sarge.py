@@ -13,7 +13,7 @@ SARGE_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'
-                  'd/distribute/distribute-0.6.28.tar.gz')
+                  'd/distribute/distribute-0.6.30.tar.gz')
 PIP_URL = 'https://github.com/dholth/pip/zipball/e0f3535'  # wheel_build branch
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
