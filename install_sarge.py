@@ -18,9 +18,10 @@ PIP_URL = 'https://github.com/dholth/pip/zipball/e0f3535'  # wheel_build branch
 
 def install(sarge_home, python_bin):
     username = os.popen('whoami').read().strip()
-    virtualenv_path = sarge_home / 'var' / 'sarge-venv'
+    virtualenv_path = sarge_home / 'opt' / 'sarge-venv'
     virtualenv_bin = virtualenv_path / 'bin'
     sarge_cfg = sarge_home / 'etc' / 'sarge.yaml'
+    virtualenv_path.makedirs_p()
 
     if not (virtualenv_bin / 'python').isfile():
         import virtualenv
