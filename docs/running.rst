@@ -54,3 +54,7 @@ rotate them using `logrotate`. Here is an example configuration::
             kill -USR2 `cat /var/local/myapp/var/run/supervisor.pid`
         endscript
     }
+
+See also the `supervisord` `logging documentation`_.
+
+.. _logging documentation: http://supervisord.org/logging.html
