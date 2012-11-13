@@ -37,6 +37,8 @@ def install(sarge_home, python_bin):
                                       search_dirs=[sarge_home / 'dist'],
                                       use_distribute=True,
                                       never_download=True)
+        subprocess.check_call([virtualenv_bin / 'pip', 'install',
+                               sarge_home / 'dist' / filename(WHEEL_URL)])
 
     print "installing sarge ..."
     subprocess.check_call([virtualenv_bin / 'pip', 'install', SARGE_PACKAGE])
