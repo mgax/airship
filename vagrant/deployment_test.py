@@ -48,7 +48,9 @@ def install_sarge():
     with cd(env['sarge-home']):
         sudo("chown vagrant: .")
         run("mkdir opt")
-        run("python {index-dir}/virtualenv.py --distribute "
+        run("mkdir dist")
+        run("cp {index-dir}/virtualenv.py dist/".format(**env))
+        run("python dist/virtualenv.py --distribute "
             "--extra-search-dir={index-dir} --never-download "
             "opt/sarge-venv"
             .format(**env))
