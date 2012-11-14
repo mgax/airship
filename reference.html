@@ -54,22 +54,13 @@
 argument, then a sub-command which may have additional arguments. If
 <cite>sarge</cite> is called from the <tt class="docutils literal"><span class="pre">bin</span></tt> folder in <cite>sarge_home</cite>, the first
 argument is already provided by the bin/ script.</p>
-<div class="section" id="sarge-new">
-<h3>sarge new<a class="headerlink" href="#sarge-new" title="Permalink to this headline">¶</a></h3>
-<p>Create a new application instance. Receives one argument, a JSON
-document with information about the application; be sure to quote it
-properly. The JSON may contain:</p>
-<dl class="docutils">
-<dt><tt class="docutils literal"><span class="pre">application_name</span></tt></dt>
-<dd>Short string used to distinguish between application types. Good
-names are e.g. <cite>web</cite>, <cite>worker</cite>.</dd>
-<dt><tt class="docutils literal"><span class="pre">prerun</span></tt></dt>
-<dd>Bash file to be sourced before running the application. This is
-the place to activate a virtualenv or set environment variables.</dd>
-</dl>
-<p><cite>new</cite> prints the <cite>id</cite> of the new instance to <cite>stderr</cite>. Example:</p>
-<div class="highlight-python"><pre>$ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
-web-jCCbfV</pre>
+<div class="section" id="sarge-deploy">
+<h3>sarge deploy<a class="headerlink" href="#sarge-deploy" title="Permalink to this headline">¶</a></h3>
+<p>Run a full deployment: create new bucket, unpack tarball, install
+dependencies, stop old process, start the new one, destroy old bucket.</p>
+<p>Expects two arguments: a tarball (not gzipped) containing the
+application, and the name of the process to deploy.</p>
+<div class="highlight-python"><pre>$ bin/sarge deploy myapp.tar web</pre>
 </div>
 </div>
 <div class="section" id="sarge-run">
@@ -129,7 +120,7 @@ can do.</p>
   <ul>
 <li><a class="reference internal" href="#">Reference</a><ul>
 <li><a class="reference internal" href="#commands">Commands</a><ul>
-<li><a class="reference internal" href="#sarge-new">sarge new</a></li>
+<li><a class="reference internal" href="#sarge-deploy">sarge deploy</a></li>
 <li><a class="reference internal" href="#sarge-run">sarge run</a></li>
 <li><a class="reference internal" href="#sarge-start">sarge start</a></li>
 <li><a class="reference internal" href="#sarge-stop">sarge stop</a></li>

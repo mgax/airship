@@ -48,20 +48,18 @@
             
   <div class="section" id="welcome-to-sarge-s-documentation">
 <h1>Welcome to Sarge&#8217;s documentation!<a class="headerlink" href="#welcome-to-sarge-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Sarge is a server-side tool for deploying applications inspired by the
-<a class="reference external" href="http://www.12factor.net/">twelve-factor methodology</a>. It&#8217;s a wrapper around <a class="reference external" href="http://supervisord.org/">supervisor</a>, with
-logic to set up and tear down application instances, and plugins to
-configure services for each instance (e.g. persistence). Take a look at
-the <a class="reference external" href="https://github.com/mgax/sarge/tree/master/deploy">example deployment scripts</a> to get a feel for the deployment process.</p>
+<p>Sarge is a server-side tool, for deploying applications, inspired by the
+<a class="reference external" href="http://www.12factor.net/">twelve-factor methodology</a>. It&#8217;s a wrapper around <a class="reference external" href="http://supervisord.org/">supervisor</a>,
+<a class="reference external" href="http://www.virtualenv.org/">virtualenv</a>, <a class="reference external" href="http://www.pip-installer.org/">pip</a> and <a class="reference external" href="http://haproxy.1wt.eu/">haproxy</a> which can install, start, monitor and
+tear down successive versions of an application&#8217;s process types.</p>
 <p>The source code is maintained on GitHub:
-<a class="reference external" href="https://github.com/mgax/Sarge">https://github.com/mgax/Sarge</a>.</p>
+<a class="reference external" href="https://github.com/mgax/sarge">https://github.com/mgax/sarge</a>.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#bootstrapping">Bootstrapping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#deploying-an-instance">Deploying an instance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#rolling-deployment">Rolling deployment</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="environment.html">The runtime environment</a><ul>

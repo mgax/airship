@@ -54,38 +54,14 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="bootstrapping">
 <h2>Bootstrapping<a class="headerlink" href="#bootstrapping" title="Permalink to this headline">¶</a></h2>
-<p>Sarge code runs on the server, so whenever we deploy to a new host, we
-first need to install sarge itself. <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span></tt> shoud be enough to
-install the package, and it&#8217;s a good idea to do this in a <a class="reference external" href="http://www.virtualenv.org/">virtualenv</a>.</p>
-<p>Then we need to choose a home folder for the deployment. This is where
-instances and configuration files will be created. If the application is
-called <cite>gardensale</cite> we could run <tt class="docutils literal"><span class="pre">sarge</span> <span class="pre">/var/local/gardensale</span> <span class="pre">init</span></tt>.
-This will create an <tt class="docutils literal"><span class="pre">etc</span></tt> folder (for configuration files), a <tt class="docutils literal"><span class="pre">var</span></tt>
-folder (for logs, pidfiles, sockets, etc), and a <tt class="docutils literal"><span class="pre">bin</span></tt> folder, with
-convenient shortcuts to the <cite>sarge</cite>, <cite>supervisord</cite> and <cite>supervisorctl</cite>
-commands.</p>
-<p>The whole bootstrapping process can be automated with <a class="reference external" href="https://github.com/mgax/sarge/blob/master/deploy/bootstrap-sarge.py">this script</a>
-that creates a virtualenv, installs sarge, and initializes a home folder:</p>
-<div class="highlight-python"><pre>$ python &lt;(curl -fsSL raw.github.com/mgax/sarge/master/deploy/bootstrap-sarge.py) /var/local/gardensale</pre>
+<p>Before deploying any application we need to install <cite>sarge</cite> itself.
+There is a handy script:</p>
+<div class="highlight-python"><pre>$ python &lt;(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app</pre>
 </div>
-<div class="section" id="supervisord">
-<h3>supervisord<a class="headerlink" href="#supervisord" title="Permalink to this headline">¶</a></h3>
-<p>Sarge relies on supervisord to keep track of running instances. After
-deployment, you should start the supervisord process, by calling
-<tt class="docutils literal"><span class="pre">bin/supervisord</span></tt> from the sarge home folder. It should also be called
-at system boot, e.g. from <tt class="docutils literal"><span class="pre">/etc/rc.local</span></tt>; be sure to run it as the
-correct user, which is probably not <cite>root</cite>.</p>
-</div>
-<div class="section" id="loging">
-<h3>loging<a class="headerlink" href="#loging" title="Permalink to this headline">¶</a></h3>
-<p>Instance logs are handled by <cite>supervisord</cite>. They are saved in the sarge
-home folder, as <tt class="docutils literal"><span class="pre">var/log/${INSTANCE_ID}.log</span></tt>.</p>
-<p>You can either let <cite>supervisord</cite> rotate logs itself, based on the log
-file size, or the system-wide <cite>logrotate</cite> utility. If you choose
-<cite>logrotate</cite> don&#8217;t forget to tell <cite>supervisord</cite> to re-open its logs:</p>
-<div class="highlight-python"><pre>$ kill -USR2 `cat /var/local/gardensale/var/run/supervisord.pid`</pre>
-</div>
-<p>See the <cite>supervisord</cite> <a class="reference external" href="http://supervisord.org/logging.html">logging documentation</a> for details.</p>
+<p>Don&#8217;t forget to start sarge&#8217;s <cite>supervisord</cite> at boot, e.g. by adding the
+following line to <tt class="docutils literal"><span class="pre">/etc/rc.local</span></tt> (replace <cite>daemon</cite> with the user
+which should run the app):</p>
+<div class="highlight-python"><pre>su daemon -c '/var/local/my_awesome_app/bin/supervisord'</pre>
 </div>
 </div>
 <div class="section" id="deploying-an-instance">
@@ -113,34 +89,6 @@ $ chmod +x web-jCCbfV/server</pre>
 </div>
 <p>Now we can <cite>start</cite>, <cite>stop</cite> and <cite>destroy</cite> the instance.</p>
 </div>
-<div class="section" id="rolling-deployment">
-<h2>Rolling deployment<a class="headerlink" href="#rolling-deployment" title="Permalink to this headline">¶</a></h2>
-<p>Sarge can host any number of instances, even if the application name is
-the same. This allows us to perform a rolling deployment:</p>
-<ul class="simple">
-<li>Create a new instance of the application.</li>
-<li>Install the current version of source code in that instance.</li>
-<li>Start up the instance.</li>
-<li>Run some kind of checks to see if the site is sane.</li>
-<li>Configure the front-end web server to point to the new instance.</li>
-<li>Tear down the old instance.</li>
-</ul>
-<p>If the sanity checks fail, we simply abort, and tear down the new
-instance.</p>
-<p>To make all this work automatically we need a tool for configuring the
-front-end server. The <a class="reference external" href="https://github.com/mgax/sarge/blob/master/tek/nginx.py">tek.nginx module</a> contains code for such a tool,
-but it needs to be installed manually right now.</p>
-<p>See <a class="reference external" href="https://github.com/mgax/sarge/blob/master/deploy/complex_fabfile.py">this complex fabfile</a> for an example of rolling deployment. It
-describes two targets, <cite>staging</cite> and <cite>production</cite>, each with two
-application types, <cite>web</cite> and <cite>worker</cite>. Deployment for <cite>worker</cite> is
-simple: destroy any existing workers and install new ones. Deployment
-for <cite>web</cite> is a bit more complex: start up a new instance, prompt the
-developer to do a quick check (the instance is served at its own
-separate URL), and then promote the new instance to the main URL and
-clean up the old one. There is a <cite>virtualenv</cite> command, that creates or
-updates the remote virtual environment, shared between instances because
-it takes a while to set up.</p>
-</div>
 </div>
 
 
@@ -152,13 +100,8 @@ it takes a while to set up.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
-<li><a class="reference internal" href="#bootstrapping">Bootstrapping</a><ul>
-<li><a class="reference internal" href="#supervisord">supervisord</a></li>
-<li><a class="reference internal" href="#loging">loging</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#bootstrapping">Bootstrapping</a></li>
 <li><a class="reference internal" href="#deploying-an-instance">Deploying an instance</a></li>
-<li><a class="reference internal" href="#rolling-deployment">Rolling deployment</a></li>
 </ul>
 </li>
 </ul>
