@@ -14,7 +14,9 @@ tear down successive versions of an application's process types.
 
 
 The source code is maintained on GitHub:
-https://github.com/mgax/sarge.
+https://github.com/mgax/sarge. There's also a tiny `example app`_.
+
+.. _`example app`: https://github.com/mgax/sargeapp
 
 
 Contents:
