@@ -10,24 +10,18 @@ argument, then a sub-command which may have additional arguments. If
 `sarge` is called from the ``bin`` folder in `sarge_home`, the first
 argument is already provided by the bin/ script.
 
-sarge new
----------
-Create a new application instance. Receives one argument, a JSON
-document with information about the application; be sure to quote it
-properly. The JSON may contain:
 
-``application_name``
-    Short string used to distinguish between application types. Good
-    names are e.g. `web`, `worker`.
+sarge deploy
+------------
+Run a full deployment: create new bucket, unpack tarball, install
+dependencies, stop old process, start the new one, destroy old bucket.
 
-``prerun``
-    Bash file to be sourced before running the application. This is
-    the place to activate a virtualenv or set environment variables.
+Expects two arguments: a tarball (not gzipped) containing the
+application, and the name of the process to deploy.
 
-`new` prints the `id` of the new instance to `stderr`. Example::
+::
 
-    $ bin/sarge new '{"application_name": "web", "prerun": "sargerc"}'
-    web-jCCbfV
+    $ bin/sarge deploy myapp.tar web
 
 sarge run
 ---------
