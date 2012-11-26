@@ -1,4 +1,8 @@
 import subprocess
+import blinker
+
+
+bucket_setup = blinker.Signal()
 
 
 def get_procs(bucket):
@@ -25,6 +29,8 @@ def set_up_bucket(bucket):
         subprocess.check_call([pip, 'install', '-r', requirements_file,
                                '--use-wheel', '--no-index',
                                '--find-links=file://' + index_dir])
+
+    bucket_setup.send(bucket)
 
     procname = bucket.meta['APPLICATION_NAME']
     procs = get_procs(bucket)
