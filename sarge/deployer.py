@@ -41,10 +41,6 @@ def set_up_script(bucket):
     server_script.chmod(0755)
 
 
-def set_up_bucket(bucket):
-    bucket_setup.send(bucket)
-
-
 def remove_old_buckets(bucket):
     sarge = bucket.sarge
     procname = bucket.meta['APPLICATION_NAME']
@@ -58,6 +54,6 @@ def remove_old_buckets(bucket):
 def deploy(sarge, tarfile, procname):
     bucket = sarge.new_bucket({'application_name': procname})
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
-    set_up_bucket(bucket)
+    bucket_setup.send(bucket)
     remove_old_buckets(bucket)
     bucket.start()
