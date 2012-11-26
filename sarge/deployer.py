@@ -11,7 +11,8 @@ def get_procs(bucket):
                     (l.split(':', 1) for l in f))
 
 
-def set_up_bucket(bucket):
+@bucket_setup.connect
+def set_up_virtualenv_and_requirements(bucket, **extra):
     sarge = bucket.sarge
     requirements_file = bucket.folder / 'requirements.txt'
     if requirements_file.isfile():
@@ -30,6 +31,8 @@ def set_up_bucket(bucket):
                                '--use-wheel', '--no-index',
                                '--find-links=file://' + index_dir])
 
+
+def set_up_bucket(bucket):
     bucket_setup.send(bucket)
 
     procname = bucket.meta['APPLICATION_NAME']
