@@ -32,14 +32,17 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
                                '--find-links=file://' + index_dir])
 
 
-def set_up_bucket(bucket):
-    bucket_setup.send(bucket)
-
+@bucket_setup.connect
+def set_up_script(bucket):
     procname = bucket.meta['APPLICATION_NAME']
     procs = get_procs(bucket)
     server_script = bucket.folder / '_run_process'
     server_script.write_text('exec %s\n' % procs[procname])
     server_script.chmod(0755)
+
+
+def set_up_bucket(bucket):
+    bucket_setup.send(bucket)
 
 
 def remove_old_buckets(bucket):
