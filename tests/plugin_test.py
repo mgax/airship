@@ -7,10 +7,10 @@ class PluginTest(SargeTestCase):
     @patch('sarge.core.pkg_resources')
     def test_plugin_function_called(self, pkg_resources):
         from sarge.core import load_plugins
-        callback = Mock()
-        pkg_resources.iter_entry_points.return_value = [callback]
+        entry_point = Mock()
+        pkg_resources.iter_entry_points.return_value = [entry_point]
         load_plugins()
-        self.assertEqual(callback.mock_calls, [call()])
+        self.assertEqual(entry_point.load.return_value.mock_calls, [call()])
 
     @patch('sarge.deployer.subprocess')
     @patch('sarge.deployer.bucket_setup')

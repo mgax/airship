@@ -231,7 +231,8 @@ class Sarge(object):
 
 
 def load_plugins():
-    for callback in pkg_resources.iter_entry_points('sarge_plugins'):
+    for entry_point in pkg_resources.iter_entry_points('sarge_plugins'):
+        callback = entry_point.load()
         callback()
 
 
