@@ -9,6 +9,7 @@ from importlib import import_module
 from path import path
 import yaml
 from kv import KV
+import pkg_resources
 from .daemons import Supervisor
 from .routing import Haproxy
 from . import deployer
@@ -229,6 +230,11 @@ class Sarge(object):
         return {'buckets': buckets}
 
 
+def load_plugins():
+    for callback in pkg_resources.iter_entry_points('sarge_plugins'):
+        callback()
+
+
 SARGE_SCRIPT = """#!/bin/bash
 exec '{prefix}/bin/sarge' '{home}' "$@"
 """
@@ -356,6 +362,7 @@ def set_up_logging(sarge_home):
 
 
 def main(raw_arguments=None):
+    load_plugins()
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home = path(args.sarge_home).abspath()
