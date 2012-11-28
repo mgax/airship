@@ -33,8 +33,12 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
         except subprocess.CalledProcessError:
             raise DeployError("Failed to create a virtualenv.")
 
-        subprocess.check_call([pip, 'install', 'wheel', '--no-index',
-                               '--find-links=file://' + index_dir])
+        try:
+            subprocess.check_call([pip, 'install', 'wheel', '--no-index',
+                                   '--find-links=file://' + index_dir])
+        except subprocess.CalledProcessError:
+            raise DeployError("Failed to install requirements.")
+
         subprocess.check_call([pip, 'install', '-r', requirements_file,
                                '--use-wheel', '--no-index',
                                '--find-links=file://' + index_dir])
