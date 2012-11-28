@@ -5,6 +5,10 @@ import blinker
 bucket_setup = blinker.Signal()
 
 
+class DeployError(Exception):
+    """ Something went wrong during deployment. """
+
+
 def get_procs(bucket):
     with (bucket.folder / 'Procfile').open('rb') as f:
         return dict((k.strip(), v.strip()) for k, v in
@@ -22,9 +26,13 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
         virtualenv_py = sarge.home_path / 'dist' / 'virtualenv.py'
         python = sarge.config.get('virtualenv_python_bin', 'python')
 
-        subprocess.check_call([python, virtualenv_py, venv,
-                               '--distribute', '--never-download',
-                               '--extra-search-dir=' + index_dir])
+        try:
+            subprocess.check_call([python, virtualenv_py, venv,
+                                   '--distribute', '--never-download',
+                                   '--extra-search-dir=' + index_dir])
+        except subprocess.CalledProcessError:
+            raise DeployError("Failed to create a virtualenv.")
+
         subprocess.check_call([pip, 'install', 'wheel', '--no-index',
                                '--find-links=file://' + index_dir])
         subprocess.check_call([pip, 'install', '-r', requirements_file,
