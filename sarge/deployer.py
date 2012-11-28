@@ -5,6 +5,14 @@ import blinker
 bucket_setup = blinker.Signal()
 
 
+class DeployError(Exception):
+    """ Something went wrong during deployment. """
+
+    def __init__(self, bucket, message):
+        super(DeployError, self).__init__(message)
+        self.bucket = bucket
+
+
 def get_procs(bucket):
     with (bucket.folder / 'Procfile').open('rb') as f:
         return dict((k.strip(), v.strip()) for k, v in
@@ -22,14 +30,25 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
         virtualenv_py = sarge.home_path / 'dist' / 'virtualenv.py'
         python = sarge.config.get('virtualenv_python_bin', 'python')
 
-        subprocess.check_call([python, virtualenv_py, venv,
-                               '--distribute', '--never-download',
-                               '--extra-search-dir=' + index_dir])
-        subprocess.check_call([pip, 'install', 'wheel', '--no-index',
-                               '--find-links=file://' + index_dir])
-        subprocess.check_call([pip, 'install', '-r', requirements_file,
-                               '--use-wheel', '--no-index',
-                               '--find-links=file://' + index_dir])
+        try:
+            subprocess.check_call([python, virtualenv_py, venv,
+                                   '--distribute', '--never-download',
+                                   '--extra-search-dir=' + index_dir])
+        except subprocess.CalledProcessError:
+            raise DeployError(bucket, "Failed to create a virtualenv.")
+
+        try:
+            subprocess.check_call([pip, 'install', 'wheel', '--no-index',
+                                   '--find-links=file://' + index_dir])
+        except subprocess.CalledProcessError:
+            raise DeployError(bucket, "Failed to install wheel.")
+
+        try:
+            subprocess.check_call([pip, 'install', '-r', requirements_file,
+                                   '--use-wheel', '--no-index',
+                                   '--find-links=file://' + index_dir])
+        except subprocess.CalledProcessError:
+            raise DeployError(bucket, "Failed to install requirements.")
 
 
 @bucket_setup.connect
