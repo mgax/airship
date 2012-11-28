@@ -37,7 +37,7 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
             subprocess.check_call([pip, 'install', 'wheel', '--no-index',
                                    '--find-links=file://' + index_dir])
         except subprocess.CalledProcessError:
-            raise DeployError("Failed to install requirements.")
+            raise DeployError("Failed to install wheel.")
 
         subprocess.check_call([pip, 'install', '-r', requirements_file,
                                '--use-wheel', '--no-index',

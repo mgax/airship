@@ -27,10 +27,10 @@ class DeployErrorTest(SargeTestCase):
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to create a virtualenv.")
 
-    def test_pip_failure_raises_deploy_error(self):
+    def test_pip_wheel_failure_raises_deploy_error(self):
         self.subprocess.check_call.side_effect = [
             None,
             self.subprocess.CalledProcessError(3, ''),
         ]
         err = self.call_and_expect_failure()
-        self.assertEqual(err.message, "Failed to install requirements.")
+        self.assertEqual(err.message, "Failed to install wheel.")
