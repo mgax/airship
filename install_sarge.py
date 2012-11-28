@@ -22,6 +22,9 @@ SARGE_CFG_TEMPLATE = """\
 wheel_index_dir: {wheel_index_dir}
 virtualenv_python_bin: {virtualenv_python_bin}
 port_range: {port_range}
+port_map:
+    web: 127.0.0.1:{web_port}
+env:
 """
 
 
@@ -56,6 +59,7 @@ def install(sarge_home, python_bin):
         sarge_cfg.write_bytes(SARGE_CFG_TEMPLATE.format(
             wheel_index_dir=json.dumps(sarge_home / dist),
             port_range=json.dumps([base + 10, base + 99]),
+            web_port=json.dumps(base),
             virtualenv_python_bin=json.dumps(sys.executable),
         ))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
