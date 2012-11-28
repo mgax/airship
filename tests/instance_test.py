@@ -147,6 +147,22 @@ class BucketPortAllocationTest(SargeTestCase):
                          [5000, 5001, 5008, 5009])
         self.assertRaises(RuntimeError, sarge.new_bucket)  # no more ports
 
+    def test_port_allocation_shifts_in_range_if_next_port_is_too_low(self):
+        sarge1 = self.create_sarge({'port_range': [5000, 5009]})
+        b1 = sarge1.new_bucket()
+        self.assertEqual(b1.port, 5000)
+        sarge2 = self.create_sarge({'port_range': [6000, 6009]})
+        b2 = sarge2.new_bucket()
+        self.assertEqual(b2.port, 6000)
+
+    def test_port_allocation_shifts_in_range_if_next_port_is_too_high(self):
+        sarge1 = self.create_sarge({'port_range': [6000, 6009]})
+        b1 = sarge1.new_bucket()
+        self.assertEqual(b1.port, 6000)
+        sarge2 = self.create_sarge({'port_range': [5000, 5009]})
+        b2 = sarge2.new_bucket()
+        self.assertEqual(b2.port, 5000)
+
 
 class BucketListingTest(SargeTestCase):
 

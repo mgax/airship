@@ -183,9 +183,13 @@ class Sarge(object):
         ports_db = self._open_ports_db()
         with ports_db.lock():
             next_port = ports_db.get('next', start_port)
-            queue = chain(xrange(next_port, end_port),
-                          xrange(start_port, next_port-1))
+            if start_port <= next_port <= end_port:
+                queue = chain(xrange(next_port, end_port),
+                              xrange(start_port, next_port-1))
+            else:
+                queue = xrange(start_port, end_port)
             for port in queue:
+                assert start_port <= port <= end_port
                 if port not in ports_db:
                     ports_db[port] = bucket_id
                     ports_db['next'] = port + 1
