@@ -44,9 +44,14 @@ def install(sarge_home, python_bin):
     subprocess.check_call([virtualenv_bin / 'pip', 'install', SARGE_PACKAGE])
 
     if not sarge_cfg.isfile():
+        import random
         (sarge_home / 'etc').mkdir_p()
-        sarge_cfg.write_bytes(json.dumps({
-            'wheel_index_dir': sarge_home / dist}))
+        base = random.randint(20, 600) * 100
+        cfg_data = {
+            'wheel_index_dir': sarge_home / dist,
+            'port_range': [base + 10, base + 99],
+        }
+        sarge_cfg.write_bytes(json.dumps(cfg_data, indent=2))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
 
     cmd = "{sarge_home}/bin/supervisord".format(**locals())
