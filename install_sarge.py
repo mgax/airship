@@ -18,6 +18,12 @@ PIP_URL = 'https://github.com/qwcode/pip/zipball/dff849c'  # wheel_install branc
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
+SARGE_CFG_TEMPLATE = """\
+wheel_index_dir: {wheel_index_dir}
+virtualenv_python_bin: {virtualenv_python_bin}
+port_range: {port_range}
+"""
+
 
 def filename(url):
     return url.split('/')[-1]
@@ -47,12 +53,11 @@ def install(sarge_home, python_bin):
         import random
         (sarge_home / 'etc').mkdir_p()
         base = random.randint(20, 600) * 100
-        cfg_data = {
-            'wheel_index_dir': sarge_home / dist,
-            'port_range': [base + 10, base + 99],
-            'virtualenv_python_bin': sys.executable,
-        }
-        sarge_cfg.write_bytes(json.dumps(cfg_data, indent=2))
+        sarge_cfg.write_bytes(SARGE_CFG_TEMPLATE.format(
+            wheel_index_dir=json.dumps(sarge_home / dist),
+            port_range=json.dumps([base + 10, base + 99]),
+            virtualenv_python_bin=json.dumps(sys.executable),
+        ))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
 
     cmd = "{sarge_home}/bin/supervisord".format(**locals())
