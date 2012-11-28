@@ -50,6 +50,7 @@ def install(sarge_home, python_bin):
         cfg_data = {
             'wheel_index_dir': sarge_home / dist,
             'port_range': [base + 10, base + 99],
+            'virtualenv_python_bin': sys.executable,
         }
         sarge_cfg.write_bytes(json.dumps(cfg_data, indent=2))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
