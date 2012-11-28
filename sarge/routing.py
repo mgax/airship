@@ -63,9 +63,11 @@ class Haproxy(object):
         proc_name = bucket.meta.get('APPLICATION_NAME')
         if proc_name not in self.port_map:
             return
-        port = bucket.port
-        port_bind = self.port_map[proc_name]
-        haproxy_route_cfg = HAPROXY_ROUTE.format(**locals())
+        haproxy_route_cfg = HAPROXY_ROUTE.format(
+            proc_name=proc_name,
+            port=bucket.port,
+            port_bind=self.port_map[proc_name],
+        )
         (self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name).write_text(
             haproxy_route_cfg)
         self.update_haproxy()
