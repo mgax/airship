@@ -315,6 +315,12 @@ def deploy_cmd(sarge, args):
         deployer.deploy(sarge, args.tarfile, args.procname)
     except deployer.DeployError, e:
         print "Deployment failed:", e.message
+        try:
+            e.bucket.destroy()
+        except:
+            print "Error while cleaning up failed deployment %s." % bucket.id_
+        else:
+            print "Cleaned up failed deployment."
 
 
 def build_args_parser():
