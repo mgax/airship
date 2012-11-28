@@ -2,35 +2,35 @@ from mock import Mock, patch
 from common import SargeTestCase
 
 
-class DeployTest(SargeTestCase):
+class DeployErrorTest(SargeTestCase):
 
-    @patch('sarge.deployer.subprocess')
-    def test_virtualenv_failure_raises_deploy_error(self, subprocess):
+    def setUp(self):
         from subprocess import CalledProcessError
+        self.subprocess = self.patch('sarge.deployer.subprocess')
+        self.subprocess.CalledProcessError = CalledProcessError
+        self.bucket = Mock(folder=self.tmp)
+        self.bucket.sarge.config = {'wheel_index_dir': self.tmp}
+        self.bucket.sarge.home_path = self.tmp
+        (self.tmp / 'requirements.txt').write_text("")
+
+    def call_and_expect_failure(self):
         from sarge.deployer import (set_up_virtualenv_and_requirements,
                                     DeployError)
-        subprocess.CalledProcessError = CalledProcessError
-        subprocess.check_call.side_effect = CalledProcessError(3, '')
-        (self.tmp / 'requirements.txt').write_text("")
-        bucket = Mock(folder=self.tmp)
-        bucket.sarge.config = {'wheel_index_dir': self.tmp}
-        bucket.sarge.home_path = self.tmp
         with self.assertRaises(DeployError) as e:
-            set_up_virtualenv_and_requirements(bucket)
-        self.assertEqual(e.exception.message, "Failed to create a virtualenv.")
+            set_up_virtualenv_and_requirements(self.bucket)
+        return e.exception
 
-    @patch('sarge.deployer.subprocess')
-    def test_pip_failure_raises_deploy_error(self, subprocess):
-        from subprocess import CalledProcessError
-        from sarge.deployer import (set_up_virtualenv_and_requirements,
-                                    DeployError)
-        subprocess.CalledProcessError = CalledProcessError
-        subprocess.check_call.side_effect = [None, CalledProcessError(3, '')]
-        (self.tmp / 'requirements.txt').write_text("")
-        bucket = Mock(folder=self.tmp)
-        bucket.sarge.config = {'wheel_index_dir': self.tmp}
-        bucket.sarge.home_path = self.tmp
-        with self.assertRaises(DeployError) as e:
-            set_up_virtualenv_and_requirements(bucket)
-        self.assertEqual(e.exception.message,
-                         "Failed to install requirements.")
+    def test_virtualenv_failure_raises_deploy_error(self):
+        self.subprocess.check_call.side_effect = [
+            self.subprocess.CalledProcessError(3, ''),
+        ]
+        err = self.call_and_expect_failure()
+        self.assertEqual(err.message, "Failed to create a virtualenv.")
+
+    def test_pip_failure_raises_deploy_error(self):
+        self.subprocess.check_call.side_effect = [
+            None,
+            self.subprocess.CalledProcessError(3, ''),
+        ]
+        err = self.call_and_expect_failure()
+        self.assertEqual(err.message, "Failed to install requirements.")
