@@ -202,10 +202,8 @@ class BucketRunTest(SargeTestCase):
         self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
 
     def test_run_prepares_environ_from_etc_app_config(self):
-        (self.tmp / 'etc' / 'app').mkdir_p()
-        with (self.tmp / 'etc' / 'app' / 'config.json').open('wb') as f:
-            json.dump({'SOME_CONFIG_VALUE': "hello there!"}, f)
-        self.create_sarge().new_bucket().run(None)
+        env = {'SOME_CONFIG_VALUE': "hello there!"}
+        self.create_sarge({'env': env}).new_bucket().run(None)
         environ = self.get_environ()
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 

@@ -80,18 +80,10 @@ class Bucket(object):
         self.sarge.buckets_db.pop(self.id_, None)
         self.sarge._free_port(self)
 
-    def _get_config(self):
-        config_json = self.sarge.home_path / 'etc' / 'app' / 'config.json'
-        if not config_json.isfile():
-            return {}
-
-        with config_json.open('rb') as f:
-            return json.load(f)
-
     def run(self, command):
         os.chdir(self.folder)
         environ = dict(os.environ)
-        environ.update(self._get_config())
+        environ.update(self.sarge.config.get('env') or {})
         environ['PORT'] = str(self.port)
         venv = self.folder / '_virtualenv'
         if venv.isdir():
