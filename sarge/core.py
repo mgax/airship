@@ -311,7 +311,10 @@ def run_cmd(sarge, args):
 
 
 def deploy_cmd(sarge, args):
-    deployer.deploy(sarge, args.tarfile, args.procname)
+    try:
+        deployer.deploy(sarge, args.tarfile, args.procname)
+    except deployer.DeployError, e:
+        print "Deployment failed:", e.message
 
 
 def build_args_parser():
