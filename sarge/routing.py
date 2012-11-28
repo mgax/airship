@@ -50,7 +50,8 @@ class Haproxy(object):
         if self.etc_haproxy.isdir():
             return
         (self.etc_haproxy / HAPROXY_FRAGMENTS).makedirs()
-        (self.etc_haproxy / HAPROXY_FRAGMENTS / '0-global').write_text(HAPROXY_GLOBAL)
+        (self.etc_haproxy / HAPROXY_FRAGMENTS / '0-global').write_text(
+            HAPROXY_GLOBAL)
         (self.etc_haproxy / 'haproxy.cfg').write_text(HAPROXY_GLOBAL)
 
     def supervisord_config(self, sarge):
@@ -65,7 +66,8 @@ class Haproxy(object):
         port = bucket.port
         port_bind = self.port_map[proc_name]
         haproxy_route_cfg = HAPROXY_ROUTE.format(**locals())
-        (self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name).write_text(haproxy_route_cfg)
+        (self.etc_haproxy / HAPROXY_FRAGMENTS / proc_name).write_text(
+            haproxy_route_cfg)
         self.update_haproxy()
 
     def remove_bucket(self, bucket):
