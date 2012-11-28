@@ -78,6 +78,9 @@ def download_to(url, parent_folder, fname=None):
     if fname is None:
         fname = filename(url)
     file_path = os.path.join(parent_folder, fname)
+    if os.path.isfile(file_path):
+        print "skipping {file_path}, already downloaded".format(**locals())
+        return
     print "downloading {url} to {file_path}".format(**locals())
     http = urllib.urlopen(url)
     with open(file_path, 'wb') as f:
