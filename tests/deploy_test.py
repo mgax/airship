@@ -34,3 +34,12 @@ class DeployErrorTest(SargeTestCase):
         ]
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to install wheel.")
+
+    def test_pip_requirements_failure_raises_deploy_error(self):
+        self.subprocess.check_call.side_effect = [
+            None,
+            None,
+            self.subprocess.CalledProcessError(3, ''),
+        ]
+        err = self.call_and_expect_failure()
+        self.assertEqual(err.message, "Failed to install requirements.")
