@@ -117,7 +117,7 @@ class Sarge(object):
         etc.mkdir_p()
         self.buckets_db = KV(etc / 'buckets.db', table='bucket')
         self.daemons = Supervisor(etc)
-        self.haproxy = Haproxy(self.home_path, config.get('port_map', {}))
+        self.haproxy = Haproxy(self.home_path, config.get('port_map') or {})
         from routing import configuration_update
         configuration_update.connect(self._haproxy_update, self.haproxy)
 
