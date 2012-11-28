@@ -8,6 +8,10 @@ bucket_setup = blinker.Signal()
 class DeployError(Exception):
     """ Something went wrong during deployment. """
 
+    def __init__(self, bucket, message):
+        super(DeployError, self).__init__(message)
+        self.bucket = bucket
+
 
 def get_procs(bucket):
     with (bucket.folder / 'Procfile').open('rb') as f:
@@ -31,20 +35,20 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
                                    '--distribute', '--never-download',
                                    '--extra-search-dir=' + index_dir])
         except subprocess.CalledProcessError:
-            raise DeployError("Failed to create a virtualenv.")
+            raise DeployError(bucket, "Failed to create a virtualenv.")
 
         try:
             subprocess.check_call([pip, 'install', 'wheel', '--no-index',
                                    '--find-links=file://' + index_dir])
         except subprocess.CalledProcessError:
-            raise DeployError("Failed to install wheel.")
+            raise DeployError(bucket, "Failed to install wheel.")
 
         try:
             subprocess.check_call([pip, 'install', '-r', requirements_file,
                                    '--use-wheel', '--no-index',
                                    '--find-links=file://' + index_dir])
         except subprocess.CalledProcessError:
-            raise DeployError("Failed to install requirements.")
+            raise DeployError(bucket, "Failed to install requirements.")
 
 
 @bucket_setup.connect

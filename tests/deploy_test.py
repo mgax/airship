@@ -26,6 +26,7 @@ class DeployErrorTest(SargeTestCase):
         ]
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to create a virtualenv.")
+        self.assertIs(err.bucket, self.bucket)
 
     def test_pip_wheel_failure_raises_deploy_error(self):
         self.subprocess.check_call.side_effect = [
@@ -34,6 +35,7 @@ class DeployErrorTest(SargeTestCase):
         ]
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to install wheel.")
+        self.assertIs(err.bucket, self.bucket)
 
     def test_pip_requirements_failure_raises_deploy_error(self):
         self.subprocess.check_call.side_effect = [
@@ -43,3 +45,4 @@ class DeployErrorTest(SargeTestCase):
         ]
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to install requirements.")
+        self.assertIs(err.bucket, self.bucket)
