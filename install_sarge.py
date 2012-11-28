@@ -18,6 +18,12 @@ PIP_URL = 'https://github.com/qwcode/pip/zipball/dff849c'  # wheel_install branc
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
+SARGE_CFG_TEMPLATE = """\
+wheel_index_dir: {wheel_index_dir}
+virtualenv_python_bin: {virtualenv_python_bin}
+port_range: {port_range}
+"""
+
 
 def filename(url):
     return url.split('/')[-1]
@@ -44,9 +50,14 @@ def install(sarge_home, python_bin):
     subprocess.check_call([virtualenv_bin / 'pip', 'install', SARGE_PACKAGE])
 
     if not sarge_cfg.isfile():
+        import random
         (sarge_home / 'etc').mkdir_p()
-        sarge_cfg.write_bytes(json.dumps({
-            'wheel_index_dir': sarge_home / dist}))
+        base = random.randint(20, 600) * 100
+        sarge_cfg.write_bytes(SARGE_CFG_TEMPLATE.format(
+            wheel_index_dir=json.dumps(sarge_home / dist),
+            port_range=json.dumps([base + 10, base + 99]),
+            virtualenv_python_bin=json.dumps(sys.executable),
+        ))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
 
     cmd = "{sarge_home}/bin/supervisord".format(**locals())
@@ -67,6 +78,9 @@ def download_to(url, parent_folder, fname=None):
     if fname is None:
         fname = filename(url)
     file_path = os.path.join(parent_folder, fname)
+    if os.path.isfile(file_path):
+        print "skipping {file_path}, already downloaded".format(**locals())
+        return
     print "downloading {url} to {file_path}".format(**locals())
     http = urllib.urlopen(url)
     with open(file_path, 'wb') as f:
