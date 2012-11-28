@@ -128,12 +128,17 @@ class Sarge(object):
             folder.makedirs()
         return folder
 
-    def initialize(self):
-        self.generate_supervisord_configuration()
+    def _haproxy_configure_supervisor(self):
         haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
         haproxy_program.write_text(self.haproxy.supervisord_config(self))
 
+    def initialize(self):
+        self.generate_supervisord_configuration()
+        self._haproxy_configure_supervisor()
+
     def _haproxy_update(self, sender, **extra):
+        self._haproxy_configure_supervisor()
+        self.daemons.ctl(['update'])
         self.daemons.ctl(['restart', 'haproxy'])
 
     def generate_supervisord_configuration(self):
