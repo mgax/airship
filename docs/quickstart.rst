@@ -175,5 +175,36 @@ Now it's time to tweak the configuration file,
 .. _haproxy: http://haproxy.1wt.eu/
 
 
-Deploy with fabric
-------------------
+Deploy the application
+----------------------
+With Sarge, the actual deployment is a one-liner::
+
+    $ git archive HEAD | ssh target /var/local/my_awesome_app/bin/sarge deploy - web
+
+But that's too cryptic, so let's unpack that into separate steps. Some
+are run on `devhost` (our local development machine), some on `target`
+(the deployment server, we connect via ssh).
+
+* Prepare a `tar` archive. If the project is versioned with `git` then
+  you can use `git-archive`. Make sure all changes are committed::
+
+      devhost$ git archive HEAD > app.tar
+
+* Upload the archive to the server. Let's assume it's called `target`.
+
+  ::
+
+      devhost$ scp app.tar target:
+
+* Run `sarge deploy` with the archive and the name of the process to
+  deploy. If we have several process types (`web`, `worker`, etc) then
+  we need to deploy each of them separately.
+
+  ::
+
+      devhost$ ssh target
+      target$ /var/local/my_awesome_app/bin/sarge deploy app.tar web
+
+  This last command outputs a lot of messages about what Sarge is doing
+  (setting up a `virtualenv`, installing dependencies, tearing down old
+  versions, starting up the new one, and reconfiguring `haproxy`).
