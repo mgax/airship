@@ -50,7 +50,7 @@ writing Python applications.
 
     ::
 
-        web: ./app.py $PORT
+        web: python app.py runserver -dr -p $PORT
 
 .. _its Procfile: https://github.com/mgax/sargeapp/blob/master/Procfile
 
