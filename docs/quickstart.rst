@@ -90,6 +90,29 @@ writing Python applications.
         from an environment variable.
 
 
+Local development
+-----------------
+All of the above constraints are intended to simplify deployment. But
+you still need to run the code on the development machine. Luckily this
+is easy, using honcho_ or foreman_. They read the ``Procfile`` and start
+processes defined there, just like Sarge.
+
+.. _honcho: https://github.com/nickstenning/honcho
+.. _foreman: http://ddollar.github.com/foreman/
+
+For local configuration, you can write environment variables in a file
+named ``.env``, it will be loaded into the process environments. It's a
+good idea to ignore this file from version control. Here is an ``.env``
+file for our toy application::
+
+    DEBUG=on
+    MESSAGE=hello honcho!
+
+To start the application locally simply run::
+
+    honcho start
+
+
 Set up Sarge on the server
 --------------------------
 
