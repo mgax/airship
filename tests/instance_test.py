@@ -37,13 +37,6 @@ class BucketTest(SargeTestCase):
         with self.assertRaises(KeyError):
             self.create_sarge().get_bucket('nonesuch')
 
-    def test_new_bucket_configures_daemon_to_stopped(self):
-        sarge = self.create_sarge()
-        sarge.daemons = Mock()
-        bucket = sarge.new_bucket()
-        self.assertEqual(sarge.daemons.configure_bucket_stopped.mock_calls,
-                         [call(bucket)])
-
     def test_start_bucket_configures_daemon_to_running(self):
         sarge = self.create_sarge()
         sarge.daemons = Mock()

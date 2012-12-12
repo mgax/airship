@@ -52,9 +52,6 @@ class Bucket(object):
     def port(self):
         return self.config['port']
 
-    def _new(self):
-        self.sarge.daemons.configure_bucket_stopped(self)
-
     def configure(self):
         self.run_folder.makedirs_p()
 
@@ -216,7 +213,6 @@ class Sarge(object):
             'port': self._allocate_port(bucket_id),
         }
         bucket = self._get_bucket_by_id(bucket_id)
-        bucket._new()
         return bucket
 
     def list_buckets(self):
