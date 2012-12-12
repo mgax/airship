@@ -33,3 +33,9 @@ server. To set up the server quickly, run the `magic installer`_::
 
 .. _this fabfile: https://gist.github.com/4266737
 .. _magic installer: https://github.com/mgax/sarge/blob/master/install_sarge.py
+
+The code and issue tracker are `on GitHub`_ and documentation is hosted
+by `Read the Docs`_.
+
+.. _on GitHub: https://github.com/mgax/sarge
+.. _Read the Docs: https://sarge-deployer.readthedocs.org/
