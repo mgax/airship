@@ -209,6 +209,20 @@ are run on `devhost` (our local development machine), some on `target`
   (setting up a `virtualenv`, installing dependencies, tearing down old
   versions, starting up the new one, and reconfiguring `haproxy`).
 
+* Deployment may fail because of missing dependencies. Sarge expects to
+  find all dependencies in ``$SARGE_HOME/dist`` and will not download
+  anything from network repositories like PyPI_. You can either manually
+  download all distribution files to ``$SARGE_HOME/dist`` or build them
+  as wheels_. Here is a quick way to build a wheel for Flask version 0.9
+  (be sure to match version numbers with the ones in the app's
+  ``requirements.txt``)::
+
+      target$ cd /var/local/my_awesome_app
+      target$ opt/sarge-env/bin/pip wheel -w dist Flask==0.9
+
+.. _PyPI: http://pypi.python.org/pypi/
+.. _wheels: http://wheel.readthedocs.org/
+
 Using fabric
 ~~~~~~~~~~~~
 But you don't want to type all that by hand or remember arcane
