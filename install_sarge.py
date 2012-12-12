@@ -20,7 +20,7 @@ WHEEL_URL = ('http://pypi.python.org/packages/source/'
 
 SARGE_CFG_TEMPLATE = """\
 python_dist: {python_dist}
-virtualenv_python_bin: {virtualenv_python_bin}
+python_interpreter: {python_interpreter}
 port_range: {port_range}
 port_map:
     web: 127.0.0.1:{web_port}
@@ -60,7 +60,7 @@ def install(sarge_home, python_bin):
             python_dist=json.dumps(sarge_home / dist),
             port_range=json.dumps([base + 10, base + 99]),
             web_port=json.dumps(base),
-            virtualenv_python_bin=json.dumps(sys.executable),
+            python_interpreter=json.dumps(sys.executable),
         ))
         subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
 

@@ -29,7 +29,7 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
         venv = bucket.folder / '_virtualenv'
         pip = venv / 'bin' / 'pip'
         virtualenv_py = sarge.home_path / 'dist' / 'virtualenv.py'
-        python = sarge.config.get('virtualenv_python_bin', 'python')
+        python = sarge.config.get('python_interpreter', 'python')
 
         try:
             subprocess.check_call([python, virtualenv_py, venv,
