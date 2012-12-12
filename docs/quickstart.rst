@@ -12,10 +12,10 @@ at `github.com/mgax/sargeapp`_.
 Prepare the application for sarge
 ---------------------------------
 Applications running on sarge need to follow some basic rules. Some are
-inspired from the 12factor methodology, others are common practices when
+inspired from the `12factor methodology`_, others are common practices when
 writing Python applications.
 
-.. _12factor: http://www.12factor.net/
+.. _12factor methodology: http://www.12factor.net/
 
 **configuration**
     Any application needs some amount of configuration: database
