@@ -94,6 +94,15 @@ writing Python applications.
         location is up to you, but it shoud be read by the application
         from an environment variable.
 
+**logging**
+    Write log messages to `stderr` or `stdout`. Sarge captures these
+    streams and writes them to log files. Location of log files
+    shouldn't be the application's concern. Here's a quick way to set up
+    logging in Python::
+
+        import logging
+        logging.basicConfig()
+
 
 Local development
 -----------------
