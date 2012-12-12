@@ -68,6 +68,27 @@ writing Python applications.
 
 .. _virtualenv: http://www.virtualenv.org/
 
+**persistence**
+    The deployment folder is temporary; whenever a new version is
+    deployed, this folder is deleted. Any data that needs to be saved
+    from the application must be saved externally. Here are some
+    examples:
+
+    *database service*
+        A specialised database (e.g. PostgreSQL). The application should
+        read an environment variable to learn how to connect to the
+        database.
+
+    *web api*
+        An API accessed via HTTP (e.g. Amazon S3). The service base URL
+        and any API key or login information should be read from
+        environment variables.
+
+    *persistent folder*
+        A folder on the server outside the deployment folder. The
+        location is up to you, but it shoud be read by the application
+        from an environment variable.
+
 
 Set up Sarge on the server
 --------------------------
