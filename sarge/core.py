@@ -179,7 +179,7 @@ class Sarge(object):
             next_port = ports_db.get('next', start_port)
             if start_port <= next_port <= end_port:
                 queue = chain(xrange(next_port, end_port),
-                              xrange(start_port, next_port-1))
+                              xrange(start_port, next_port - 1))
             else:
                 queue = xrange(start_port, end_port)
             for port in queue:
@@ -315,7 +315,8 @@ def deploy_cmd(sarge, args):
         try:
             e.bucket.destroy()
         except:
-            print "Error while cleaning up failed deployment %s." % bucket.id_
+            print ("Error while cleaning up failed deployment %s."
+                   % e.bucket.id_)
         else:
             print "Cleaned up failed deployment."
 

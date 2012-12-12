@@ -78,5 +78,5 @@ def deploy(sarge, tarfile, procname):
     remove_old_buckets(bucket)
     try:
         bucket.start()
-    except SupervisorError as e:
+    except SupervisorError:
         raise DeployError(bucket, "Failed to start bucket.")
