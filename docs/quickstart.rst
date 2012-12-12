@@ -52,7 +52,12 @@ writing Python applications.
 
         web: python app.py runserver -dr -p $PORT
 
+    It's important that the process does not daemonize, so that
+    `supervisord`, `honcho` and `foreman` can keep track of them. For
+    more information see `the supervisord documentation`_.
+
 .. _its Procfile: https://github.com/mgax/sargeapp/blob/master/Procfile
+.. _the supervisord documentation: http://supervisord.org/subprocess.html#nondaemonizing-of-subprocesses
 
 **dependencies**
     It's customary to list your Python package dependencies in a
