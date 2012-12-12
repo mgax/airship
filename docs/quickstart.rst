@@ -112,6 +112,15 @@ To start the application locally simply run::
 
     honcho start
 
+You can also run arbitrary commands, with the local configuration loaded
+in the environment. For our toy app this command starts an interactive
+shell::
+
+    $ honcho run python app.py shell
+    >>> import os
+    >>> print os.environ['MESSAGE']
+    hello honcho!
+
 
 Set up Sarge on the server
 --------------------------
