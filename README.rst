@@ -20,3 +20,11 @@ app to run in production.
 .. _dev/prod parity: http://www.12factor.net/dev-prod-parity
 .. _foreman: http://ddollar.github.com/foreman/
 .. _honcho: https://github.com/nickstenning/honcho
+
+
+You can use `this fabfile`_ in your project to deploy against a Sarge
+server. To set up the server quickly, run this command::
+
+    python <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
+
+.. _this fabfile: https://gist.github.com/4266737
