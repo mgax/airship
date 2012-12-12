@@ -54,6 +54,20 @@ writing Python applications.
 
 .. _its Procfile: https://github.com/mgax/sargeapp/blob/master/Procfile
 
+**dependencies**
+    It's customary to list your Python package dependencies in a
+    ``requirements.txt`` file. With Sarge this becomes mandatory. The
+    dependencies will be automatically installed in a fresh virtualenv_
+    every time a new version of the app is deployed.
+
+    ::
+
+        Flask==0.9
+        Jinja2==2.6
+        Werkzeug==0.8.3
+
+.. _virtualenv: http://www.virtualenv.org/
+
 
 Set up sarge on the server
 --------------------------
