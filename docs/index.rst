@@ -10,5 +10,6 @@ Contents:
    usage
    environment
    running
+   patterns
    development
    reference
