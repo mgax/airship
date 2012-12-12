@@ -1,5 +1,6 @@
 import subprocess
 import blinker
+from .daemons import SupervisorError
 
 
 bucket_setup = blinker.Signal()
@@ -75,4 +76,7 @@ def deploy(sarge, tarfile, procname):
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
     bucket_setup.send(bucket)
     remove_old_buckets(bucket)
-    bucket.start()
+    try:
+        bucket.start()
+    except SupervisorError as e:
+        raise DeployError(bucket, "Failed to start bucket.")
