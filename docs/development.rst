@@ -1,20 +1,28 @@
 Development
 ===========
-
 To work on Sarge you will need additional libraries. Install them by
 running ``pip install -r requirements-dev.txt``.
 
-Automated tests
----------------
 
-Unit tests are located in the ``tests`` folder. They can be run simply
-by calling `nosetests`.
+Unit tests
+----------
+Sarge has a suite of unit tests that exercise individual bits of the
+implementation. They are located in the ``tests`` folder. Run them using
+nose_::
+
+    $ nosetests
+
+.. _nose: https://nose.readthedocs.org/
+
+
+Integration tests
+-----------------
 
 There is also a suite of integration tests which require a vagrant_
 virtual machine::
 
     $ gem install vagrant
-    $ vagrant box add lucid32 http://files.vagrantup.com/lucid32.box
+    $ vagrant box add precise64 http://files.vagrantup.com/precise64.box
     $ cd $SARGE_REPO/vagrant
     $ vagrant up
 
@@ -25,4 +33,4 @@ Once the vagrant VM starts up, run the tests with nose. They are in the
 accidentally run as part of the unit test suite, therefore you must
 invoke them explicitly::
 
-    $ nosetests vagrant
+    $ nosetests -sx vagrant
