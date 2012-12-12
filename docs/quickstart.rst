@@ -124,6 +124,20 @@ shell::
 
 Set up Sarge on the server
 --------------------------
+Sarge comes with an easy-to-use `installer script`_. Pick a folder
+(let's call it ``$SARGE_HOME``) and run the script; it will:
+
+.. _installer script: https://github.com/mgax/sarge/blob/master/install_sarge.py
+
+* Download dependencies to ``$SARGE_HOME/dist``;
+* Create a virtualenv at ``$SARGE_HOME/opt/sarge-env`` and install the
+  Sarge package;
+* Write a configuration file at ``$SARGE_HOME/etc/sarge.yaml``;
+* Write configuration files for `supervisord` and `haproxy`, these go in
+  ``$SARGE_HOME/etc``;
+* Create scripts in ``$SARGE_HOME/bin``.
+
+There are still some manual steps to go through.
 
 
 Deploy with fabric
