@@ -36,7 +36,7 @@ class SargeTestCase(HandyTestCase):
             with open(cfg_path, 'rb') as f:
                 config.update(json.load(f))
         config['home'] = self.tmp
-        return imp('sarge').Sarge(config)
+        return imp('sarge.core').Sarge(config)
 
     def signal(self, name):
         return imp('sarge.signals')._signals[name]
