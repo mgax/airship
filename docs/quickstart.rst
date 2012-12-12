@@ -282,3 +282,8 @@ Werkzeug
 
 Gunicorn
     http://docs.gunicorn.org/en/latest/deploy.html
+
+Static files are left as an exercise to the reader. They can't be served
+by the web server from the deployment folder because it changes with each
+new version. You could `rsync` them to a fixed location upon deployment,
+or upload them to a CDN service.
