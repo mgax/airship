@@ -208,3 +208,21 @@ are run on `devhost` (our local development machine), some on `target`
   This last command outputs a lot of messages about what Sarge is doing
   (setting up a `virtualenv`, installing dependencies, tearing down old
   versions, starting up the new one, and reconfiguring `haproxy`).
+
+Using fabric
+~~~~~~~~~~~~
+But you don't want to type all that by hand or remember arcane
+incantations. You can use fabric_ to record the process and run it with
+one command: ``fab deploy``.
+
+Just copy `this fabfile`_ to your project. It requires one configuration
+variable, ``TARGET``, which you can specify in your ``.env`` file::
+
+    TARGET=target:/var/local/my_awesome_app
+
+Then run `fabric` with `honcho`::
+
+    devhost$ honcho run fab deploy
+
+.. _fabric: http://docs.fabfile.org/
+.. _this fabfile: https://gist.github.com/4266737
