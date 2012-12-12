@@ -24,6 +24,12 @@ writing Python applications.
     In Python they can be read from `os.environ`_ or by using the env_
     library.
 
+    ::
+
+        import os
+        from peewee import SqliteDatabase
+        db = SqliteDatabase(os.environ['DATABASE'])
+
 .. _environment variables: https://en.wikipedia.org/wiki/Environment_variable
 .. _os.environ: http://docs.python.org/library/os#os.environ
 .. _env: http://pypi.python.org/pypi/env
