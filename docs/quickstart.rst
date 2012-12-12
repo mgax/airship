@@ -188,6 +188,18 @@ Now it's time to tweak the configuration file,
 
 .. _haproxy: http://haproxy.1wt.eu/
 
+Finally we need to start `supervisord`. Start it manually for now::
+
+    $ $SARGE_HOME/bin/supervisord
+
+It's a good idea to have it start up at boot. The installer prints a
+ready-made command which can be written to ``/etc/rc.local``. It's based
+on this pattern, replacing ``$SARGE_HOME`` as explained above, and
+``$USERNAME`` with the name of the user account under which Sarge and
+the application should run::
+
+    su username -c '$SARGE_HOME/bin/supervisord'
+
 
 Deploy the application
 ----------------------
