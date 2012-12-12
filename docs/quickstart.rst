@@ -240,3 +240,19 @@ Then run `fabric` with `honcho`::
 
 .. _fabric: http://docs.fabfile.org/
 .. _this fabfile: https://gist.github.com/4266737
+
+
+Configure a front-end web server
+--------------------------------
+Once deployed, the application will respond to HTTP requests on the port
+set in ``port_map: web:``. Typically you want to set up a web server as
+reverse proxy. Here are some useful guides:
+
+Flask
+    http://flask.pocoo.org/docs/deploying/wsgi-standalone/
+
+Werkzeug
+    http://werkzeug.pocoo.org/docs/deployment/proxying/
+
+Gunicorn
+    http://docs.gunicorn.org/en/latest/deploy.html
