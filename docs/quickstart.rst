@@ -137,7 +137,42 @@ Sarge comes with an easy-to-use `installer script`_. Pick a folder
   ``$SARGE_HOME/etc``;
 * Create scripts in ``$SARGE_HOME/bin``.
 
-There are still some manual steps to go through.
+Now it's time to tweak the configuration file,
+``$SARGE_HOME/etc/sarge.yaml``.
+
+**Port numbers**
+    Sarge needs a port range to allocate to new deployments. It also
+    needs a map of process names and stable port numbers. Upon
+    deployment it configures a `haproxy` to route between the stable
+    port and the deployment's allocated port.
+
+    The installer script generates a random base number for the port
+    range and maps the `web` process name to a stable port. Change this
+    as you need::
+
+        port_range: [5010, 5099]
+        port_map:
+            web: 127.0.0.1:5000
+
+**Environment variables**
+    Configuration for the application is also specified in
+    ``$SARGE_HOME/etc/sarge.yaml`` under ``env``. Write the variables as
+    a YAML dictionary::
+
+        env:
+            MESSAGE: "hello sarge!"
+            DATABASE: "postgresql://user:pw@localhost:5432/db_name"
+
+**Path to haproxy**
+    Sarge needs haproxy_ to route connections from the mapped port
+    numbers to the actual running process for the currently active
+    deployment. Installing `haproxy` is up to you, Sarge just needs to
+    find the binary. By default it looks in ``$PATH``, and if the
+    ``haproxy`` binary is not there, you need to specify it::
+
+        haproxy_bin: "/usr/local/sbin/haproxy"
+
+.. _haproxy: http://haproxy.1wt.eu/
 
 
 Deploy with fabric
