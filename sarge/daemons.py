@@ -4,6 +4,10 @@ import subprocess
 from path import path
 
 
+class SupervisorError(Exception):
+    """ Something went wrong while talking to supervisord. """
+
+
 SUPERVISORD_CFG_TEMPLATE = """\
 [unix_http_server]
 file = %(home_path)s/var/run/supervisor.sock
@@ -83,14 +87,18 @@ class Supervisor(object):
         self._bucket_cfg(bucket_id).unlink_p()
         try:
             self.ctl(['update'])
-        except subprocess.CalledProcessError:
+        except SupervisorError:
             pass  # maybe supervisord is stopped
 
     def ctl(self, cmd_args):
         if os.environ.get('SARGE_NO_SUPERVISORCTL'):
             return
         base_args = [self.ctl_path, '-c', self.config_path]
-        return subprocess.check_call(base_args + cmd_args, stdout=sys.stderr)
+        try:
+            return subprocess.check_call(base_args + cmd_args,
+                                         stdout=sys.stderr)
+        except subprocess.CalledProcessError:
+            raise SupervisorError
 
     def configure_bucket_running(self, bucket):
         self._configure_bucket(bucket, True)

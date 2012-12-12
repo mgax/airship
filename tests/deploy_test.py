@@ -46,3 +46,17 @@ class DeployErrorTest(SargeTestCase):
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to install requirements.")
         self.assertIs(err.bucket, self.bucket)
+
+
+class DaemonErrorTest(SargeTestCase):
+
+    def test_supervisorctl_failure_raises_daemon_error(self):
+        from sarge.daemons import SupervisorError
+        from subprocess import CalledProcessError
+        subprocess = self.patch('sarge.daemons.subprocess')
+        subprocess.CalledProcessError = CalledProcessError
+        subprocess.check_call.side_effect = CalledProcessError(3, '')
+        sarge = self.create_sarge()
+        bucket = sarge.new_bucket()
+        with self.assertRaises(SupervisorError) as err:
+            bucket.start()
