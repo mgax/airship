@@ -224,7 +224,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(4999).text, msg)
 
     def test_requirements_installed_in_virtualenv(self):
-        sarge_yaml = {'wheel_index_dir': env['index-dir']}
+        sarge_yaml = {'python_dist': env['index-dir']}
         put(StringIO(json.dumps(sarge_yaml)),
             str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
 

@@ -25,7 +25,7 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
     sarge = bucket.sarge
     requirements_file = bucket.folder / 'requirements.txt'
     if requirements_file.isfile():
-        index_dir = sarge.config['wheel_index_dir']
+        index_dir = sarge.config['python_dist']
         venv = bucket.folder / '_virtualenv'
         pip = venv / 'bin' / 'pip'
         virtualenv_py = sarge.home_path / 'dist' / 'virtualenv.py'

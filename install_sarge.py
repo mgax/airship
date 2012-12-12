@@ -19,7 +19,7 @@ WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
 SARGE_CFG_TEMPLATE = """\
-wheel_index_dir: {wheel_index_dir}
+python_dist: {python_dist}
 virtualenv_python_bin: {virtualenv_python_bin}
 port_range: {port_range}
 port_map:
@@ -57,7 +57,7 @@ def install(sarge_home, python_bin):
         (sarge_home / 'etc').mkdir_p()
         base = random.randint(20, 600) * 100
         sarge_cfg.write_bytes(SARGE_CFG_TEMPLATE.format(
-            wheel_index_dir=json.dumps(sarge_home / dist),
+            python_dist=json.dumps(sarge_home / dist),
             port_range=json.dumps([base + 10, base + 99]),
             web_port=json.dumps(base),
             virtualenv_python_bin=json.dumps(sys.executable),

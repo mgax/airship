@@ -9,7 +9,7 @@ class DeployErrorTest(SargeTestCase):
         self.subprocess = self.patch('sarge.deployer.subprocess')
         self.subprocess.CalledProcessError = CalledProcessError
         self.bucket = Mock(folder=self.tmp)
-        self.bucket.sarge.config = {'wheel_index_dir': self.tmp}
+        self.bucket.sarge.config = {'python_dist': self.tmp}
         self.bucket.sarge.home_path = self.tmp
         (self.tmp / 'requirements.txt').write_text("")
 
