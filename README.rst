@@ -22,6 +22,10 @@ app to run in production.
 .. _honcho: https://github.com/nickstenning/honcho
 
 
+See the Quickstart_ to get a feel for the deployment process.
+
+.. _Quickstart: https://sarge-deployer.readthedocs.org/en/latest/quickstart.html
+
 You can use `this fabfile`_ in your project to deploy against a Sarge
 server. To set up the server quickly, run this command::
 
