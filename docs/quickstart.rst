@@ -9,9 +9,9 @@ at `github.com/mgax/sargeapp`_.
 .. _Flask: http://flask.pocoo.org/
 
 
-Prepare the application for sarge
+Prepare the application for Sarge
 ---------------------------------
-Applications running on sarge need to follow some basic rules. Some are
+Applications running on Sarge need to follow some basic rules. Some are
 inspired from the `12factor methodology`_, others are common practices when
 writing Python applications.
 
@@ -69,7 +69,7 @@ writing Python applications.
 .. _virtualenv: http://www.virtualenv.org/
 
 
-Set up sarge on the server
+Set up Sarge on the server
 --------------------------
 
 
