@@ -1,5 +1,5 @@
 """ Sarge automated installation script
-usage: python <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
+usage: python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
 """
 
 import os

@@ -22,9 +22,14 @@ app to run in production.
 .. _honcho: https://github.com/nickstenning/honcho
 
 
-You can use `this fabfile`_ in your project to deploy against a Sarge
-server. To set up the server quickly, run this command::
+See the Quickstart_ to get a feel for the deployment process.
 
-    python <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
+.. _Quickstart: https://sarge-deployer.readthedocs.org/en/latest/quickstart.html
+
+You can use `this fabfile`_ in your project to deploy against a Sarge
+server. To set up the server quickly, run the `magic installer`_::
+
+    python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
 
 .. _this fabfile: https://gist.github.com/4266737
+.. _magic installer: https://github.com/mgax/sarge/blob/master/install_sarge.py
