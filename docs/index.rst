@@ -7,9 +7,6 @@ Contents:
    :maxdepth: 2
 
    quickstart
-   usage
-   environment
-   running
    patterns
    development
    reference
