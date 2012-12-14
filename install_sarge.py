@@ -15,7 +15,7 @@ PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'
                   'd/distribute/distribute-0.6.32.tar.gz')
-PIP_URL = 'https://github.com/qwcode/pip/zipball/dff849c'  # wheel_install branch
+PIP_URL = 'https://github.com/qwcode/pip/tarball/53bbdf5'  # wheel_install branch
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     download_to(PATH_PY_URL, dist)
     download_to(VIRTUALENV_URL, dist)
     download_to(DISTRIBUTE_URL, dist)
-    download_to(PIP_URL, dist, 'pip-1.2.1.post1.zip')
+    download_to(PIP_URL, dist, 'pip-1.2.1.post1-2012-11-28.tar.gz')
     download_to(WHEEL_URL, dist)
 
     sys.path[0:0] = [dist]
