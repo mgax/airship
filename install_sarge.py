@@ -10,6 +10,7 @@ import json
 
 
 SARGE_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
+SARGE_GIT = 'git+https://github.com/mgax/sarge.git#egg=Sarge'
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'
@@ -32,7 +33,7 @@ def filename(url):
     return url.split('/')[-1]
 
 
-def install(sarge_home, python_bin):
+def install(sarge_home, python_bin, devel):
     username = os.popen('whoami').read().strip()
     virtualenv_path = sarge_home / 'opt' / 'sarge-venv'
     virtualenv_bin = virtualenv_path / 'bin'
@@ -49,8 +50,13 @@ def install(sarge_home, python_bin):
         subprocess.check_call([virtualenv_bin / 'pip', 'install',
                                sarge_home / 'dist' / filename(WHEEL_URL)])
 
-    print "installing sarge ..."
-    subprocess.check_call([virtualenv_bin / 'pip', 'install', SARGE_PACKAGE])
+    if devel:
+        print "installing sarge in development mode ..."
+        sarge_req = ['-e', SARGE_GIT]
+    else:
+        print "installing sarge ..."
+        sarge_req = [SARGE_PACKAGE]
+    subprocess.check_call([virtualenv_bin / 'pip', 'install'] + sarge_req)
 
     if not sarge_cfg.isfile():
         import random
@@ -98,6 +104,11 @@ if __name__ == '__main__':
     if not os.path.isdir(dist):
         os.makedirs(dist)
 
+    if len(sys.argv) > 2 and sys.argv[2] == '-e':
+        devel = True
+    else:
+        devel = False
+
     download_to(PATH_PY_URL, dist)
     download_to(VIRTUALENV_URL, dist)
     download_to(DISTRIBUTE_URL, dist)
@@ -106,4 +117,4 @@ if __name__ == '__main__':
 
     sys.path[0:0] = [dist]
     from path import path
-    install(path(sarge_home), sys.executable)
+    install(path(sarge_home), sys.executable, devel)
