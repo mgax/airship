@@ -35,3 +35,18 @@ a list of the libraries installed in the virtualenv, and update
 ``requirements.txt`` with the missing entries.
 
 .. _pip: http://www.pip-installer.org/
+
+
+Configure the application
+-------------------------
+The application receives configuration via environment variables, but
+how do we set them?  For local development we create a file called
+``.env``:
+
+.. code-block:: bash
+
+    DEBUG=on
+    SECRET_KEY=asdf
+    DATABASE=sqlite:///db.sqlite
+
+This file will be picked up by Honcho when it runs our application.
