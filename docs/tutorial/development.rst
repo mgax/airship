@@ -50,3 +50,25 @@ how do we set them?  For local development we create a file called
     DATABASE=sqlite:///db.sqlite
 
 This file will be picked up by Honcho when it runs our application.
+
+
+Run with Honcho
+---------------
+Now we can finally run our application.  It's a simple command::
+
+    $ honcho start
+
+Honcho will read ``Procfile``, ``.env``, and run the command listed as
+``web``, which starts a local server, on port 5000 by default.  Honcho
+has a number of options, it can use different ports, or start more than
+one process (or none at all) for each process type.
+
+But how do we create our database table?  Remember that's a separate
+command, ``syncdb``.  It needs the configuration because that's how it
+knows where to find the database.  Luckily Honcho has us covered with
+its ``run`` subcommand::
+
+    $ honcho run python cloudlist.py syncdb
+
+Everything after ``run`` is executed as a shell command, after setting
+the environment variables from ``.env``.
