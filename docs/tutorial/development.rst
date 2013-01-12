@@ -16,3 +16,22 @@ project to install its libraries.  The rest of this tutorial assumes you
 have created and activated a virtualenv.
 
 .. _virtualenv: http://virtualenv.org/
+
+
+Install dependencies
+--------------------
+Each virtualenv comes with pip_ which we're going to use for installing
+our application's dependencies::
+
+    $ pip install -r requirements.txt
+
+We also install the development tools which we're going to use a bit
+later::
+
+    $ pip install -r requirements-dev.txt
+
+Whenever you add a dependency to the project, run ``pip freeze`` to get
+a list of the libraries installed in the virtualenv, and update
+``requirements.txt`` with the missing entries.
+
+.. _pip: http://www.pip-installer.org/
