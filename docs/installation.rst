@@ -24,3 +24,23 @@ run this command, but make sure it runs with the correct user; the
 installation message gives the right incantation.
 
 .. _installer script: https://github.com/mgax/sarge/blob/master/install_sarge.py
+
+
+Manually
+--------
+If you don't like magic scripts then you can install Sarge by hand.
+
+0. Choose a "home" folder.  This is where applications are deployed,
+   configuration files live, and log files are written.  We'll call it
+   ``$SARGE_HOME`` below.
+1. Create and activate a virtualenv.
+2. Install sarge and dependencies:
+   ``pip install https://github.com/mgax/sarge/tarball/master``.
+3. Create a configuration file in ``$SARGE_HOME/etc/sarge.yaml``.
+   (**TODO**: describe what the configuration file should look like.)
+4. Run ``sarge $SARGE_HOME init``. This creates some more files and
+   folders in ``$SARGE_HOME/etc``, a logfile folder in
+   ``$SARGE_HOME/var/log``, and convenience wrappers for some commands
+   in ``$SARGE_HOME/bin``.
+5. Start ``$SARGE_HOME/bin/supervisord`` and make sure it starts at
+   system boot.
