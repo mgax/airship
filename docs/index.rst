@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 2
 
    quickstart
+   tutorial/index
    patterns
    development
    reference
