@@ -1,3 +1,5 @@
+.. _tutorial-application:
+
 The application
 ===============
 
@@ -128,3 +130,39 @@ ninja.
 .. code-block:: bash
 
     web: python cloudlist.py runserver -p $PORT
+
+
+There's a lot going on here so let's break it up into pieces.
+
+We read options from environment variables.  That's how Sarge is going
+to provide configuration to our application, and, conveniently, that's
+how you can provide configuration when running on your own computer.
+The `Entry` model provides a good excuse to set up a database. Nowhere
+in the application do we actually specify what database to use, it's
+configured via the ``DATABASE`` environment variable.
+
+The application has a couple of views, so we can see it working.  They
+just provide CRUD for our model.  (Well, almost, since there's no
+"update" action.)  After "create" and "delete" a `flash message`_ is
+set.  The messages are stored in the browser session, and to have
+working sessions, we need to set a random value for ``SECRET_KEY``.
+
+`The pip documentation says`_ it's a good idea to list the application's
+dependencies in a ``requirements.txt`` file.  Sarge needs this file so
+it can install the dependencies during deployment.
+``requirements-dev.txt`` is completely ignored by Sarge, the intention
+is to install it manually in your development environment.  It provides
+development tools: Honcho (runs the application) and Fabric (for
+deploying to Sarge).
+
+Instead of just running the application (``app.run()``), we use
+Flask-Script_, so we can implement a `syncdb` command, which creates the
+`entry` database table.  The ``Procfile`` lists an application's process
+types.  Ours has just one process type, the web service, and our
+procfile describes how the process should be started.  In particular it
+tells the app to listen on the port number provided by the environment.
+
+
+.. _flash message: http://flask.pocoo.org/docs/patterns/flashing/
+.. _The pip documentation says: http://www.pip-installer.org/en/latest/requirements.html
+.. _Flask-Script: http://flask-script.readthedocs.org/
