@@ -72,3 +72,28 @@ its ``run`` subcommand::
 
 Everything after ``run`` is executed as a shell command, after setting
 the environment variables from ``.env``.
+
+
+Source control
+--------------
+Most likely you use a source control system for your project.  If not,
+you should seriously consider using one.  For this tutorial we're going
+to use git_.
+
+.. _git: http://git-scm.com/
+
+
+Not all files belong in the code repository.  Python bytecode files
+(with the ``pyc`` extension) are generated when the code is run and
+differ from one Python version to another.  My configuration is
+different from yours so it makes no sense to commit ``.env``.  So the
+repository should include a ``.gitignore`` file that contains at least
+these lines::
+
+    .env
+    *.pyc
+
+Dependencies also don't belong, they can be installed on each system
+based on the requirements files. So if the virtualenv is inside the
+project folder, be sure to create a ``.gitignore`` file inside it, with
+the contents ``*``, which means "ignore all the files in this folder".
