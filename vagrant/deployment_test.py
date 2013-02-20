@@ -26,7 +26,7 @@ PACKAGE_FILENAMES = [
 ]
 VAGRANT_HOME = path('/home/vagrant')
 
-env['sarge-home'] = path('/var/local/sarge-test')
+env['sarge-home'] = path('/var/local/airship-test')
 env['sarge-src'] = '/sarge-src'
 env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
 env['index-url'] = 'file://' + env['index-dir']
