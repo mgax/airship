@@ -35,7 +35,7 @@ def filename(url):
 
 def install(sarge_home, python_bin, devel):
     username = os.popen('whoami').read().strip()
-    virtualenv_path = sarge_home / 'opt' / 'sarge-venv'
+    virtualenv_path = sarge_home / 'opt' / 'airship-venv'
     virtualenv_bin = virtualenv_path / 'bin'
     sarge_cfg = sarge_home / 'etc' / 'airship.yaml'
     virtualenv_path.makedirs_p()
