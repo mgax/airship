@@ -60,7 +60,7 @@ def install_sarge():
             "--use-wheel --no-index --find-links={index-url} "
             "-e {sarge-src}"
             .format(**env))
-        run("opt/sarge-venv/bin/sarge . init")
+        run("opt/sarge-venv/bin/airship . init")
 
 
 def setUpModule(self):

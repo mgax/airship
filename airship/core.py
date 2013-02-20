@@ -234,7 +234,7 @@ def load_plugins():
 
 
 SARGE_SCRIPT = """#!/bin/bash
-exec '{prefix}/bin/sarge' '{home}' "$@"
+exec '{prefix}/bin/airship' '{home}' "$@"
 """
 
 SUPERVISORD_SCRIPT = """#!/bin/bash

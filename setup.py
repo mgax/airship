@@ -10,5 +10,5 @@ distutils.core.setup(
     version='0.3-dev',
     packages=['airship'],
     install_requires=dependencies,
-    entry_points={'console_scripts': ['sarge = airship.core:main']},
+    entry_points={'console_scripts': ['airship = airship.core:main']},
 )

@@ -68,7 +68,7 @@ def install(sarge_home, python_bin, devel):
             web_port=json.dumps(base),
             python_interpreter=json.dumps(sys.executable),
         ))
-        subprocess.check_call([virtualenv_bin / 'sarge', sarge_home, 'init'])
+        subprocess.check_call([virtualenv_bin / 'airship', sarge_home, 'init'])
 
     cmd = "{sarge_home}/bin/supervisord".format(**locals())
     fullcmd = "su {username} -c '{cmd}'".format(**locals())
