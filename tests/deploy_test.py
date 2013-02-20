@@ -6,7 +6,7 @@ class DeployErrorTest(SargeTestCase):
 
     def setUp(self):
         from subprocess import CalledProcessError
-        self.subprocess = self.patch('sarge.deployer.subprocess')
+        self.subprocess = self.patch('airship.deployer.subprocess')
         self.subprocess.CalledProcessError = CalledProcessError
         self.bucket = Mock(folder=self.tmp)
         self.bucket.sarge.config = {'python_dist': self.tmp}
@@ -14,8 +14,8 @@ class DeployErrorTest(SargeTestCase):
         (self.tmp / 'requirements.txt').write_text("")
 
     def call_and_expect_failure(self):
-        from sarge.deployer import (set_up_virtualenv_and_requirements,
-                                    DeployError)
+        from airship.deployer import (set_up_virtualenv_and_requirements,
+                                      DeployError)
         with self.assertRaises(DeployError) as e:
             set_up_virtualenv_and_requirements(self.bucket)
         return e.exception
@@ -51,9 +51,9 @@ class DeployErrorTest(SargeTestCase):
 class DaemonErrorTest(SargeTestCase):
 
     def test_supervisorctl_failure_raises_daemon_error(self):
-        from sarge.daemons import SupervisorError
+        from airship.daemons import SupervisorError
         from subprocess import CalledProcessError
-        subprocess = self.patch('sarge.daemons.subprocess')
+        subprocess = self.patch('airship.daemons.subprocess')
         subprocess.CalledProcessError = CalledProcessError
         subprocess.check_call.side_effect = CalledProcessError(3, '')
         sarge = self.create_sarge()

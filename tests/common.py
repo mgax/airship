@@ -36,12 +36,12 @@ class SargeTestCase(HandyTestCase):
             with open(cfg_path, 'rb') as f:
                 config.update(json.load(f))
         config['home'] = self.tmp
-        return imp('sarge.core').Sarge(config)
+        return imp('airship.core').Sarge(config)
 
     def signal(self, name):
-        return imp('sarge.signals')._signals[name]
+        return imp('airship.signals')._signals[name]
 
     def _pre_setup(self):
         super(SargeTestCase, self)._pre_setup()
         (self.tmp / 'etc').mkdir()
-        self.mock_subprocess = self.patch('sarge.daemons.subprocess')
+        self.mock_subprocess = self.patch('airship.daemons.subprocess')

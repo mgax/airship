@@ -21,7 +21,7 @@ class ShellTest(SargeTestCase):
         cfg_path = self.tmp / 'etc' / 'sarge.yaml'
         cfg_path.write_text('{}')
         bin_path = self.tmp / 'sargebin'
-        bin_path.write_text('#!{0}\nfrom sarge.core import main\nmain()\n'
+        bin_path.write_text('#!{0}\nfrom airship.core import main\nmain()\n'
                             .format(sys.executable))
         bin_path.chmod(0755)
 
@@ -48,7 +48,7 @@ class ShellTest(SargeTestCase):
         self.assertEqual(directory, (self.tmp / bucket_id).realpath())
 
     def test_shell_loads_rc_file(self):
-        from sarge.core import RUN_RC_NAME
+        from airship.core import RUN_RC_NAME
         bucket_id = self.sargebin('new', '{}').strip()
         (self.tmp / bucket_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
         out = self.sargebin('run', bucket_id, "echo $MYVAR").strip()

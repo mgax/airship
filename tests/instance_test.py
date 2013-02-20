@@ -71,7 +71,7 @@ class BucketTest(SargeTestCase):
 
     def test_unlucky_bucket_id_generator_gives_up(self):
         sarge = self.create_sarge()
-        with patch('sarge.core.random') as random:
+        with patch('airship.core.random') as random:
             random.choice.return_value = 'z'
             sarge.new_bucket()
             with self.assertRaises(RuntimeError):
@@ -190,7 +190,7 @@ class BucketListingTest(SargeTestCase):
 class BucketRunTest(SargeTestCase):
 
     def setUp(self):
-        self.os = self.patch('sarge.core.os')
+        self.os = self.patch('airship.core.os')
         self.os.environ = {}
         self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
 

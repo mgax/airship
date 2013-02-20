@@ -40,7 +40,7 @@ class HaproxyConfigurationTest(SargeTestCase):
         self.assertEqual(get_routes(cfg_file.text()), {})
 
     def test_haproxy_reconfiguration_triggers_haproxy_restart(self):
-        with patch('sarge.daemons.Supervisor.ctl') as ctl:
+        with patch('airship.daemons.Supervisor.ctl') as ctl:
             sarge = self.create_sarge({'port_map': {'testy': '*:8743'}})
             bucket = sarge.new_bucket({'application_name': 'testy'})
             bucket.start()

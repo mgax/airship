@@ -32,7 +32,7 @@ def config_file_checker(cfg_path):
 class SupervisorConfigurationTest(SargeTestCase):
 
     def setUp(self):
-        self.mock_supervisorctl = self.patch('sarge.daemons.Supervisor.ctl')
+        self.mock_supervisorctl = self.patch('airship.daemons.Supervisor.ctl')
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
         self.create_sarge().generate_supervisord_configuration()
