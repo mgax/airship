@@ -3,10 +3,10 @@ from StringIO import StringIO
 import json
 from path import path
 from mock import Mock, patch, call
-from common import SargeTestCase, imp
+from common import AirshipTestCase, imp
 
 
-class ShellTest(SargeTestCase):
+class ShellTest(AirshipTestCase):
 
     def setUp(self):
         (self.tmp / 'etc' / 'airship.yaml').write_text('{}')

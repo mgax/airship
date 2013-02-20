@@ -3,7 +3,7 @@ import sys
 import subprocess
 from path import path
 from mock import patch, call
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
 src_dir = path(__file__).parent.parent
@@ -15,7 +15,7 @@ def setUpModule():
         raise SkipTest
 
 
-class ShellTest(SargeTestCase):
+class ShellTest(AirshipTestCase):
 
     def setUp(self):
         cfg_path = self.tmp / 'etc' / 'airship.yaml'

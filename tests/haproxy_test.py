@@ -1,5 +1,5 @@
 from mock import patch, call
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
 def get_routes(haproxy_cfg):
@@ -13,7 +13,7 @@ def get_routes(haproxy_cfg):
     return routes
 
 
-class HaproxyConfigurationTest(SargeTestCase):
+class HaproxyConfigurationTest(AirshipTestCase):
 
     def test_with_no_buckets_we_have_empty_configuration_file(self):
         sarge = self.create_sarge()

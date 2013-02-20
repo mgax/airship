@@ -1,8 +1,8 @@
 from mock import Mock, patch
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
-class DeployErrorTest(SargeTestCase):
+class DeployErrorTest(AirshipTestCase):
 
     def setUp(self):
         from subprocess import CalledProcessError
@@ -48,7 +48,7 @@ class DeployErrorTest(SargeTestCase):
         self.assertIs(err.bucket, self.bucket)
 
 
-class DaemonErrorTest(SargeTestCase):
+class DaemonErrorTest(AirshipTestCase):
 
     def test_supervisorctl_failure_raises_daemon_error(self):
         from airship.daemons import SupervisorError

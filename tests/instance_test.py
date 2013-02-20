@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from mock import Mock, patch, call
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
 class ProgramsRecorder(object):
@@ -14,7 +14,7 @@ class ProgramsRecorder(object):
                               for name, p in programs])
 
 
-class BucketTest(SargeTestCase):
+class BucketTest(AirshipTestCase):
 
     def test_new_bucket_creates_bucket_folder(self):
         sarge = self.create_sarge()
@@ -96,7 +96,7 @@ class BucketTest(SargeTestCase):
         self.assertTrue(bucket.id_.startswith('testy-'))
 
 
-class BucketPortAllocationTest(SargeTestCase):
+class BucketPortAllocationTest(AirshipTestCase):
 
     def test_new_bucket_allocates_port(self):
         sarge = self.create_sarge()
@@ -157,7 +157,7 @@ class BucketPortAllocationTest(SargeTestCase):
         self.assertEqual(b2.port, 5000)
 
 
-class BucketListingTest(SargeTestCase):
+class BucketListingTest(AirshipTestCase):
 
     def test_listing_with_no_buckets_returns_empty_list(self):
         sarge = self.create_sarge()
@@ -187,7 +187,7 @@ class BucketListingTest(SargeTestCase):
         self.assertEqual(bucket_data['port'], bucket.port)
 
 
-class BucketRunTest(SargeTestCase):
+class BucketRunTest(AirshipTestCase):
 
     def setUp(self):
         self.os = self.patch('airship.core.os')

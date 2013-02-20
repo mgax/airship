@@ -1,8 +1,8 @@
 from mock import Mock, patch, call
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
-class PluginTest(SargeTestCase):
+class PluginTest(AirshipTestCase):
 
     @patch('airship.core.pkg_resources')
     def test_plugin_function_called(self, pkg_resources):

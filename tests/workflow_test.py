@@ -1,7 +1,7 @@
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
-class WorkflowTest(SargeTestCase):
+class WorkflowTest(AirshipTestCase):
 
     def setUp(self):
         self.bucket = self.create_sarge().new_bucket()

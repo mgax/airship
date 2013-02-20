@@ -2,7 +2,7 @@ import sys
 import ConfigParser
 from path import path
 from mock import call, ANY
-from common import SargeTestCase
+from common import AirshipTestCase
 
 
 def read_config(cfg_path):
@@ -29,7 +29,7 @@ def config_file_checker(cfg_path):
     return eq_config
 
 
-class SupervisorConfigurationTest(SargeTestCase):
+class SupervisorConfigurationTest(AirshipTestCase):
 
     def setUp(self):
         self.mock_supervisorctl = self.patch('airship.daemons.Supervisor.ctl')
@@ -123,7 +123,7 @@ class SupervisorConfigurationTest(SargeTestCase):
         self.assertFalse(cfg_path.isfile())
 
 
-class SupervisorInvocationTest(SargeTestCase):
+class SupervisorInvocationTest(AirshipTestCase):
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
