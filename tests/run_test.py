@@ -29,7 +29,9 @@ class ShellTest(SargeTestCase):
         argv = ['./sargebin', '.'] + list(args)
         stdin = kwargs.pop('stdin', '')
         assert not kwargs
-        env = dict(os.environ, PYTHONPATH=src_dir, SARGE_NO_SUPERVISORCTL='y')
+        env = dict(os.environ,
+                   PYTHONPATH=src_dir,
+                   AIRSHIP_NO_SUPERVISORCTL='y')
         p = subprocess.Popen(argv, cwd=self.tmp,
                              env=env,
                              stdin=subprocess.PIPE,
