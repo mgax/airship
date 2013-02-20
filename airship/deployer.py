@@ -22,14 +22,14 @@ def get_procs(bucket):
 
 @bucket_setup.connect
 def set_up_virtualenv_and_requirements(bucket, **extra):
-    sarge = bucket.sarge
+    airship = bucket.airship
     requirements_file = bucket.folder / 'requirements.txt'
     if requirements_file.isfile():
-        index_dir = sarge.config['python_dist']
+        index_dir = airship.config['python_dist']
         venv = bucket.folder / '_virtualenv'
         pip = venv / 'bin' / 'pip'
-        virtualenv_py = sarge.home_path / 'dist' / 'virtualenv.py'
-        python = sarge.config.get('python_interpreter', 'python')
+        virtualenv_py = airship.home_path / 'dist' / 'virtualenv.py'
+        python = airship.config.get('python_interpreter', 'python')
 
         try:
             subprocess.check_call([python, virtualenv_py, venv,
@@ -62,17 +62,17 @@ def set_up_script(bucket):
 
 
 def remove_old_buckets(bucket):
-    sarge = bucket.sarge
+    airship = bucket.airship
     procname = bucket.meta['APPLICATION_NAME']
-    for bucket_info in sarge.list_buckets()['buckets']:
+    for bucket_info in airship.list_buckets()['buckets']:
         if bucket_info['meta']['APPLICATION_NAME'] == procname:
             if bucket_info['id'] == bucket.id_:
                 continue
-            sarge.get_bucket(bucket_info['id']).destroy()
+            airship.get_bucket(bucket_info['id']).destroy()
 
 
-def deploy(sarge, tarfile, procname):
-    bucket = sarge.new_bucket({'application_name': procname})
+def deploy(airship, tarfile, procname):
+    bucket = airship.new_bucket({'application_name': procname})
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
     bucket_setup.send(bucket)
     remove_old_buckets(bucket)

@@ -13,7 +13,7 @@ class WorkflowTest(SargeTestCase):
     def test_bucket_destroy_removes_bucket_folder_and_run(self):
         self.bucket.start()
         bucket_folder = self.bucket.folder
-        sarge = self.bucket.sarge
+        sarge = self.bucket.airship
         run_folder = self.bucket.run_folder
 
         self.assertTrue(bucket_folder.isdir())

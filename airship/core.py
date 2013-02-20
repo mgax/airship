@@ -35,12 +35,12 @@ def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
 
 class Bucket(object):
 
-    def __init__(self, id_, sarge, config):
+    def __init__(self, id_, airship, config):
         self.id_ = id_
-        self.sarge = sarge
+        self.airship = airship
         self.config = config
-        self.folder = self.sarge._bucket_folder(id_)
-        var = self.sarge.home_path / 'var'
+        self.folder = self.airship._bucket_folder(id_)
+        var = self.airship.home_path / 'var'
         self.run_folder = var / 'run' / id_
         self.log_path = var / 'log' / (self.id_ + '.log')
 
@@ -58,29 +58,29 @@ class Bucket(object):
     def start(self):
         log.info("Activating bucket %r", self.id_)
         self.configure()
-        self.sarge.daemons.configure_bucket_running(self)
-        self.sarge.haproxy.configure_bucket(self)
+        self.airship.daemons.configure_bucket_running(self)
+        self.airship.haproxy.configure_bucket(self)
 
     def stop(self):
-        self.sarge.haproxy.remove_bucket(self)
-        self.sarge.daemons.configure_bucket_stopped(self)
+        self.airship.haproxy.remove_bucket(self)
+        self.airship.daemons.configure_bucket_stopped(self)
 
     def trigger(self):
-        self.sarge.daemons.trigger_bucket(self)
+        self.airship.daemons.trigger_bucket(self)
 
     def destroy(self):
-        self.sarge.daemons.remove_bucket(self.id_)
+        self.airship.daemons.remove_bucket(self.id_)
         if self.run_folder.isdir():
             self.run_folder.rmtree()
         if self.folder.isdir():
             self.folder.rmtree()
-        self.sarge.buckets_db.pop(self.id_, None)
-        self.sarge._free_port(self)
+        self.airship.buckets_db.pop(self.id_, None)
+        self.airship._free_port(self)
 
     def run(self, command):
         os.chdir(self.folder)
         environ = dict(os.environ)
-        environ.update(self.sarge.config.get('env') or {})
+        environ.update(self.airship.config.get('env') or {})
         environ['PORT'] = str(self.port)
         venv = self.folder / '_virtualenv'
         if venv.isdir():
@@ -95,8 +95,8 @@ class Bucket(object):
 
 
 class Airship(object):
-    """ The sarge object implements most operations performed by sarge. It acts
-    as container for deployments.
+    """ The airship object implements most operations performed by airship. It
+    acts as container for deployments.
     """
 
     def __init__(self, config):
@@ -233,7 +233,7 @@ def load_plugins():
         callback()
 
 
-SARGE_SCRIPT = """#!/bin/bash
+AIRSHIP_SCRIPT = """#!/bin/bash
 exec '{prefix}/bin/airship' '{home}' "$@"
 """
 
@@ -246,70 +246,70 @@ exec '{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
 """
 
 
-def init_cmd(sarge, args):
-    log.info("Initializing sarge folder at %r.", sarge.home_path)
-    sarge_yaml_path = sarge.home_path / 'etc' / 'airship.yaml'
-    if not sarge_yaml_path.isfile():
-        with sarge_yaml_path.open('wb') as f:
+def init_cmd(airship, args):
+    log.info("Initializing airship folder at %r.", airship.home_path)
+    airship_yaml_path = airship.home_path / 'etc' / 'airship.yaml'
+    if not airship_yaml_path.isfile():
+        with airship_yaml_path.open('wb') as f:
             f.write('{"port_range": [5000, 5100]}\n')
-    (sarge.home_path / 'var').mkdir_p()
-    (sarge.home_path / 'var' / 'log').mkdir_p()
-    (sarge.home_path / 'var' / 'run').mkdir_p()
-    sarge.initialize()
+    (airship.home_path / 'var').mkdir_p()
+    (airship.home_path / 'var' / 'log').mkdir_p()
+    (airship.home_path / 'var' / 'run').mkdir_p()
+    airship.initialize()
 
-    sarge_bin = sarge.home_path / 'bin'
-    sarge_bin.makedirs()
+    airship_bin = airship.home_path / 'bin'
+    airship_bin.makedirs()
 
-    kw = {'home': sarge.home_path, 'prefix': sys.prefix}
+    kw = {'home': airship.home_path, 'prefix': sys.prefix}
 
-    with open(sarge_bin / 'airship', 'wb') as f:
-        f.write(SARGE_SCRIPT.format(**kw))
+    with open(airship_bin / 'airship', 'wb') as f:
+        f.write(AIRSHIP_SCRIPT.format(**kw))
         path(f.name).chmod(0755)
 
-    with open(sarge_bin / 'supervisord', 'wb') as f:
+    with open(airship_bin / 'supervisord', 'wb') as f:
         f.write(SUPERVISORD_SCRIPT.format(**kw))
         path(f.name).chmod(0755)
 
-    with open(sarge_bin / 'supervisorctl', 'wb') as f:
+    with open(airship_bin / 'supervisorctl', 'wb') as f:
         f.write(SUPERVISORCTL_SCRIPT.format(**kw))
         path(f.name).chmod(0755)
 
 
-def new_cmd(sarge, args):
-    print sarge.new_bucket(json.loads(args.config)).id_
+def new_cmd(airship, args):
+    print airship.new_bucket(json.loads(args.config)).id_
 
 
-def list_cmd(sarge, args):
-    print json.dumps(sarge.list_buckets(), indent=2)
+def list_cmd(airship, args):
+    print json.dumps(airship.list_buckets(), indent=2)
 
 
-def configure_cmd(sarge, args):
-    sarge.get_bucket(args.id).configure()
+def configure_cmd(airship, args):
+    airship.get_bucket(args.id).configure()
 
 
-def start_cmd(sarge, args):
-    sarge.get_bucket(args.id).start()
+def start_cmd(airship, args):
+    airship.get_bucket(args.id).start()
 
 
-def stop_cmd(sarge, args):
-    sarge.get_bucket(args.id).stop()
+def stop_cmd(airship, args):
+    airship.get_bucket(args.id).stop()
 
 
-def trigger_cmd(sarge, args):
-    sarge.get_bucket(args.id).trigger()
+def trigger_cmd(airship, args):
+    airship.get_bucket(args.id).trigger()
 
 
-def destroy_cmd(sarge, args):
-    sarge.get_bucket(args.id).destroy()
+def destroy_cmd(airship, args):
+    airship.get_bucket(args.id).destroy()
 
 
-def run_cmd(sarge, args):
-    sarge.get_bucket(args.id).run(args.command)
+def run_cmd(airship, args):
+    airship.get_bucket(args.id).run(args.command)
 
 
-def deploy_cmd(sarge, args):
+def deploy_cmd(airship, args):
     try:
-        deployer.deploy(sarge, args.tarfile, args.procname)
+        deployer.deploy(airship, args.tarfile, args.procname)
     except deployer.DeployError, e:
         print "Deployment failed:", e.message
         try:
@@ -324,7 +324,7 @@ def deploy_cmd(sarge, args):
 def build_args_parser():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('sarge_home')
+    parser.add_argument('airship_home')
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
@@ -359,10 +359,10 @@ def build_args_parser():
     return parser
 
 
-def set_up_logging(sarge_home):
-    log_folder = sarge_home / 'var' / 'log'
+def set_up_logging(airship_home):
+    log_folder = airship_home / 'var' / 'log'
     log_folder.makedirs_p()
-    handler = logging.FileHandler(log_folder / 'sarge.log')
+    handler = logging.FileHandler(log_folder / 'airship.log')
     log_format = "%(asctime)s %(levelname)s:%(name)s %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
     handler.setLevel(logging.DEBUG)
@@ -373,17 +373,17 @@ def main(raw_arguments=None):
     load_plugins()
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments or sys.argv[1:])
-    sarge_home = path(args.sarge_home).abspath()
-    set_up_logging(sarge_home)
-    sarge_yaml_path = sarge_home / 'etc' / 'airship.yaml'
-    if sarge_yaml_path.isfile():
-        with sarge_yaml_path.open('rb') as f:
+    airship_home = path(args.airship_home).abspath()
+    set_up_logging(airship_home)
+    airship_yaml_path = airship_home / 'etc' / 'airship.yaml'
+    if airship_yaml_path.isfile():
+        with airship_yaml_path.open('rb') as f:
             config = yaml.load(f)
     else:
         config = {}
-    config['home'] = sarge_home
-    sarge = Airship(config)
-    args.func(sarge, args)
+    config['home'] = airship_home
+    airship = Airship(config)
+    args.func(airship, args)
 
 
 if __name__ == '__main__':

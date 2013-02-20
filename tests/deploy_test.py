@@ -9,8 +9,8 @@ class DeployErrorTest(SargeTestCase):
         self.subprocess = self.patch('airship.deployer.subprocess')
         self.subprocess.CalledProcessError = CalledProcessError
         self.bucket = Mock(folder=self.tmp)
-        self.bucket.sarge.config = {'python_dist': self.tmp}
-        self.bucket.sarge.home_path = self.tmp
+        self.bucket.airship.config = {'python_dist': self.tmp}
+        self.bucket.airship.home_path = self.tmp
         (self.tmp / 'requirements.txt').write_text("")
 
     def call_and_expect_failure(self):
