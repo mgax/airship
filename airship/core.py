@@ -228,7 +228,7 @@ class Airship(object):
 
 
 def load_plugins():
-    for entry_point in pkg_resources.iter_entry_points('sarge_plugins'):
+    for entry_point in pkg_resources.iter_entry_points('airship_plugins'):
         callback = entry_point.load()
         callback()
 
