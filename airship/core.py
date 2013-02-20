@@ -262,7 +262,7 @@ def init_cmd(sarge, args):
 
     kw = {'home': sarge.home_path, 'prefix': sys.prefix}
 
-    with open(sarge_bin / 'sarge', 'wb') as f:
+    with open(sarge_bin / 'airship', 'wb') as f:
         f.write(SARGE_SCRIPT.format(**kw))
         path(f.name).chmod(0755)
 

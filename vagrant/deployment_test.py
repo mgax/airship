@@ -114,7 +114,7 @@ def tar_maker():
 
 
 def get_buckets():
-    json_list = run('{sarge-home}/bin/sarge list'.format(**env))
+    json_list = run('{sarge-home}/bin/airship list'.format(**env))
     return json.loads(json_list)['buckets']
 
 
@@ -134,7 +134,7 @@ def get_from_port(port):
 def deploy(tar_file, proc_name):
     with cd(env['sarge-home']):
         put(tar_file, '_app.tar')
-        run('bin/sarge deploy _app.tar {proc_name}'
+        run('bin/airship deploy _app.tar {proc_name}'
             .format(proc_name=proc_name))
         run('rm _app.tar')
 
@@ -148,7 +148,7 @@ class DeploymentTest(unittest.TestCase):
         run("echo '{{}}' > {sarge-home}/etc/airship.yaml".format(**env))
 
     def add_bucket_cleanup(self, proc_name):
-        self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
+        self.addCleanup(run, ('{sarge-home}/bin/airship destroy {proc_name}'
                               .format(proc_name=proc_name, **env)))
 
     def test_deploy_sarge_bucket_answers_to_http(self):

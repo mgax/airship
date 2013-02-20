@@ -40,7 +40,7 @@ startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 autorestart = false
-command = bin/sarge run %(bucket_id)s ./_run_process
+command = bin/airship run %(bucket_id)s ./_run_process
 """
 
 

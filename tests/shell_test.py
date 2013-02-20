@@ -75,7 +75,7 @@ class ShellTest(SargeTestCase):
         expected = ['bin', 'etc', 'var']
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertItemsEqual([f.name for f in (other_tmp / 'bin').listdir()],
-                              ['sarge', 'supervisord', 'supervisorctl'])
+                              ['airship', 'supervisord', 'supervisorctl'])
         sarge_yaml_path = other_tmp / 'etc' / 'airship.yaml'
         self.assertTrue(sarge_yaml_path.isfile())
         self.assertIsNotNone(json.loads(sarge_yaml_path.text()))
