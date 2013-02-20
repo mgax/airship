@@ -94,7 +94,7 @@ class Bucket(object):
         os.execve(shell_args[0], shell_args, environ)
 
 
-class Sarge(object):
+class Airship(object):
     """ The sarge object implements most operations performed by sarge. It acts
     as container for deployments.
     """
@@ -382,7 +382,7 @@ def main(raw_arguments=None):
     else:
         config = {}
     config['home'] = sarge_home
-    sarge = Sarge(config)
+    sarge = Airship(config)
     args.func(sarge, args)
 
 

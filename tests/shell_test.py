@@ -11,7 +11,7 @@ class ShellTest(SargeTestCase):
     def setUp(self):
         (self.tmp / 'etc' / 'sarge.yaml').write_text('{}')
 
-    @patch('airship.core.Sarge.new_bucket')
+    @patch('airship.core.Airship.new_bucket')
     def test_new_bucket_calls_api_and_returns_path(self, new_bucket):
         new_bucket.return_value = Mock(id_="bucket-id")
         with patch('sys.stdout', StringIO()) as stdout:
@@ -56,7 +56,7 @@ class ShellTest(SargeTestCase):
         imp('airship.core').main([str(self.tmp), 'run', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 
-    @patch('airship.core.Sarge.list_buckets')
+    @patch('airship.core.Airship.list_buckets')
     def test_destroy_bucket_calls_api_method(self, list_buckets):
         data = {'some': ['json', 'data']}
         list_buckets.return_value = data
