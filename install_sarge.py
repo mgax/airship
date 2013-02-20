@@ -9,8 +9,8 @@ import urllib
 import json
 
 
-SARGE_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
-SARGE_GIT = 'git+https://github.com/mgax/sarge.git#egg=Sarge'
+AIRSHIP_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
+AIRSHIP_GIT = 'git+https://github.com/mgax/sarge.git#egg=Sarge'
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'
@@ -19,7 +19,7 @@ PIP_URL = 'https://github.com/qwcode/pip/tarball/53bbdf5'  # wheel_install branc
 WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
-SARGE_CFG_TEMPLATE = """\
+AIRSHIP_CFG_TEMPLATE = """\
 python_dist: {python_dist}
 python_interpreter: {python_interpreter}
 port_range: {port_range}
@@ -33,44 +33,45 @@ def filename(url):
     return url.split('/')[-1]
 
 
-def install(sarge_home, python_bin, devel):
+def install(airship_home, python_bin, devel):
     username = os.popen('whoami').read().strip()
-    virtualenv_path = sarge_home / 'opt' / 'airship-venv'
+    virtualenv_path = airship_home / 'opt' / 'airship-venv'
     virtualenv_bin = virtualenv_path / 'bin'
-    sarge_cfg = sarge_home / 'etc' / 'airship.yaml'
+    airship_cfg = airship_home / 'etc' / 'airship.yaml'
     virtualenv_path.makedirs_p()
 
     if not (virtualenv_bin / 'python').isfile():
         import virtualenv
         print "creating virtualenv in {virtualenv_path} ...".format(**locals())
         virtualenv.create_environment(virtualenv_path,
-                                      search_dirs=[sarge_home / 'dist'],
+                                      search_dirs=[airship_home / 'dist'],
                                       use_distribute=True,
                                       never_download=True)
         subprocess.check_call([virtualenv_bin / 'pip', 'install',
-                               sarge_home / 'dist' / filename(WHEEL_URL)])
+                               airship_home / 'dist' / filename(WHEEL_URL)])
 
     if devel:
-        print "installing sarge in development mode ..."
-        sarge_req = ['-e', SARGE_GIT]
+        print "installing airship in development mode ..."
+        airship_req = ['-e', AIRSHIP_GIT]
     else:
-        print "installing sarge ..."
-        sarge_req = [SARGE_PACKAGE]
-    subprocess.check_call([virtualenv_bin / 'pip', 'install'] + sarge_req)
+        print "installing airship ..."
+        airship_req = [AIRSHIP_PACKAGE]
+    subprocess.check_call([virtualenv_bin / 'pip', 'install'] + airship_req)
 
-    if not sarge_cfg.isfile():
+    if not airship_cfg.isfile():
         import random
-        (sarge_home / 'etc').mkdir_p()
+        (airship_home / 'etc').mkdir_p()
         base = random.randint(20, 600) * 100
-        sarge_cfg.write_bytes(SARGE_CFG_TEMPLATE.format(
-            python_dist=json.dumps(sarge_home / dist),
+        airship_cfg.write_bytes(AIRSHIP_CFG_TEMPLATE.format(
+            python_dist=json.dumps(airship_home / dist),
             port_range=json.dumps([base + 10, base + 99]),
             web_port=json.dumps(base),
             python_interpreter=json.dumps(sys.executable),
         ))
-        subprocess.check_call([virtualenv_bin / 'airship', sarge_home, 'init'])
+        subprocess.check_call([virtualenv_bin / 'airship',
+                               airship_home, 'init'])
 
-    cmd = "{sarge_home}/bin/supervisord".format(**locals())
+    cmd = "{airship_home}/bin/supervisord".format(**locals())
     fullcmd = "su {username} -c '{cmd}'".format(**locals())
 
     print
@@ -99,8 +100,8 @@ def download_to(url, parent_folder, fname=None):
 
 
 if __name__ == '__main__':
-    sarge_home = os.path.abspath(sys.argv[1])
-    dist = os.path.join(sarge_home, 'dist')
+    airship_home = os.path.abspath(sys.argv[1])
+    dist = os.path.join(airship_home, 'dist')
     if not os.path.isdir(dist):
         os.makedirs(dist)
 
@@ -117,4 +118,4 @@ if __name__ == '__main__':
 
     sys.path[0:0] = [dist]
     from path import path
-    install(path(sarge_home), sys.executable, devel)
+    install(path(airship_home), sys.executable, devel)
