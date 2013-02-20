@@ -9,7 +9,7 @@ from common import SargeTestCase, imp
 class ShellTest(SargeTestCase):
 
     def setUp(self):
-        (self.tmp / 'etc' / 'sarge.yaml').write_text('{}')
+        (self.tmp / 'etc' / 'airship.yaml').write_text('{}')
 
     @patch('airship.core.Airship.new_bucket')
     def test_new_bucket_calls_api_and_returns_path(self, new_bucket):
@@ -76,6 +76,6 @@ class ShellTest(SargeTestCase):
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertItemsEqual([f.name for f in (other_tmp / 'bin').listdir()],
                               ['sarge', 'supervisord', 'supervisorctl'])
-        sarge_yaml_path = other_tmp / 'etc' / 'sarge.yaml'
+        sarge_yaml_path = other_tmp / 'etc' / 'airship.yaml'
         self.assertTrue(sarge_yaml_path.isfile())
         self.assertIsNotNone(json.loads(sarge_yaml_path.text()))

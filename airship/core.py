@@ -248,7 +248,7 @@ exec '{prefix}/bin/supervisorctl' -c '{home}/etc/supervisor.conf' $@
 
 def init_cmd(sarge, args):
     log.info("Initializing sarge folder at %r.", sarge.home_path)
-    sarge_yaml_path = sarge.home_path / 'etc' / 'sarge.yaml'
+    sarge_yaml_path = sarge.home_path / 'etc' / 'airship.yaml'
     if not sarge_yaml_path.isfile():
         with sarge_yaml_path.open('wb') as f:
             f.write('{"port_range": [5000, 5100]}\n')
@@ -375,7 +375,7 @@ def main(raw_arguments=None):
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     sarge_home = path(args.sarge_home).abspath()
     set_up_logging(sarge_home)
-    sarge_yaml_path = sarge_home / 'etc' / 'sarge.yaml'
+    sarge_yaml_path = sarge_home / 'etc' / 'airship.yaml'
     if sarge_yaml_path.isfile():
         with sarge_yaml_path.open('rb') as f:
             config = yaml.load(f)

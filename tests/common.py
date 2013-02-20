@@ -31,7 +31,7 @@ class SargeTestCase(HandyTestCase):
     def create_sarge(self, config=None):
         if config is None:
             config = {}
-        cfg_path = self.tmp / 'etc' / 'sarge.yaml'
+        cfg_path = self.tmp / 'etc' / 'airship.yaml'
         if cfg_path.isfile():
             with open(cfg_path, 'rb') as f:
                 config.update(json.load(f))

@@ -18,7 +18,7 @@ def setUpModule():
 class ShellTest(SargeTestCase):
 
     def setUp(self):
-        cfg_path = self.tmp / 'etc' / 'sarge.yaml'
+        cfg_path = self.tmp / 'etc' / 'airship.yaml'
         cfg_path.write_text('{}')
         bin_path = self.tmp / 'sargebin'
         bin_path.write_text('#!{0}\nfrom airship.core import main\nmain()\n'

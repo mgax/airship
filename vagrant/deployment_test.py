@@ -145,7 +145,7 @@ class DeploymentTest(unittest.TestCase):
         run("{sarge-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
-        run("echo '{{}}' > {sarge-home}/etc/sarge.yaml".format(**env))
+        run("echo '{{}}' > {sarge-home}/etc/airship.yaml".format(**env))
 
     def add_bucket_cleanup(self, proc_name):
         self.addCleanup(run, ('{sarge-home}/bin/sarge destroy {proc_name}'
@@ -205,7 +205,7 @@ class DeploymentTest(unittest.TestCase):
 
         sarge_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
         put(StringIO(json.dumps(sarge_yaml)),
-            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
+            str(env['sarge-home'] / 'etc' / 'airship.yaml'))
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
@@ -225,7 +225,7 @@ class DeploymentTest(unittest.TestCase):
     def test_requirements_installed_in_virtualenv(self):
         sarge_yaml = {'python_dist': env['index-dir']}
         put(StringIO(json.dumps(sarge_yaml)),
-            str(env['sarge-home'] / 'etc' / 'sarge.yaml'))
+            str(env['sarge-home'] / 'etc' / 'airship.yaml'))
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(
