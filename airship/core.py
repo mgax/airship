@@ -11,7 +11,6 @@ import yaml
 from kv import KV
 import pkg_resources
 from .daemons import Supervisor
-from .routing import Haproxy
 from . import deployer
 
 
@@ -59,10 +58,8 @@ class Bucket(object):
         log.info("Activating bucket %r", self.id_)
         self.configure()
         self.airship.daemons.configure_bucket_running(self)
-        self.airship.haproxy.configure_bucket(self)
 
     def stop(self):
-        self.airship.haproxy.remove_bucket(self)
         self.airship.daemons.configure_bucket_stopped(self)
 
     def trigger(self):
@@ -106,9 +103,6 @@ class Airship(object):
         etc.mkdir_p()
         self.buckets_db = KV(etc / 'buckets.db', table='bucket')
         self.daemons = Supervisor(etc)
-        self.haproxy = Haproxy(self.home_path, config.get('port_map') or {})
-        from routing import configuration_update
-        configuration_update.connect(self._haproxy_update, self.haproxy)
 
     @property
     def cfg_links_folder(self):
@@ -117,18 +111,8 @@ class Airship(object):
             folder.makedirs()
         return folder
 
-    def _haproxy_configure_supervisor(self):
-        haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
-        haproxy_program.write_text(self.haproxy.supervisord_config(self))
-
     def initialize(self):
         self.generate_supervisord_configuration()
-        self._haproxy_configure_supervisor()
-
-    def _haproxy_update(self, sender, **extra):
-        self._haproxy_configure_supervisor()
-        self.daemons.ctl(['update'])
-        self.daemons.ctl(['restart', 'haproxy'])
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
