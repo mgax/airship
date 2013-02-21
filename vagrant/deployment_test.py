@@ -136,6 +136,10 @@ def deploy(tar_file, proc_name):
             .format(proc_name=proc_name))
         run('rm _app.tar')
 
+def configure_airship(config):
+    put(StringIO(json.dumps(config)),
+        str(env['airship-home'] / 'etc' / 'airship.yaml'))
+
 
 class DeploymentTest(unittest.TestCase):
 
@@ -143,7 +147,7 @@ class DeploymentTest(unittest.TestCase):
         run("{airship-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{airship-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
-        run("echo '{{}}' > {airship-home}/etc/airship.yaml".format(**env))
+        configure_airship({'port_map': {'web': '5016'}})
 
     def add_bucket_cleanup(self, proc_name):
         self.addCleanup(run, ('{airship-home}/bin/airship destroy {proc_name}'
@@ -162,7 +166,7 @@ class DeploymentTest(unittest.TestCase):
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
 
-    def test_deploy_new_version_answers_on_different_port(self):
+    def test_deploy_new_version_answers_on_same_port(self):
         msg = "hello airship!"
 
         with tar_maker() as (tmp, tar_file):
@@ -177,11 +181,13 @@ class DeploymentTest(unittest.TestCase):
             deploy(tar_file, 'web')
             port2 = get_port('web')
 
-        self.assertNotEqual(port1, port2)
+        self.assertEqual(port1, port2)
         self.assertEqual(get_from_port(port2).text, msg)
 
     def test_deploy_non_web_process_does_not_clobber_web_process(self):
         msg = "hello airship!"
+
+        configure_airship({'port_map': {'web': '4998', 'otherweb': '4999'}})
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
@@ -198,12 +204,10 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(get_port('web')).text, msg)
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
 
-    def test_apps_answer_on_configured_haproxy_ports(self):
+    def test_apps_answer_on_configured_ports(self):
         msg = "hello airship!"
 
-        airship_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
-        put(StringIO(json.dumps(airship_yaml)),
-            str(env['airship-home'] / 'etc' / 'airship.yaml'))
+        configure_airship({'port_map': {'web': '4998', 'otherweb': '4999'}})
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
@@ -221,9 +225,10 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(4999).text, msg)
 
     def test_requirements_installed_in_virtualenv(self):
-        airship_yaml = {'python_dist': env['index-dir']}
-        put(StringIO(json.dumps(airship_yaml)),
-            str(env['airship-home'] / 'etc' / 'airship.yaml'))
+        configure_airship({
+            'python_dist': env['index-dir'],
+            'port_map': {'web': '5016'},
+        })
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(
