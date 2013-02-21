@@ -24,7 +24,7 @@ python_dist: {python_dist}
 python_interpreter: {python_interpreter}
 port_range: {port_range}
 port_map:
-    web: 127.0.0.1:{web_port}
+    web: {web_port}
 env:
 """
 

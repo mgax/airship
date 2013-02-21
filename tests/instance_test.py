@@ -96,65 +96,17 @@ class BucketTest(AirshipTestCase):
         self.assertTrue(bucket.id_.startswith('testy-'))
 
 
-class BucketPortAllocationTest(AirshipTestCase):
+class PortConfigurationTest(AirshipTestCase):
 
-    def test_new_bucket_allocates_port(self):
+    def test_new_bucket_allocates_no_port(self):
         airship = self.create_airship()
         bucket = airship.new_bucket()
-        self.assertTrue(1024 <= bucket.port < 65536)
+        self.assertIsNone(bucket.port)
 
-    def test_new_buckets_have_different_ports(self):
-        airship = self.create_airship()
-        bucket1 = airship.new_bucket()
-        bucket2 = airship.new_bucket()
-        self.assertNotEqual(bucket1.port, bucket2.port)
-
-    def test_destroyed_buckets_free_their_ports(self):
-        airship = self.create_airship()
-        bucket1 = airship.new_bucket()
-        bucket2 = airship.new_bucket()
-        allocated = lambda: set(airship._open_ports_db()) - set(['next'])
-        self.assertItemsEqual(allocated(), [bucket1.port, bucket2.port])
-        bucket1.destroy()
-        self.assertItemsEqual(allocated(), [bucket2.port])
-
-    def test_ports_allocated_sequentially_even_after_bucket_destroyed(self):
-        airship = self.create_airship()
-        bucket1 = airship.new_bucket()
-        bucket2 = airship.new_bucket()
-        bucket1.destroy()
-        bucket3 = airship.new_bucket()
-        self.assertEqual(bucket3.port, bucket2.port + 1)
-
-    def test_port_allocation_wraps_when_it_reaches_interval_end(self):
-        airship = self.create_airship({'port_range': [5000, 5009]})
-        i0_i1 = [airship.new_bucket() for c in range(2)]
-        i2_i7 = [airship.new_bucket() for c in range(6)]
-        for bucket in i0_i1:
-            bucket.destroy()
-        i8_i9 = [airship.new_bucket() for c in range(2)]
-        for bucket in i8_i9:
-            bucket.destroy()
-        i10_i13 = [airship.new_bucket() for c in range(4)]
-        self.assertEqual([i.port for i in i10_i13],
-                         [5000, 5001, 5008, 5009])
-        self.assertRaises(RuntimeError, airship.new_bucket)  # no more ports
-
-    def test_port_allocation_shifts_in_range_if_next_port_is_too_low(self):
-        airship1 = self.create_airship({'port_range': [5000, 5009]})
-        b1 = airship1.new_bucket()
-        self.assertEqual(b1.port, 5000)
-        airship2 = self.create_airship({'port_range': [6000, 6009]})
-        b2 = airship2.new_bucket()
-        self.assertEqual(b2.port, 6000)
-
-    def test_port_allocation_shifts_in_range_if_next_port_is_too_high(self):
-        airship1 = self.create_airship({'port_range': [6000, 6009]})
-        b1 = airship1.new_bucket()
-        self.assertEqual(b1.port, 6000)
-        airship2 = self.create_airship({'port_range': [5000, 5009]})
-        b2 = airship2.new_bucket()
-        self.assertEqual(b2.port, 5000)
+    def test_bucket_allocates_port_from_config_file(self):
+        airship = self.create_airship({'port_map': {'testy': 3516}})
+        bucket = airship.new_bucket({'application_name': 'testy'})
+        self.assertEqual(bucket.port, 3516)
 
 
 class BucketListingTest(AirshipTestCase):
