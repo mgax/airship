@@ -9,6 +9,6 @@ Vagrant::Config.run do |config|
 
   config.vm.provision :shell, :path => "provision.sh"
 
-  config.vm.share_folder "sarge-repo", "/sarge-src", "../"
+  config.vm.share_folder "airship-repo", "/airship-src", "../"
 
 end

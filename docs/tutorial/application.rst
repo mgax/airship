@@ -134,11 +134,11 @@ ninja.
 
 There's a lot going on here so let's break it up into pieces.
 
-We read options from environment variables.  That's how Sarge is going
+We read options from environment variables.  That's how Airship is going
 to provide configuration to our application, and, conveniently, that's
-how you can provide configuration when running on your own computer.
-The `Entry` model provides a good excuse to set up a database. Nowhere
-in the application do we actually specify what database to use, it's
+how you can provide configuration when running on your own computer. The
+`Entry` model provides a good excuse to set up a database. Nowhere in
+the application do we actually specify what database to use, it's
 configured via the ``DATABASE`` environment variable.
 
 The application has a couple of views, so we can see it working.  They
@@ -148,12 +148,12 @@ set.  The messages are stored in the browser session, and to have
 working sessions, we need to set a random value for ``SECRET_KEY``.
 
 `The pip documentation says`_ it's a good idea to list the application's
-dependencies in a ``requirements.txt`` file.  Sarge needs this file so
+dependencies in a ``requirements.txt`` file.  Airship needs this file so
 it can install the dependencies during deployment.
-``requirements-dev.txt`` is completely ignored by Sarge, the intention
+``requirements-dev.txt`` is completely ignored by Airship, the intention
 is to install it manually in your development environment.  It provides
 development tools: Honcho (runs the application) and Fabric (for
-deploying to Sarge).
+deploying to Airship).
 
 Instead of just running the application (``app.run()``), we use
 Flask-Script_, so we can implement a `syncdb` command, which creates the

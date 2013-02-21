@@ -3,8 +3,9 @@
 Development
 ===========
 You probably want to work on the application on your own computer, with
-a local database, and running on a local port.  Sarge is for deployment,
-but the same conventions used for Sarge can be used locally.
+a local database, and running on a local port.  Airship is for
+deployment, but the same conventions used for Airship can be used
+locally.
 
 
 Virtualenv

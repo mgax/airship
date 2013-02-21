@@ -6,9 +6,9 @@ if sys.version_info < (2, 7):
     dependencies += ['importlib', 'argparse']
 
 distutils.core.setup(
-    name='Sarge',
-    version='0.2-dev',
-    packages=['sarge'],
+    name='Airship',
+    version='0.3-dev',
+    packages=['airship'],
     install_requires=dependencies,
-    entry_points={'console_scripts': ['sarge = sarge.core:main']},
+    entry_points={'console_scripts': ['airship = airship.core:main']},
 )

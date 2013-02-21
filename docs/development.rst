@@ -1,12 +1,12 @@
 Development
 ===========
-To work on Sarge you will need additional libraries. Install them by
+To work on Airship you will need additional libraries. Install them by
 running ``pip install -r requirements-dev.txt``.
 
 
 Unit tests
 ----------
-Sarge has a suite of unit tests that exercise individual bits of the
+Airship has a suite of unit tests that exercise individual bits of the
 implementation. They are located in the ``tests`` folder. Run them using
 nose_::
 
@@ -23,7 +23,7 @@ virtual machine::
 
     $ gem install vagrant
     $ vagrant box add precise64 http://files.vagrantup.com/precise64.box
-    $ cd $SARGE_REPO/vagrant
+    $ cd $AIRSHIP_REPO/vagrant
     $ vagrant up
 
 .. _vagrant: http://vagrantup.com/

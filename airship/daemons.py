@@ -40,7 +40,7 @@ startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 autorestart = false
-command = bin/sarge run %(bucket_id)s ./_run_process
+command = bin/airship run %(bucket_id)s ./_run_process
 """
 
 
@@ -91,7 +91,7 @@ class Supervisor(object):
             pass  # maybe supervisord is stopped
 
     def ctl(self, cmd_args):
-        if os.environ.get('SARGE_NO_SUPERVISORCTL'):
+        if os.environ.get('AIRSHIP_NO_SUPERVISORCTL'):
             return
         base_args = [self.ctl_path, '-c', self.config_path]
         try:

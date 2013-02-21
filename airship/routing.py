@@ -6,11 +6,11 @@ configuration_update = blinker.Signal()
 SUPERVISORD_HAPROXY = """\
 [program:haproxy]
 redirect_stderr = true
-stdout_logfile = {sarge_home}/var/log/haproxy.log
+stdout_logfile = {airship_home}/var/log/haproxy.log
 startsecs = 1
 startretries = 1
 autostart = true
-command = {haproxy_bin} -f {sarge_home}/etc/haproxy/haproxy.cfg
+command = {haproxy_bin} -f {airship_home}/etc/haproxy/haproxy.cfg
 """
 
 
@@ -37,14 +37,14 @@ HAPROXY_FRAGMENTS = 'fragments'
 
 class Haproxy(object):
 
-    def __init__(self, sarge_home, port_map):
-        self.sarge_home = sarge_home
+    def __init__(self, airship_home, port_map):
+        self.airship_home = airship_home
         self.port_map = port_map
         self._initialize()
 
     @property
     def etc_haproxy(self):
-        return self.sarge_home / 'etc' / 'haproxy'
+        return self.airship_home / 'etc' / 'haproxy'
 
     def _initialize(self):
         if self.etc_haproxy.isdir():
@@ -54,10 +54,10 @@ class Haproxy(object):
             HAPROXY_GLOBAL)
         (self.etc_haproxy / 'haproxy.cfg').write_text(HAPROXY_GLOBAL)
 
-    def supervisord_config(self, sarge):
-        haproxy_bin = sarge.config.get('haproxy_bin', 'haproxy')
+    def supervisord_config(self, airship):
+        haproxy_bin = airship.config.get('haproxy_bin', 'haproxy')
         return SUPERVISORD_HAPROXY.format(haproxy_bin=haproxy_bin,
-                                          sarge_home=self.sarge_home)
+                                          airship_home=self.airship_home)
 
     def configure_bucket(self, bucket):
         proc_name = bucket.meta.get('APPLICATION_NAME')

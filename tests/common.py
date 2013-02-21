@@ -26,22 +26,22 @@ class HandyTestCase(unittest.TestCase):
         super(HandyTestCase, self).__call__(result)
 
 
-class SargeTestCase(HandyTestCase):
+class AirshipTestCase(HandyTestCase):
 
-    def create_sarge(self, config=None):
+    def create_airship(self, config=None):
         if config is None:
             config = {}
-        cfg_path = self.tmp / 'etc' / 'sarge.yaml'
+        cfg_path = self.tmp / 'etc' / 'airship.yaml'
         if cfg_path.isfile():
             with open(cfg_path, 'rb') as f:
                 config.update(json.load(f))
         config['home'] = self.tmp
-        return imp('sarge.core').Sarge(config)
+        return imp('airship.core').Airship(config)
 
     def signal(self, name):
-        return imp('sarge.signals')._signals[name]
+        return imp('airship.signals')._signals[name]
 
     def _pre_setup(self):
-        super(SargeTestCase, self)._pre_setup()
+        super(AirshipTestCase, self)._pre_setup()
         (self.tmp / 'etc').mkdir()
-        self.mock_subprocess = self.patch('sarge.daemons.subprocess')
+        self.mock_subprocess = self.patch('airship.daemons.subprocess')
