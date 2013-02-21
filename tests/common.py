@@ -28,7 +28,7 @@ class HandyTestCase(unittest.TestCase):
 
 class AirshipTestCase(HandyTestCase):
 
-    def create_sarge(self, config=None):
+    def create_airship(self, config=None):
         if config is None:
             config = {}
         cfg_path = self.tmp / 'etc' / 'airship.yaml'

@@ -26,8 +26,8 @@ PACKAGE_FILENAMES = [
 ]
 VAGRANT_HOME = path('/home/vagrant')
 
-env['sarge-home'] = path('/var/local/airship-test')
-env['sarge-src'] = '/sarge-src'
+env['airship-home'] = path('/var/local/airship-test')
+env['airship-src'] = '/airship-src'
 env['index-dir'] = VAGRANT_HOME / 'virtualenv-dist'
 env['index-url'] = 'file://' + env['index-dir']
 
@@ -39,36 +39,34 @@ def update_index_dir():
             if not exists(name):
                 run("curl -O {url}".format(url=WEB_INDEX_URL + name))
 
-SARGE_REPO = path(__file__).parent.parent
 
-
-def install_sarge():
-    sudo("mkdir {sarge-home}".format(**env))
-    with cd(env['sarge-home']):
+def install_airship():
+    sudo("mkdir {airship-home}".format(**env))
+    with cd(env['airship-home']):
         sudo("chown vagrant: .")
         run("mkdir opt")
         run("mkdir dist")
         run("cp {index-dir}/virtualenv.py dist/".format(**env))
         run("python dist/virtualenv.py --distribute "
             "--extra-search-dir={index-dir} --never-download "
-            "opt/sarge-venv"
+            "opt/airship-venv"
             .format(**env))
-        run("opt/sarge-venv/bin/pip install wheel "
+        run("opt/airship-venv/bin/pip install wheel "
             "--no-index --find-links={index-url} "
             .format(**env))
-        run("opt/sarge-venv/bin/pip install "
+        run("opt/airship-venv/bin/pip install "
             "--use-wheel --no-index --find-links={index-url} "
-            "-e {sarge-src}"
+            "-e {airship-src}"
             .format(**env))
-        run("opt/sarge-venv/bin/airship . init")
+        run("opt/airship-venv/bin/airship . init")
 
 
 def setUpModule(self):
     env['key_filename'] = path(__file__).parent / 'vagrant_id_rsa'
     env['host_string'] = 'vagrant@192.168.13.13'
     update_index_dir()
-    if not exists(env['sarge-home']):
-        install_sarge()
+    if not exists(env['airship-home']):
+        install_airship()
 
 
 def tearDownModule(self):
@@ -114,7 +112,7 @@ def tar_maker():
 
 
 def get_buckets():
-    json_list = run('{sarge-home}/bin/airship list'.format(**env))
+    json_list = run('{airship-home}/bin/airship list'.format(**env))
     return json.loads(json_list)['buckets']
 
 
@@ -132,7 +130,7 @@ def get_from_port(port):
 
 
 def deploy(tar_file, proc_name):
-    with cd(env['sarge-home']):
+    with cd(env['airship-home']):
         put(tar_file, '_app.tar')
         run('bin/airship deploy _app.tar {proc_name}'
             .format(proc_name=proc_name))
@@ -142,36 +140,36 @@ def deploy(tar_file, proc_name):
 class DeploymentTest(unittest.TestCase):
 
     def setUp(self):
-        run("{sarge-home}/bin/supervisord".format(**env), pty=False)
-        _shutdown = "{sarge-home}/bin/supervisorctl shutdown".format(**env)
+        run("{airship-home}/bin/supervisord".format(**env), pty=False)
+        _shutdown = "{airship-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
-        run("echo '{{}}' > {sarge-home}/etc/airship.yaml".format(**env))
+        run("echo '{{}}' > {airship-home}/etc/airship.yaml".format(**env))
 
     def add_bucket_cleanup(self, proc_name):
-        self.addCleanup(run, ('{sarge-home}/bin/airship destroy {proc_name}'
+        self.addCleanup(run, ('{airship-home}/bin/airship destroy {proc_name}'
                               .format(proc_name=proc_name, **env)))
 
-    def test_deploy_sarge_bucket_answers_to_http(self):
-        msg = "hello sarge!"
+    def test_deploy_airship_bucket_answers_to_http(self):
+        msg = "hello airship!"
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        with cd(env['sarge-home']):
+        with cd(env['airship-home']):
             deploy(tar_file, 'web')
             self.add_bucket_cleanup('web')
 
         self.assertEqual(get_from_port(get_port('web')).text, msg)
 
     def test_deploy_new_version_answers_on_different_port(self):
-        msg = "hello sarge!"
+        msg = "hello airship!"
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
-        with cd(env['sarge-home']):
+        with cd(env['airship-home']):
             deploy(tar_file, 'web')
             self.add_bucket_cleanup('web')
             port1 = get_port('web')
@@ -183,14 +181,14 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(port2).text, msg)
 
     def test_deploy_non_web_process_does_not_clobber_web_process(self):
-        msg = "hello sarge!"
+        msg = "hello airship!"
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n"
                                           "otherweb: python theapp.py\n")
 
-        with cd(env['sarge-home']):
+        with cd(env['airship-home']):
             deploy(tar_file, 'web')
             self.add_bucket_cleanup('web')
 
@@ -201,18 +199,18 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
 
     def test_apps_answer_on_configured_haproxy_ports(self):
-        msg = "hello sarge!"
+        msg = "hello airship!"
 
-        sarge_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
-        put(StringIO(json.dumps(sarge_yaml)),
-            str(env['sarge-home'] / 'etc' / 'airship.yaml'))
+        airship_yaml = {'port_map': {'web': '*:4998', 'otherweb': '*:4999'}}
+        put(StringIO(json.dumps(airship_yaml)),
+            str(env['airship-home'] / 'etc' / 'airship.yaml'))
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
             (tmp / 'Procfile').write_text("web: python theapp.py\n"
                                           "otherweb: python theapp.py\n")
 
-        with cd(env['sarge-home']):
+        with cd(env['airship-home']):
             deploy(tar_file, 'web')
             self.add_bucket_cleanup('web')
 
@@ -223,9 +221,9 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(get_from_port(4999).text, msg)
 
     def test_requirements_installed_in_virtualenv(self):
-        sarge_yaml = {'python_dist': env['index-dir']}
-        put(StringIO(json.dumps(sarge_yaml)),
-            str(env['sarge-home'] / 'etc' / 'airship.yaml'))
+        airship_yaml = {'python_dist': env['index-dir']}
+        put(StringIO(json.dumps(airship_yaml)),
+            str(env['airship-home'] / 'etc' / 'airship.yaml'))
 
         with tar_maker() as (tmp, tar_file):
             (tmp / 'theapp.py').write_text(
@@ -242,7 +240,7 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
             (tmp / 'requirements.txt').write_text("path.py==2.4\n")
 
-        with cd(env['sarge-home']):
+        with cd(env['airship-home']):
             deploy(tar_file, 'web')
             self.add_bucket_cleanup('web')
 

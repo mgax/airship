@@ -19,7 +19,7 @@ class PluginTest(AirshipTestCase):
                                                     bucket_setup,
                                                     remove_old_buckets):
         from airship.deployer import deploy
-        sarge = Mock()
-        bucket = sarge.new_bucket.return_value
-        deploy(sarge, Mock(), 'web')
+        airship = Mock()
+        bucket = airship.new_bucket.return_value
+        deploy(airship, Mock(), 'web')
         self.assertEqual(bucket_setup.send.mock_calls, [call(bucket)])

@@ -56,7 +56,7 @@ class DaemonErrorTest(AirshipTestCase):
         subprocess = self.patch('airship.daemons.subprocess')
         subprocess.CalledProcessError = CalledProcessError
         subprocess.check_call.side_effect = CalledProcessError(3, '')
-        sarge = self.create_sarge()
-        bucket = sarge.new_bucket()
+        airship = self.create_airship()
+        bucket = airship.new_bucket()
         with self.assertRaises(SupervisorError) as err:
             bucket.start()

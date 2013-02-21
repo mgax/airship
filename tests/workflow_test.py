@@ -4,7 +4,7 @@ from common import AirshipTestCase
 class WorkflowTest(AirshipTestCase):
 
     def setUp(self):
-        self.bucket = self.create_sarge().new_bucket()
+        self.bucket = self.create_airship().new_bucket()
 
     def test_new_bucket_creates_runtime_folder(self):
         self.bucket.start()
@@ -13,7 +13,7 @@ class WorkflowTest(AirshipTestCase):
     def test_bucket_destroy_removes_bucket_folder_and_run(self):
         self.bucket.start()
         bucket_folder = self.bucket.folder
-        sarge = self.bucket.airship
+        airship = self.bucket.airship
         run_folder = self.bucket.run_folder
 
         self.assertTrue(bucket_folder.isdir())

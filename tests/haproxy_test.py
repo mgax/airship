@@ -16,22 +16,22 @@ def get_routes(haproxy_cfg):
 class HaproxyConfigurationTest(AirshipTestCase):
 
     def test_with_no_buckets_we_have_empty_configuration_file(self):
-        sarge = self.create_sarge()
+        airship = self.create_airship()
         cfg = (self.tmp / 'etc' / 'haproxy' / 'haproxy.cfg').text()
         self.assertIn('maxconn 256', cfg)
         self.assertIn('defaults', cfg)
         self.assertEqual(get_routes(cfg), {})
 
     def test_bucket_with_stable_port_is_configured_in_haproxy(self):
-        sarge = self.create_sarge({'port_map': {'testy': '*:8743'}})
-        bucket = sarge.new_bucket({'application_name': 'testy'})
+        airship = self.create_airship({'port_map': {'testy': '*:8743'}})
+        bucket = airship.new_bucket({'application_name': 'testy'})
         bucket.start()
         cfg = (self.tmp / 'etc' / 'haproxy' / 'haproxy.cfg').text()
         self.assertEqual(get_routes(cfg), {'*:8743': bucket.port})
 
     def test_stopped_bucket_is_removed_from_haproxy(self):
-        sarge = self.create_sarge({'port_map': {'testy': '*:8743'}})
-        bucket = sarge.new_bucket({'application_name': 'testy'})
+        airship = self.create_airship({'port_map': {'testy': '*:8743'}})
+        bucket = airship.new_bucket({'application_name': 'testy'})
         bucket.start()
         cfg_file = (self.tmp / 'etc' / 'haproxy' / 'haproxy.cfg')
         self.assertEqual(get_routes(cfg_file.text()),
@@ -41,7 +41,7 @@ class HaproxyConfigurationTest(AirshipTestCase):
 
     def test_haproxy_reconfiguration_triggers_haproxy_restart(self):
         with patch('airship.daemons.Supervisor.ctl') as ctl:
-            sarge = self.create_sarge({'port_map': {'testy': '*:8743'}})
-            bucket = sarge.new_bucket({'application_name': 'testy'})
+            airship = self.create_airship({'port_map': {'testy': '*:8743'}})
+            bucket = airship.new_bucket({'application_name': 'testy'})
             bucket.start()
         self.assertIn(call(['restart', 'haproxy']), ctl.mock_calls)

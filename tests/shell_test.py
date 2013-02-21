@@ -22,37 +22,37 @@ class ShellTest(AirshipTestCase):
 
     @patch('airship.core.Bucket.configure')
     def test_configure_bucket_calls_api_method(self, configure):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'configure', bucket.id_])
         self.assertEqual(configure.mock_calls, [call()])
 
     @patch('airship.core.Bucket.start')
     def test_start_bucket_calls_api_method(self, start):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'start', bucket.id_])
         self.assertEqual(start.mock_calls, [call()])
 
     @patch('airship.core.Bucket.stop')
     def test_stop_bucket_calls_api_method(self, stop):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'stop', bucket.id_])
         self.assertEqual(stop.mock_calls, [call()])
 
     @patch('airship.core.Bucket.trigger')
     def test_trigger_bucket_calls_api_method(self, trigger):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'trigger', bucket.id_])
         self.assertEqual(trigger.mock_calls, [call()])
 
     @patch('airship.core.Bucket.destroy')
     def test_destroy_bucket_calls_api_method(self, destroy):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'destroy', bucket.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
     @patch('airship.core.Bucket.run')
     def test_run_bucket_calls_api_method_with_args(self, run):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         imp('airship.core').main([str(self.tmp), 'run', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 
@@ -76,6 +76,6 @@ class ShellTest(AirshipTestCase):
         self.assertItemsEqual([f.name for f in other_tmp.listdir()], expected)
         self.assertItemsEqual([f.name for f in (other_tmp / 'bin').listdir()],
                               ['airship', 'supervisord', 'supervisorctl'])
-        sarge_yaml_path = other_tmp / 'etc' / 'airship.yaml'
-        self.assertTrue(sarge_yaml_path.isfile())
-        self.assertIsNotNone(json.loads(sarge_yaml_path.text()))
+        airship_yaml_path = other_tmp / 'etc' / 'airship.yaml'
+        self.assertTrue(airship_yaml_path.isfile())
+        self.assertIsNotNone(json.loads(airship_yaml_path.text()))

@@ -35,7 +35,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
         self.mock_supervisorctl = self.patch('airship.daemons.Supervisor.ctl')
 
     def test_generate_supervisord_cfg_with_no_deployments(self):
-        self.create_sarge().generate_supervisord_configuration()
+        self.create_airship().generate_supervisord_configuration()
 
         config_path = self.tmp / 'etc' / 'supervisor.conf'
         eq_config = config_file_checker(config_path)
@@ -57,7 +57,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
         return self.tmp / 'etc' / 'supervisor.d' / bucket.id_
 
     def test_generate_supervisord_cfg_with_run_command(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
 
         eq_config = config_file_checker(self.bucket_cfg(bucket))
@@ -71,7 +71,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
         eq_config(section, 'startretries', '1')
 
     def test_bucket_start_changes_autostart_to_true(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
 
         section = 'program:%s' % bucket.id_
@@ -80,7 +80,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
         eq_config(section, 'startsecs', '2')
 
     def test_bucket_stop_changes_autostart_to_false(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
         bucket.stop()
 
@@ -91,14 +91,14 @@ class SupervisorConfigurationTest(AirshipTestCase):
         eq_config(section, 'startsecs', '0')
 
     def test_bucket_start_triggers_supervisord_update(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         self.mock_supervisorctl.reset_mock()
         bucket.start()
         self.assertEqual(self.mock_supervisorctl.mock_calls,
                          [call(['update'])])
 
     def test_bucket_stop_triggers_supervisord_update(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
         self.mock_supervisorctl.reset_mock()
         bucket.stop()
@@ -106,7 +106,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
                          [call(['update'])])
 
     def test_bucket_destroy_triggers_supervisord_update(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
         bucket.stop()
         self.mock_supervisorctl.reset_mock()
@@ -115,7 +115,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
                          [call(['update'])])
 
     def test_destroy_bucket_removes_its_supervisor_configuration(self):
-        bucket = self.create_sarge().new_bucket()
+        bucket = self.create_airship().new_bucket()
         bucket.start()
         cfg_path = self.tmp / 'etc' / 'supervisor.d' / bucket.id_
         self.assertTrue(cfg_path.isfile())
@@ -127,7 +127,7 @@ class SupervisorInvocationTest(AirshipTestCase):
 
     def test_invoke_supervisorctl(self):
         self.mock_subprocess.reset_mock()
-        self.create_sarge().daemons.ctl(['hello', 'world!'])
+        self.create_airship().daemons.ctl(['hello', 'world!'])
         supervisorctl_path = (path(sys.prefix).abspath() /
                               'bin' / 'supervisorctl')
         cfg_path = self.tmp / 'etc' / 'supervisor.conf'
