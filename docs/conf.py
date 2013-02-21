@@ -5,21 +5,21 @@ extensions = ['sphinx.ext.autodoc']
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
-project = u'Sarge'
+project = u'Airship'
 copyright = u'2012, Alex Morega'
 version = '0.1'
 release = '0.1'
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 html_theme = 'nature'
-htmlhelp_basename = 'Sargedoc'
+htmlhelp_basename = 'Airshipdoc'
 
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'sarge', u'Sarge Documentation',
+    ('index', 'airship', u'Airship Documentation',
      [u'Alex Morega'], 1)
 ]
 

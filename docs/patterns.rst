@@ -4,7 +4,7 @@ Useful patterns
 
 Log rotation
 ------------
-Sarge writes log files to ``$SARGE_HOME/var/log/$BUCKET_ID``. Although
+Airship writes log files to ``$AIRSHIP_HOME/var/log/$BUCKET_ID``. Although
 `supervisord` has a limit on logfile size, it's a good idea to rotate them
 using `logrotate`. Here is an example configuration::
 

@@ -1,8 +1,8 @@
-Sarge: deployment made easy
-===========================
+Airship: deployment made easy
+=============================
 
 Deployment doesn't have to be hard. Eliminate manual installation steps
-and arcane fabfiles. Sarge provides a consistent environment for your
+and arcane fabfiles. Airship provides a consistent environment for your
 app to run in production.
 
 * A virtualenv_ for each new version.
@@ -26,13 +26,13 @@ See the Quickstart_ to get a feel for the deployment process.
 
 .. _Quickstart: https://sarge-deployer.readthedocs.org/en/latest/quickstart.html
 
-You can use `this fabfile`_ in your project to deploy against a Sarge
+You can use `this fabfile`_ in your project to deploy against an Airship
 server. To set up the server quickly, run the `magic installer`_::
 
-    python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_sarge.py) /var/local/my_awesome_app
+    python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_airship.py) /var/local/my_awesome_app
 
 .. _this fabfile: https://gist.github.com/4266737
-.. _magic installer: https://github.com/mgax/sarge/blob/master/install_sarge.py
+.. _magic installer: https://github.com/mgax/sarge/blob/master/install_airship.py
 
 The code and issue tracker are `on GitHub`_ and documentation is hosted
 by `Read the Docs`_.

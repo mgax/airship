@@ -5,14 +5,14 @@ Reference
 
 Commands
 ========
-The `sarge` shell command expects the path to `sarge_home` as first
+The `airship` shell command expects the path to `airship_home` as first
 argument, then a sub-command which may have additional arguments. If
-`sarge` is called from the ``bin`` folder in `sarge_home`, the first
+`airship` is called from the ``bin`` folder in `airship_home`, the first
 argument is already provided by the bin/ script.
 
 
-sarge deploy
-------------
+airship deploy
+--------------
 Run a full deployment: create new bucket, unpack tarball, install
 dependencies, stop old process, start the new one, destroy old bucket.
 
@@ -21,10 +21,10 @@ application, and the name of the process to deploy.
 
 ::
 
-    $ bin/sarge deploy myapp.tar web
+    $ bin/airship deploy myapp.tar web
 
-sarge run
----------
+airship run
+-----------
 Open a bash shell in the instance's folder. The ``prerun`` script, if
 any, is executed as `rc` file. `run` accepts an optional argument, a
 command to be run in the shell. With this option it behaves like ``bash
@@ -32,34 +32,34 @@ command to be run in the shell. With this option it behaves like ``bash
 
 ::
 
-    $ bin/sarge run web-jCCbfV 'echo "hello from instance in" `pwd`'
+    $ bin/airship run web-jCCbfV 'echo "hello from instance in" `pwd`'
 
-sarge start
------------
+airship start
+-------------
 Start an instance. This simply configures the ``./server`` script,
 inside the instance's folder, as a supervisor `program`.
 
 ::
 
-    $ bin/sarge start web-jCCbfV
+    $ bin/airship start web-jCCbfV
 
-sarge stop
-----------
+airship stop
+------------
 Stops an instance. This simply removes the relevant `program` from
 supervisor.
 
 ::
 
-    $ bin/sarge stop web-jCCbfV
+    $ bin/airship stop web-jCCbfV
 
-sarge destroy
--------------
+airship destroy
+---------------
 Remove the instance (its folder and configuration files). Calls `stop`
 first, in case the instance was running.
 
 ::
 
-    $ bin/sarge destroy web-jCCbfV
+    $ bin/airship destroy web-jCCbfV
 
 supervisord
 -----------
