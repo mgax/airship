@@ -202,7 +202,7 @@ def init_cmd(airship, args):
     airship_yaml_path = airship.home_path / 'etc' / 'airship.yaml'
     if not airship_yaml_path.isfile():
         with airship_yaml_path.open('wb') as f:
-            f.write('{"port_range": [5000, 5100]}\n')
+            f.write('{}\n')
     (airship.home_path / 'var').mkdir_p()
     (airship.home_path / 'var' / 'log').mkdir_p()
     (airship.home_path / 'var' / 'run').mkdir_p()
