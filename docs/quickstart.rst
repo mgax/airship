@@ -141,7 +141,7 @@ Set up Airship on the server
 Airship comes with an easy-to-use `installer script`_. Pick a folder
 (let's call it ``$AIRSHIP_HOME``) and run the script; it will:
 
-.. _installer script: https://github.com/mgax/sarge/blob/master/install_airship.py
+.. _installer script: https://github.com/mgax/airship/blob/master/install_airship.py
 
 * Download dependencies to ``$AIRSHIP_HOME/dist``;
 * Create a virtualenv at ``$AIRSHIP_HOME/opt/airship-env`` and install the

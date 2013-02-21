@@ -1,5 +1,5 @@
 """ Airship automated installation script
-usage: python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_airship.py) /var/local/my_awesome_app
+usage: python2.7 <(curl -fsSL raw.github.com/mgax/airship/master/install_airship.py) /var/local/my_awesome_app
 """
 
 import os
@@ -9,8 +9,8 @@ import urllib
 import json
 
 
-AIRSHIP_PACKAGE = 'https://github.com/mgax/sarge/tarball/master'
-AIRSHIP_GIT = 'git+https://github.com/mgax/sarge.git#egg=Airship'
+AIRSHIP_PACKAGE = 'https://github.com/mgax/airship/tarball/master'
+AIRSHIP_GIT = 'git+https://github.com/mgax/airship.git#egg=Airship'
 PATH_PY_URL = 'https://raw.github.com/jaraco/path.py/2.3/path.py'
 VIRTUALENV_URL = 'https://raw.github.com/pypa/virtualenv/develop/virtualenv.py'
 DISTRIBUTE_URL = ('http://pypi.python.org/packages/source/'

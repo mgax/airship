@@ -29,13 +29,13 @@ See the Quickstart_ to get a feel for the deployment process.
 You can use `this fabfile`_ in your project to deploy against an Airship
 server. To set up the server quickly, run the `magic installer`_::
 
-    python2.7 <(curl -fsSL raw.github.com/mgax/sarge/master/install_airship.py) /var/local/my_awesome_app
+    python2.7 <(curl -fsSL raw.github.com/mgax/airship/master/install_airship.py) /var/local/my_awesome_app
 
 .. _this fabfile: https://gist.github.com/4266737
-.. _magic installer: https://github.com/mgax/sarge/blob/master/install_airship.py
+.. _magic installer: https://github.com/mgax/airship/blob/master/install_airship.py
 
 The code and issue tracker are `on GitHub`_ and documentation is hosted
 by `Read the Docs`_.
 
-.. _on GitHub: https://github.com/mgax/sarge
+.. _on GitHub: https://github.com/mgax/airship
 .. _Read the Docs: https://sarge-deployer.readthedocs.org/
