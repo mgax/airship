@@ -4,7 +4,6 @@ import logging
 import json
 import random
 import string
-from datetime import datetime
 from importlib import import_module
 from path import path
 import yaml
@@ -48,10 +47,6 @@ class Bucket(object):
                 for line in f:
                     (procname, cmd) = line.split(':', 1)
                     self.process_types[procname.strip()] = cmd.strip()
-
-    @property
-    def meta(self):
-        return self.config['meta']
 
     def start(self):
         log.info("Activating bucket %r", self.id_)
@@ -138,11 +133,8 @@ class Airship(object):
         return id_
 
     def new_bucket(self, config={}):
-        meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         bucket_id = self._generate_bucket_id()
-        self.buckets_db[bucket_id] = {
-            'meta': meta,
-        }
+        self.buckets_db[bucket_id] = {}
         bucket = self._get_bucket_by_id(bucket_id)
         return bucket
 

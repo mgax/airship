@@ -59,14 +59,6 @@ class BucketTest(AirshipTestCase):
         self.assertEqual(bucket_1.id_, 'd1')
         self.assertEqual(bucket_2.id_, 'd2')
 
-    def test_bucket_metadata_contains_creation_time(self):
-        airship = self.create_airship()
-        t0 = datetime.utcnow().isoformat()
-        bucket = airship.new_bucket()
-        t1 = datetime.utcnow().isoformat()
-        creation = bucket.meta['CREATION_TIME']
-        self.assertTrue(t0 <= creation <= t1)
-
     def test_bucket_reads_procfile(self):
         airship = self.create_airship()
         t0 = datetime.utcnow().isoformat()
