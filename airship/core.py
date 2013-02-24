@@ -5,26 +5,21 @@ import json
 import random
 import string
 from pipes import quote as shellquote
-from importlib import import_module
 from path import path
 import yaml
 from kv import KV
 import pkg_resources
+import blinker
 from .daemons import Supervisor
 from . import deployer
 
-
 log = logging.getLogger(__name__)
-
 
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
 
-
-def _get_named_object(name):
-    module_name, attr_name = name.split(':')
-    module = import_module(module_name)
-    return getattr(module, attr_name)
+bucket_run = blinker.Signal()
+define_arguments = blinker.Signal()
 
 
 def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
@@ -66,9 +61,7 @@ class Bucket(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
-        venv = self.folder / '_virtualenv'
-        if venv.isdir():
-            environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
+        bucket_run.send(self.airship, bucket=self, environ=environ)
         shell_args = ['/bin/bash']
         if command:
             if command in self.process_types:
@@ -148,10 +141,14 @@ class Airship(object):
         return {'buckets': [{'id': id_} for id_ in self.buckets_db]}
 
 
-def load_plugins():
-    for entry_point in pkg_resources.iter_entry_points('airship_plugins'):
-        callback = entry_point.load()
-        callback()
+# we load the entry points here so they can do import-time signal registrations
+_plugin_callbacks = [ep.load() for ep in
+                     pkg_resources.iter_entry_points('airship_plugins')]
+
+
+def load_plugins(airship):
+    for callback in _plugin_callbacks:
+        callback(airship)
 
 
 AIRSHIP_SCRIPT = """#!/bin/bash
@@ -224,20 +221,28 @@ def build_args_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('airship_home')
     subparsers = parser.add_subparsers()
-    init_parser = subparsers.add_parser('init')
-    init_parser.set_defaults(func=init_cmd)
-    list_parser = subparsers.add_parser('list')
-    list_parser.set_defaults(func=list_cmd)
-    destroy_parser = subparsers.add_parser('destroy')
-    destroy_parser.set_defaults(func=destroy_cmd)
+
+    def create_command(name, handler):
+        subparser = subparsers.add_parser(name)
+        subparser.set_defaults(func=handler)
+        return subparser
+
+    create_command('init', init_cmd)
+
+    create_command('list', list_cmd)
+
+    destroy_parser = create_command('destroy', destroy_cmd)
     destroy_parser.add_argument('-d', '--bucket_id')
-    run_parser = subparsers.add_parser('run')
-    run_parser.set_defaults(func=run_cmd)
+
+    run_parser = create_command('run', run_cmd)
     run_parser.add_argument('-d', '--bucket_id')
     run_parser.add_argument('command', nargs=argparse.REMAINDER)
-    deploy_parser = subparsers.add_parser('deploy')
-    deploy_parser.set_defaults(func=deploy_cmd)
+
+    deploy_parser = create_command('deploy', deploy_cmd)
     deploy_parser.add_argument('tarfile')
+
+    define_arguments.send(None, create_command=create_command)
+
     return parser
 
 
@@ -252,7 +257,6 @@ def set_up_logging(airship_home):
 
 
 def main(raw_arguments=None):
-    load_plugins()
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     airship_home = path(args.airship_home).abspath()
@@ -265,6 +269,7 @@ def main(raw_arguments=None):
         config = {}
     config['home'] = airship_home
     airship = Airship(config)
+    load_plugins(airship)
     args.func(airship, args)
 
 

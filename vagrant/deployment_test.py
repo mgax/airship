@@ -171,7 +171,7 @@ class DeploymentTest(unittest.TestCase):
 
     def test_requirements_installed_in_virtualenv(self):
         configure_airship({
-            'python_dist': env['index-dir'],
+            'python': {'dist': env['index-dir']},
             'port_map': {'web': '5016'},
         })
 

@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from collections import namedtuple
 from mock import patch
@@ -13,6 +14,7 @@ def mock_exec():
         calls.append(MockCall(procname, args, environ))
 
     with patch('airship.core.os') as mock_os:
+        mock_os.environ = os.environ
         mock_os.execve.side_effect = mock_execve
         yield calls
 
