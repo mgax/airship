@@ -32,8 +32,10 @@ class PluginTest(AirshipTestCase):
     def test_run_sends_bucket_run_signal(self, mock_os):
         from airship.core import bucket_run
         mock_os.environ = os.environ
-        bucket = self.create_airship().new_bucket()
+        airship = self.create_airship()
+        bucket = airship.new_bucket()
         handler = Mock()
         with bucket_run.connected_to(handler):
             bucket.run('ls')
-        self.assertEqual(handler.mock_calls, [call(bucket, environ=ANY)])
+        self.assertEqual(handler.mock_calls,
+                         [call(airship, bucket=bucket, environ=ANY)])
