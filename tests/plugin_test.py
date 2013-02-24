@@ -5,15 +5,13 @@ from common import AirshipTestCase
 
 class PluginTest(AirshipTestCase):
 
-    @patch('airship.core.pkg_resources')
-    def test_plugin_function_called(self, pkg_resources):
+    def test_plugin_function_called(self):
         from airship.core import load_plugins
-        entry_point = Mock()
-        pkg_resources.iter_entry_points.return_value = [entry_point]
         airship = Mock()
-        load_plugins(airship)
-        self.assertEqual(entry_point.load.return_value.mock_calls,
-                         [call(airship)])
+        entry_point = Mock()
+        with patch('airship.core._plugin_callbacks', [entry_point]):
+            load_plugins(airship)
+        self.assertEqual(entry_point.mock_calls, [call(airship)])
 
     @patch('airship.deployer.subprocess')
     @patch('airship.deployer.bucket_setup')

@@ -141,9 +141,13 @@ class Airship(object):
         return {'buckets': [{'id': id_} for id_ in self.buckets_db]}
 
 
+# we load the entry points here so they can do import-time signal registrations
+_plugin_callbacks = [ep.load() for ep in
+                     pkg_resources.iter_entry_points('airship_plugins')]
+
+
 def load_plugins(airship):
-    for entry_point in pkg_resources.iter_entry_points('airship_plugins'):
-        callback = entry_point.load()
+    for callback in _plugin_callbacks:
         callback(airship)
 
 
