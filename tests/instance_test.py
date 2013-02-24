@@ -76,6 +76,20 @@ class BucketTest(AirshipTestCase):
         creation = bucket.meta['CREATION_TIME']
         self.assertTrue(t0 <= creation <= t1)
 
+    def test_bucket_reads_procfile(self):
+        airship = self.create_airship()
+        t0 = datetime.utcnow().isoformat()
+        bucket = airship.new_bucket()
+        (bucket.folder / 'Procfile').write_text(
+            'one: run this command on $PORT\n'
+            'two: and $THIS other one\n'
+        )
+        bucket = airship.get_bucket()
+        self.assertEqual(bucket.process_types, {
+            'one': 'run this command on $PORT',
+            'two': 'and $THIS other one',
+        })
+
 
 class BucketListingTest(AirshipTestCase):
 

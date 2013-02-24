@@ -42,6 +42,15 @@ class Bucket(object):
         self.run_folder = var / 'run' / id_
         self.log_path = var / 'log' / (self.id_ + '.log')
         self.process_types = {}
+        self._read_procfile()
+
+    def _read_procfile(self):
+        procfile_path = self.folder / 'Procfile'
+        if procfile_path.isfile():
+            with procfile_path.open('rb') as f:
+                for line in f:
+                    (procname, cmd) = line.split(':', 1)
+                    self.process_types[procname.strip()] = cmd.strip()
 
     @property
     def meta(self):
