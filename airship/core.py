@@ -150,14 +150,7 @@ class Airship(object):
         return bucket
 
     def list_buckets(self):
-        buckets = []
-        for bucket_id in self.buckets_db:
-            bucket = self._get_bucket_by_id(bucket_id)
-            buckets.append({
-                'id': bucket.id_,
-                'meta': bucket.meta,
-            })
-        return {'buckets': buckets}
+        return {'buckets': [{'id': id_} for id_ in self.buckets_db]}
 
 
 def load_plugins():
