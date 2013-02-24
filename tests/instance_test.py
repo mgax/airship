@@ -85,11 +85,6 @@ class BucketTest(AirshipTestCase):
         creation = bucket.meta['CREATION_TIME']
         self.assertTrue(t0 <= creation <= t1)
 
-    def test_bucket_metadata_contains_app_name(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket()
-        self.assertEqual(bucket.meta['APPLICATION_NAME'], 'web')
-
 
 class PortConfigurationTest(AirshipTestCase):
 

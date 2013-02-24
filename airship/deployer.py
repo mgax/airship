@@ -54,7 +54,7 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
 
 @bucket_setup.connect
 def set_up_script(bucket):
-    procname = bucket.meta['APPLICATION_NAME']
+    procname = 'web'
     procs = get_procs(bucket)
     server_script = bucket.folder / '_run_process'
     server_script.write_text('exec %s\n' % procs[procname])
@@ -63,12 +63,10 @@ def set_up_script(bucket):
 
 def remove_old_buckets(bucket):
     airship = bucket.airship
-    procname = bucket.meta['APPLICATION_NAME']
     for bucket_info in airship.list_buckets()['buckets']:
-        if bucket_info['meta']['APPLICATION_NAME'] == procname:
-            if bucket_info['id'] == bucket.id_:
-                continue
-            airship.get_bucket(bucket_info['id']).destroy()
+        if bucket_info['id'] == bucket.id_:
+            continue
+        airship.get_bucket(bucket_info['id']).destroy()
 
 
 def deploy(airship, tarfile):

@@ -146,7 +146,6 @@ class Airship(object):
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = 'web'
-        meta['APPLICATION_NAME'] = app_name
         bucket_id = self._generate_bucket_id()
         self.buckets_db[bucket_id] = {
             'require-services': config.get('services', {}),
