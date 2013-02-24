@@ -47,10 +47,6 @@ class Bucket(object):
     def meta(self):
         return self.config['meta']
 
-    @property
-    def port(self):
-        return self.config['port']
-
     def configure(self):
         self.run_folder.makedirs_p()
 
@@ -77,7 +73,8 @@ class Bucket(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
-        environ['PORT'] = str(self.port)
+        port_map = self.airship.config.get('port_map', {})
+        environ['PORT'] = str(port_map.get('web'))
         venv = self.folder / '_virtualenv'
         if venv.isdir():
             environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
@@ -145,13 +142,11 @@ class Airship(object):
 
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
-        app_name = 'web'
         bucket_id = self._generate_bucket_id()
         self.buckets_db[bucket_id] = {
             'require-services': config.get('services', {}),
             'urlmap': config.get('urlmap', []),
             'meta': meta,
-            'port': self.config.get('port_map', {}).get(app_name),
         }
         bucket = self._get_bucket_by_id(bucket_id)
         return bucket
@@ -163,7 +158,6 @@ class Airship(object):
             buckets.append({
                 'id': bucket.id_,
                 'meta': bucket.meta,
-                'port': bucket.port,
             })
         return {'buckets': buckets}
 

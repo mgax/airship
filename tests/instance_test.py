@@ -86,19 +86,6 @@ class BucketTest(AirshipTestCase):
         self.assertTrue(t0 <= creation <= t1)
 
 
-class PortConfigurationTest(AirshipTestCase):
-
-    def test_new_bucket_allocates_no_port(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket()
-        self.assertIsNone(bucket.port)
-
-    def test_bucket_allocates_port_from_config_file(self):
-        airship = self.create_airship({'port_map': {'web': 3516}})
-        bucket = airship.new_bucket()
-        self.assertEqual(bucket.port, 3516)
-
-
 class BucketListingTest(AirshipTestCase):
 
     def test_listing_with_no_buckets_returns_empty_list(self):
@@ -113,13 +100,6 @@ class BucketListingTest(AirshipTestCase):
         report = airship.list_buckets()
         self.assertItemsEqual([i['id'] for i in report['buckets']],
                               [bucket_1.id_, bucket_2.id_])
-
-    def test_listing_contains_port(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket()
-        report = airship.list_buckets()
-        [bucket_data] = report['buckets']
-        self.assertEqual(bucket_data['port'], bucket.port)
 
 
 class BucketRunTest(AirshipTestCase):
@@ -136,7 +116,7 @@ class BucketRunTest(AirshipTestCase):
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 
     def test_run_inserts_port_in_environ(self):
-        bucket = self.create_airship().new_bucket()
+        bucket = self.create_airship({'port_map': {'web': 13}}).new_bucket()
         bucket.run(None)
         environ = self.get_environ()
-        self.assertEqual(environ['PORT'], str(bucket.port))
+        self.assertEqual(environ['PORT'], '13')
