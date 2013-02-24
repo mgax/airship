@@ -71,8 +71,8 @@ def remove_old_buckets(bucket):
             airship.get_bucket(bucket_info['id']).destroy()
 
 
-def deploy(airship, tarfile, procname):
-    bucket = airship.new_bucket({'application_name': procname})
+def deploy(airship, tarfile):
+    bucket = airship.new_bucket()
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
     bucket_setup.send(bucket)
     remove_old_buckets(bucket)

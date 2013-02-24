@@ -150,13 +150,9 @@ class Airship(object):
 
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
-        app_name = config.get('application_name')
-        if app_name:
-            meta['APPLICATION_NAME'] = app_name
-            id_prefix = app_name + '-'
-        else:
-            id_prefix = ''
-        bucket_id = self._generate_bucket_id(id_prefix)
+        app_name = 'web'
+        meta['APPLICATION_NAME'] = app_name
+        bucket_id = self._generate_bucket_id(app_name + '-')
         self.buckets_db[bucket_id] = {
             'require-services': config.get('services', {}),
             'urlmap': config.get('urlmap', []),
@@ -260,7 +256,7 @@ def run_cmd(airship, args):
 
 def deploy_cmd(airship, args):
     try:
-        deployer.deploy(airship, args.tarfile, args.procname)
+        deployer.deploy(airship, args.tarfile)
     except deployer.DeployError, e:
         print "Deployment failed:", e.message
         try:
@@ -306,7 +302,6 @@ def build_args_parser():
     deploy_parser = subparsers.add_parser('deploy')
     deploy_parser.set_defaults(func=deploy_cmd)
     deploy_parser.add_argument('tarfile')
-    deploy_parser.add_argument('procname')
     return parser
 
 

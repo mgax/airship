@@ -29,8 +29,8 @@ class BucketTest(AirshipTestCase):
 
     def test_get_bucket_with_app_name_returns_bucket(self):
         airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'jack'})
-        same_bucket = airship.get_bucket('jack')
+        bucket = airship.new_bucket()
+        same_bucket = airship.get_bucket('web')
         self.assertEqual(bucket.folder, same_bucket.folder)
 
     def test_get_bucket_with_invalid_name_raises_keyerror(self):
@@ -87,13 +87,13 @@ class BucketTest(AirshipTestCase):
 
     def test_bucket_metadata_contains_app_name(self):
         airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'testy'})
-        self.assertEqual(bucket.meta['APPLICATION_NAME'], 'testy')
+        bucket = airship.new_bucket()
+        self.assertEqual(bucket.meta['APPLICATION_NAME'], 'web')
 
     def test_bucket_id_starts_with_app_name(self):
         airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'testy'})
-        self.assertTrue(bucket.id_.startswith('testy-'))
+        bucket = airship.new_bucket()
+        self.assertTrue(bucket.id_.startswith('web-'))
 
 
 class PortConfigurationTest(AirshipTestCase):
@@ -104,8 +104,8 @@ class PortConfigurationTest(AirshipTestCase):
         self.assertIsNone(bucket.port)
 
     def test_bucket_allocates_port_from_config_file(self):
-        airship = self.create_airship({'port_map': {'testy': 3516}})
-        bucket = airship.new_bucket({'application_name': 'testy'})
+        airship = self.create_airship({'port_map': {'web': 3516}})
+        bucket = airship.new_bucket()
         self.assertEqual(bucket.port, 3516)
 
 
@@ -126,10 +126,10 @@ class BucketListingTest(AirshipTestCase):
 
     def test_listing_contains_metadata(self):
         airship = self.create_airship()
-        airship.new_bucket({'application_name': 'testy'})
+        airship.new_bucket()
         report = airship.list_buckets()
         [bucket_data] = report['buckets']
-        self.assertEqual(bucket_data['meta']['APPLICATION_NAME'], 'testy')
+        self.assertEqual(bucket_data['meta']['APPLICATION_NAME'], 'web')
 
     def test_listing_contains_port(self):
         airship = self.create_airship()
