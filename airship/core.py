@@ -9,15 +9,16 @@ from path import path
 import yaml
 from kv import KV
 import pkg_resources
+import blinker
 from .daemons import Supervisor
 from . import deployer
 
-
 log = logging.getLogger(__name__)
-
 
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
+
+bucket_run = blinker.Signal()
 
 
 def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
@@ -60,6 +61,7 @@ class Bucket(object):
         environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
         venv = self.folder / '_virtualenv'
+        bucket_run.send(self, environ=environ)
         if venv.isdir():
             environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
