@@ -75,11 +75,11 @@ def tearDownModule(self):
 
 
 SIMPLE_APP = """\
-import os
+import os, sys
 from wsgiref.simple_server import make_server
 def theapp(environ, start_response):
     start_response("200 OK", [])
-    return ["{msg}"]
+    return ["hello " + sys.argv[-1]]
 make_server("0", int(os.environ['PORT']), theapp).serve_forever()
 """
 
@@ -111,17 +111,11 @@ def tar_maker():
         tmp.rmtree()
 
 
-def get_buckets():
+def cleanup_all_buckets():
     json_list = run('{airship-home}/bin/airship list'.format(**env))
-    return json.loads(json_list)['buckets']
-
-
-def get_port(proc_name):
-    for i in get_buckets():
-        if i['meta']['APPLICATION_NAME'] == proc_name:
-            return i['port']
-    else:
-        raise RuntimeError("No process found with name %r" % proc_name)
+    for bucket in json.loads(json_list)['buckets']:
+        run('{airship-home}/bin/airship destroy {bucket_id}'
+            .format(bucket_id=bucket['id'], **env))
 
 
 def get_from_port(port):
@@ -129,12 +123,12 @@ def get_from_port(port):
     return retry([requests.ConnectionError], requests.get, url)
 
 
-def deploy(tar_file, proc_name):
+def deploy(tar_file):
     with cd(env['airship-home']):
         put(tar_file, '_app.tar')
-        run('bin/airship deploy _app.tar {proc_name}'
-            .format(proc_name=proc_name))
+        run('bin/airship deploy _app.tar')
         run('rm _app.tar')
+
 
 def configure_airship(config):
     put(StringIO(json.dumps(config)),
@@ -147,82 +141,33 @@ class DeploymentTest(unittest.TestCase):
         run("{airship-home}/bin/supervisord".format(**env), pty=False)
         _shutdown = "{airship-home}/bin/supervisorctl shutdown".format(**env)
         self.addCleanup(run, _shutdown)
+        self.addCleanup(cleanup_all_buckets)
         configure_airship({'port_map': {'web': '5016'}})
 
-    def add_bucket_cleanup(self, proc_name):
-        self.addCleanup(run, ('{airship-home}/bin/airship destroy {proc_name}'
-                              .format(proc_name=proc_name, **env)))
-
     def test_deploy_airship_bucket_answers_to_http(self):
-        msg = "hello airship!"
-
         with tar_maker() as (tmp, tar_file):
-            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
+            (tmp / 'theapp.py').write_text(SIMPLE_APP)
             (tmp / 'Procfile').write_text("web: python theapp.py\n")
 
         with cd(env['airship-home']):
-            deploy(tar_file, 'web')
-            self.add_bucket_cleanup('web')
+            deploy(tar_file)
 
-        self.assertEqual(get_from_port(get_port('web')).text, msg)
-
-    def test_deploy_new_version_answers_on_same_port(self):
-        msg = "hello airship!"
-
-        with tar_maker() as (tmp, tar_file):
-            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
-            (tmp / 'Procfile').write_text("web: python theapp.py\n")
-
-        with cd(env['airship-home']):
-            deploy(tar_file, 'web')
-            self.add_bucket_cleanup('web')
-            port1 = get_port('web')
-
-            deploy(tar_file, 'web')
-            port2 = get_port('web')
-
-        self.assertEqual(port1, port2)
-        self.assertEqual(get_from_port(port2).text, msg)
+        self.assertEqual(get_from_port(5016).text, "hello theapp.py")
 
     def test_deploy_non_web_process_does_not_clobber_web_process(self):
-        msg = "hello airship!"
-
         configure_airship({'port_map': {'web': '4998', 'otherweb': '4999'}})
 
         with tar_maker() as (tmp, tar_file):
-            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
-            (tmp / 'Procfile').write_text("web: python theapp.py\n"
-                                          "otherweb: python theapp.py\n")
+            (tmp / 'theapp.py').write_text(SIMPLE_APP)
+            (tmp / 'Procfile').write_text("web: python theapp.py 1\n"
+                                          "otherweb: python theapp.py 2\n")
 
         with cd(env['airship-home']):
-            deploy(tar_file, 'web')
-            self.add_bucket_cleanup('web')
+            deploy(tar_file)
+            deploy(tar_file)
 
-            deploy(tar_file, 'otherweb')
-            self.add_bucket_cleanup('otherweb')
-
-        self.assertEqual(get_from_port(get_port('web')).text, msg)
-        self.assertEqual(get_from_port(get_port('otherweb')).text, msg)
-
-    def test_apps_answer_on_configured_ports(self):
-        msg = "hello airship!"
-
-        configure_airship({'port_map': {'web': '4998', 'otherweb': '4999'}})
-
-        with tar_maker() as (tmp, tar_file):
-            (tmp / 'theapp.py').write_text(SIMPLE_APP.format(msg=msg))
-            (tmp / 'Procfile').write_text("web: python theapp.py\n"
-                                          "otherweb: python theapp.py\n")
-
-        with cd(env['airship-home']):
-            deploy(tar_file, 'web')
-            self.add_bucket_cleanup('web')
-
-            deploy(tar_file, 'otherweb')
-            self.add_bucket_cleanup('otherweb')
-
-        self.assertEqual(get_from_port(4998).text, msg)
-        self.assertEqual(get_from_port(4999).text, msg)
+        self.assertEqual(get_from_port(4998).text, "hello 1")
+        self.assertEqual(get_from_port(4999).text, "hello 2")
 
     def test_requirements_installed_in_virtualenv(self):
         configure_airship({
@@ -246,8 +191,7 @@ class DeploymentTest(unittest.TestCase):
             (tmp / 'requirements.txt').write_text("path.py==2.4\n")
 
         with cd(env['airship-home']):
-            deploy(tar_file, 'web')
-            self.add_bucket_cleanup('web')
+            deploy(tar_file)
 
-        self.assertEqual(get_from_port(get_port('web')).text,
+        self.assertEqual(get_from_port(5016).text,
                          "Represents a filesystem path")
