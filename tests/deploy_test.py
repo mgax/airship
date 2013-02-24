@@ -6,7 +6,7 @@ class DeployErrorTest(AirshipTestCase):
 
     def setUp(self):
         from subprocess import CalledProcessError
-        self.subprocess = self.patch('airship.deployer.subprocess')
+        self.subprocess = self.patch('airship.contrib.python.subprocess')
         self.subprocess.CalledProcessError = CalledProcessError
         self.bucket = Mock(folder=self.tmp)
         self.bucket.airship.config = {'python_dist': self.tmp}
@@ -14,8 +14,8 @@ class DeployErrorTest(AirshipTestCase):
         (self.tmp / 'requirements.txt').write_text("")
 
     def call_and_expect_failure(self):
-        from airship.deployer import (set_up_virtualenv_and_requirements,
-                                      DeployError)
+        from airship.deployer import DeployError
+        from airship.contrib.python import set_up_virtualenv_and_requirements
         with self.assertRaises(DeployError) as e:
             set_up_virtualenv_and_requirements(self.bucket)
         return e.exception
