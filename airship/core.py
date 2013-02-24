@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
-RUN_RC_NAME = '.runrc'
 
 
 def _get_named_object(name):
@@ -79,10 +78,7 @@ class Bucket(object):
             environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
         if command:
-            environ['BASH_ENV'] = RUN_RC_NAME
             shell_args += ['-c', command]
-        else:
-            shell_args += ['--rcfile', RUN_RC_NAME]
         os.execve(shell_args[0], shell_args, environ)
 
     def run_process(self, procname):

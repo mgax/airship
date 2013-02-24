@@ -48,13 +48,6 @@ class RealProcessTest(AirshipTestCase):
         directory = self.airshipbin('run', bucket_id, 'pwd').strip()
         self.assertEqual(directory, (self.tmp / bucket_id).realpath())
 
-    def test_shell_loads_rc_file(self):
-        from airship.core import RUN_RC_NAME
-        bucket_id = self.airshipbin('new', '{}').strip()
-        (self.tmp / bucket_id / RUN_RC_NAME).write_text("MYVAR='asdf'\n")
-        out = self.airshipbin('run', bucket_id, "echo $MYVAR").strip()
-        self.assertEqual(out, "asdf")
-
 
 @contextmanager
 def mock_exec():
