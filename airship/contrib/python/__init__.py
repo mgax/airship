@@ -33,6 +33,14 @@ def set_up_virtualenv_and_requirements(airship, bucket, **extra):
             raise DeployError(bucket, "Failed to install requirements.")
 
 
+def activate_virtualenv(airship, bucket, environ, **extra):
+    venv = bucket.folder / '_virtualenv'
+    if venv.isdir():
+        environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
+
+
 def load(airship):
     from airship.deployer import bucket_setup
+    from airship.core import bucket_run
     bucket_setup.connect(set_up_virtualenv_and_requirements, airship)
+    bucket_run.connect(activate_virtualenv, airship)

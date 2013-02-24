@@ -60,10 +60,7 @@ class Bucket(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
-        venv = self.folder / '_virtualenv'
         bucket_run.send(self.airship, bucket=self, environ=environ)
-        if venv.isdir():
-            environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
         if command:
             if command in self.process_types:

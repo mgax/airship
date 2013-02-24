@@ -53,7 +53,10 @@ class RunTest(AirshipTestCase):
 
     def test_run_activates_virtualenv(self):
         from run_test import mock_exec
-        bucket = self.create_airship().new_bucket()
+        from airship.contrib import python
+        airship = self.create_airship()
+        python.load(airship)
+        bucket = airship.new_bucket()
         venv = bucket.folder / '_virtualenv'
         venv.mkdir()
         with mock_exec() as calls:
