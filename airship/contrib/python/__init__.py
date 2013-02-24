@@ -1,4 +1,6 @@
+import sys
 import subprocess
+from path import path
 
 
 def set_up_virtualenv_and_requirements(airship, bucket, **extra):
@@ -44,3 +46,23 @@ def load(airship):
     from airship.core import bucket_run
     bucket_setup.connect(set_up_virtualenv_and_requirements, airship)
     bucket_run.connect(activate_virtualenv, airship)
+
+
+def do_wheel(airship, args):
+    config = airship.config.get('python', {})
+    index_dir = config['dist']
+    argv = [path(sys.prefix) / 'bin' / 'pip',
+            'wheel',
+            '--no-deps',
+            '-w', index_dir]
+    subprocess.check_call(argv + args.wheel_argv)
+
+
+from airship.core import define_arguments
+
+
+@define_arguments.connect
+def register_wheel_subcommand(sender, create_command):
+    import argparse
+    wheel_cmd = create_command('wheel', do_wheel)
+    wheel_cmd.add_argument('wheel_argv', nargs=argparse.REMAINDER)
