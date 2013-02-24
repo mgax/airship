@@ -15,7 +15,7 @@ def setUpModule():
         raise SkipTest
 
 
-class ShellTest(AirshipTestCase):
+class RealProcessTest(AirshipTestCase):
 
     def setUp(self):
         cfg_path = self.tmp / 'etc' / 'airship.yaml'
