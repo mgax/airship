@@ -107,6 +107,8 @@ class Airship(object):
 
     def __init__(self, config):
         self.home_path = config['home']
+        self.var_path = self.home_path / 'var'
+        self.log_path = self.var_path / 'log'
         self.config = config
         etc = self.home_path / 'etc'
         etc.mkdir_p()
@@ -188,9 +190,9 @@ def init_cmd(airship, args):
     if not airship_yaml_path.isfile():
         with airship_yaml_path.open('wb') as f:
             f.write('{}\n')
-    (airship.home_path / 'var').mkdir_p()
-    (airship.home_path / 'var' / 'log').mkdir_p()
-    (airship.home_path / 'var' / 'run').mkdir_p()
+    airship.var_path.mkdir_p()
+    airship.log_path.mkdir_p()
+    (airship.var_path / 'run').mkdir_p()
     airship.initialize()
 
     airship_bin = airship.home_path / 'bin'
