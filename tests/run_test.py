@@ -79,10 +79,12 @@ class MockProcessTest(AirshipTestCase):
         environ = calls[0].environ
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 
-    def test_run_inserts_port_in_environ(self):
-        bucket = self.create_airship({'port_map': {'web': 13}}).new_bucket()
+    def test_run_process_inserts_port_in_environ(self):
+        THING_PROC = "run the 'thing' process"
+        bucket = self.create_airship({'port_map': {'thing': 13}}).new_bucket()
+        bucket.process_types = {'thing': THING_PROC}
         with mock_exec() as calls:
-            bucket.run(None)
+            bucket.run_process('thing')
         self.assertEqual(calls[0].environ['PORT'], '13')
 
     def test_run_process_starts_process_from_list(self):
