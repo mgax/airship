@@ -35,7 +35,7 @@ files = %(include_files)s
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(bucket)s-%(procname)s]
 redirect_stderr = true
-stdout_logfile = %(log)s
+stdout_logfile = %(var)s/log/%(procname)s.log
 startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
@@ -76,10 +76,10 @@ class Supervisor(object):
         with self._bucket_cfg(bucket.id_).open('wb') as f:
             for procname in bucket.process_types:
                 f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                    'var': bucket.airship.var_path,
                     'bucket': bucket.id_,
                     'directory': bucket.folder,
                     'run': bucket.run_folder,
-                    'log': bucket.log_path,
                     'bucket_id': bucket.id_,
                     'autostart': 'true' if autostart else 'false',
                     'startsecs': 2 if autostart else 0,

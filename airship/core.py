@@ -40,7 +40,6 @@ class Bucket(object):
         self.folder = self.airship._bucket_folder(id_)
         var = self.airship.home_path / 'var'
         self.run_folder = var / 'run' / id_
-        self.log_path = var / 'log' / (self.id_ + '.log')
         self.process_types = {}
         self._read_procfile()
 

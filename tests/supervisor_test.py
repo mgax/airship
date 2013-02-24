@@ -72,7 +72,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
                   'bin/airship run {0} one'.format(bucket.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
-                  self.tmp / 'var' / 'log' / (bucket.id_ + '.log'))
+                  self.tmp / 'var' / 'log' / 'one.log')
         eq_config(section, 'startretries', '1')
 
     def test_bucket_start_changes_autostart_to_true(self):
