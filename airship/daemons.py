@@ -40,7 +40,7 @@ startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
 autorestart = false
-command = bin/airship run %(bucket_id)s ./_run_process
+command = bin/airship run %(bucket_id)s %(procname)s
 """
 
 
@@ -81,6 +81,7 @@ class Supervisor(object):
                 'bucket_id': bucket.id_,
                 'autostart': 'true' if autostart else 'false',
                 'startsecs': 2 if autostart else 0,
+                'procname': 'web',
             })
 
     def remove_bucket(self, bucket_id):

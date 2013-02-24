@@ -52,15 +52,6 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
             raise DeployError(bucket, "Failed to install requirements.")
 
 
-@bucket_setup.connect
-def set_up_script(bucket):
-    procname = 'web'
-    procs = get_procs(bucket)
-    server_script = bucket.folder / '_run_process'
-    server_script.write_text('exec %s\n' % procs[procname])
-    server_script.chmod(0755)
-
-
 def remove_old_buckets(bucket):
     airship = bucket.airship
     for bucket_info in airship.list_buckets()['buckets']:
