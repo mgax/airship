@@ -4,6 +4,7 @@ import logging
 import json
 import random
 import string
+from pipes import quote as shellquote
 from importlib import import_module
 from path import path
 import yaml
@@ -200,7 +201,8 @@ def destroy_cmd(airship, args):
 
 
 def run_cmd(airship, args):
-    airship.get_bucket(args.bucket_id or _newest).run(args.command)
+    command = ' '.join(shellquote(a) for a in args.command)
+    airship.get_bucket(args.bucket_id or _newest).run(command)
 
 
 def deploy_cmd(airship, args):
@@ -232,7 +234,7 @@ def build_args_parser():
     run_parser = subparsers.add_parser('run')
     run_parser.set_defaults(func=run_cmd)
     run_parser.add_argument('-d', '--bucket_id')
-    run_parser.add_argument('command', nargs='?')
+    run_parser.add_argument('command', nargs=argparse.REMAINDER)
     deploy_parser = subparsers.add_parser('deploy')
     deploy_parser.set_defaults(func=deploy_cmd)
     deploy_parser.add_argument('tarfile')

@@ -23,6 +23,18 @@ class ShellTest(AirshipTestCase):
         imp('airship.core').main([str(self.tmp), 'run', '-d', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 
+    @patch('airship.core.Bucket.run')
+    def test_run_bucket_does_not_require_bucket_id(self, run):
+        bucket = self.create_airship().new_bucket()
+        imp('airship.core').main([str(self.tmp), 'run', 'a'])
+        self.assertEqual(run.mock_calls, [call('a')])
+
+    @patch('airship.core.Bucket.run')
+    def test_run_bucket_quotes_its_arguments(self, run):
+        bucket = self.create_airship().new_bucket()
+        imp('airship.core').main([str(self.tmp), 'run', 'some', 'other thing'])
+        self.assertEqual(run.mock_calls, [call("some 'other thing'")])
+
     @patch('airship.core.Airship.list_buckets')
     def test_destroy_bucket_calls_api_method(self, list_buckets):
         data = {'some': ['json', 'data']}
