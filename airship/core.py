@@ -42,6 +42,7 @@ class Bucket(object):
         var = self.airship.home_path / 'var'
         self.run_folder = var / 'run' / id_
         self.log_path = var / 'log' / (self.id_ + '.log')
+        self.process_types = {}
 
     @property
     def meta(self):
@@ -85,6 +86,9 @@ class Bucket(object):
         else:
             shell_args += ['--rcfile', RUN_RC_NAME]
         os.execve(shell_args[0], shell_args, environ)
+
+    def run_process(self, procname):
+        self.run(self.process_types[procname])
 
 
 _newest = object()
