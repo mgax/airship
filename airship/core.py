@@ -104,6 +104,7 @@ class Airship(object):
         etc = self.home_path / 'etc'
         etc.mkdir_p()
         self.buckets_db = KV(etc / 'buckets.db', table='bucket')
+        self.meta_db = KV(etc / 'buckets.db', table='meta')
         self.daemons = Supervisor(etc)
 
     @property
@@ -132,16 +133,12 @@ class Airship(object):
         return self.home_path / id_
 
     def _generate_bucket_id(self):
-        for c in range(10):
-            id_ = random_id()
-            try:
-                self._bucket_folder(id_).mkdir()
-            except OSError:
-                continue
-            else:
-                return id_
-        else:
-            raise RuntimeError("Failed to generate unique bucket ID")
+        with self.meta_db.lock():
+            next_id = self.meta_db.get('next_bucket_id', 1)
+            self.meta_db['next_bucket_id'] = next_id + 1
+        id_ = 'd%d' % (next_id,)
+        self._bucket_folder(id_).mkdir()
+        return id_
 
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}

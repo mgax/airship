@@ -60,13 +60,12 @@ class BucketTest(AirshipTestCase):
         self.assertNotEqual(bucket_1.folder, bucket_2.folder)
         self.assertNotEqual(bucket_1.id_, bucket_2.id_)
 
-    def test_unlucky_bucket_id_generator_gives_up(self):
+    def test_buckets_get_consecutive_ids(self):
         airship = self.create_airship()
-        with patch('airship.core.random') as random:
-            random.choice.return_value = 'z'
-            airship.new_bucket()
-            with self.assertRaises(RuntimeError):
-                airship.new_bucket()
+        bucket_1 = airship.new_bucket()
+        bucket_2 = airship.new_bucket()
+        self.assertEqual(bucket_1.id_, 'd1')
+        self.assertEqual(bucket_2.id_, 'd2')
 
     def test_bucket_metadata_contains_creation_time(self):
         airship = self.create_airship()
