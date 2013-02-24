@@ -216,20 +216,26 @@ def build_args_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('airship_home')
     subparsers = parser.add_subparsers()
-    init_parser = subparsers.add_parser('init')
-    init_parser.set_defaults(func=init_cmd)
-    list_parser = subparsers.add_parser('list')
-    list_parser.set_defaults(func=list_cmd)
-    destroy_parser = subparsers.add_parser('destroy')
-    destroy_parser.set_defaults(func=destroy_cmd)
+
+    def create_command(name, handler):
+        subparser = subparsers.add_parser(name)
+        subparser.set_defaults(func=handler)
+        return subparser
+
+    create_command('init', init_cmd)
+
+    create_command('list', list_cmd)
+
+    destroy_parser = create_command('destroy', destroy_cmd)
     destroy_parser.add_argument('-d', '--bucket_id')
-    run_parser = subparsers.add_parser('run')
-    run_parser.set_defaults(func=run_cmd)
+
+    run_parser = create_command('run', run_cmd)
     run_parser.add_argument('-d', '--bucket_id')
     run_parser.add_argument('command', nargs=argparse.REMAINDER)
-    deploy_parser = subparsers.add_parser('deploy')
-    deploy_parser.set_defaults(func=deploy_cmd)
+
+    deploy_parser = create_command('deploy', deploy_cmd)
     deploy_parser.add_argument('tarfile')
+
     return parser
 
 
