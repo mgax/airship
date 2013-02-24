@@ -96,7 +96,6 @@ class SupervisorConfigurationTest(AirshipTestCase):
         section = 'program:%s-web' % bucket.id_
         eq_config = config_file_checker(self.bucket_cfg(bucket))
         eq_config(section, 'autostart', 'false')
-        eq_config(section, 'autorestart', 'false')
         eq_config(section, 'startsecs', '0')
 
     def test_bucket_start_triggers_supervisord_update(self):

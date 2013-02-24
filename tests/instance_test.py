@@ -45,14 +45,6 @@ class BucketTest(AirshipTestCase):
         self.assertEqual(airship.daemons.configure_bucket_running.mock_calls,
                          [call(bucket)])
 
-    def test_trigger_bucket_calls_daemon_start(self):
-        airship = self.create_airship()
-        airship.daemons = Mock()
-        bucket = airship.new_bucket()
-        bucket.trigger()
-        self.assertEqual(airship.daemons.trigger_bucket.mock_calls,
-                         [call(bucket)])
-
     def test_two_buckets_have_different_paths_and_ids(self):
         airship = self.create_airship()
         bucket_1 = airship.new_bucket()

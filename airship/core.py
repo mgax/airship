@@ -60,9 +60,6 @@ class Bucket(object):
     def stop(self):
         self.airship.daemons.configure_bucket_stopped(self)
 
-    def trigger(self):
-        self.airship.daemons.trigger_bucket(self)
-
     def destroy(self):
         self.airship.daemons.remove_bucket(self.id_)
         if self.folder.isdir():
@@ -201,24 +198,8 @@ def init_cmd(airship, args):
         path(f.name).chmod(0755)
 
 
-def new_cmd(airship, args):
-    print airship.new_bucket(json.loads(args.config)).id_
-
-
 def list_cmd(airship, args):
     print json.dumps(airship.list_buckets(), indent=2)
-
-
-def start_cmd(airship, args):
-    airship.get_bucket(args.id).start()
-
-
-def stop_cmd(airship, args):
-    airship.get_bucket(args.id).stop()
-
-
-def trigger_cmd(airship, args):
-    airship.get_bucket(args.id).trigger()
 
 
 def destroy_cmd(airship, args):
@@ -250,20 +231,8 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
-    new_parser = subparsers.add_parser('new')
-    new_parser.set_defaults(func=new_cmd)
-    new_parser.add_argument('config')
     list_parser = subparsers.add_parser('list')
     list_parser.set_defaults(func=list_cmd)
-    start_parser = subparsers.add_parser('start')
-    start_parser.set_defaults(func=start_cmd)
-    start_parser.add_argument('id')
-    stop_parser = subparsers.add_parser('stop')
-    stop_parser.set_defaults(func=stop_cmd)
-    stop_parser.add_argument('id')
-    trigger_parser = subparsers.add_parser('trigger')
-    trigger_parser.set_defaults(func=trigger_cmd)
-    trigger_parser.add_argument('id')
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
     destroy_parser.add_argument('id')
