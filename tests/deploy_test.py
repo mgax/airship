@@ -9,7 +9,7 @@ class DeployErrorTest(AirshipTestCase):
         self.subprocess = self.patch('airship.contrib.python.subprocess')
         self.subprocess.CalledProcessError = CalledProcessError
         self.bucket = Mock(folder=self.tmp)
-        self.bucket.airship.config = {'python_dist': self.tmp}
+        self.bucket.airship.config = {'python': {'dist': self.tmp}}
         self.bucket.airship.home_path = self.tmp
         (self.tmp / 'requirements.txt').write_text("")
 

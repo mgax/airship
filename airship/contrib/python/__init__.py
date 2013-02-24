@@ -6,11 +6,12 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
     airship = bucket.airship
     requirements_file = bucket.folder / 'requirements.txt'
     if requirements_file.isfile():
-        index_dir = airship.config['python_dist']
+        config = airship.config.get('python', {})
+        index_dir = config['dist']
         venv = bucket.folder / '_virtualenv'
         pip = venv / 'bin' / 'pip'
         virtualenv_py = airship.home_path / 'dist' / 'virtualenv.py'
-        python = airship.config.get('python_interpreter', 'python')
+        python = config.get('interpreter', 'python')
 
         try:
             subprocess.check_call([python, virtualenv_py, venv,

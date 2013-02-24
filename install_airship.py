@@ -20,8 +20,9 @@ WHEEL_URL = ('http://pypi.python.org/packages/source/'
              'w/wheel/wheel-0.14.0.tar.gz')
 
 AIRSHIP_CFG_TEMPLATE = """\
-python_dist: {python_dist}
-python_interpreter: {python_interpreter}
+python:
+    dist: {python_dist}
+    interpreter: {python_interpreter}
 port_map:
     web: {web_port}
 env:
