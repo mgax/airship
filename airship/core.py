@@ -19,6 +19,7 @@ CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
 
 bucket_run = blinker.Signal()
+define_arguments = blinker.Signal()
 
 
 def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
@@ -235,6 +236,8 @@ def build_args_parser():
 
     deploy_parser = create_command('deploy', deploy_cmd)
     deploy_parser.add_argument('tarfile')
+
+    define_arguments.send(None, create_command=create_command)
 
     return parser
 
