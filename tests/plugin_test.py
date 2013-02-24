@@ -10,8 +10,10 @@ class PluginTest(AirshipTestCase):
         from airship.core import load_plugins
         entry_point = Mock()
         pkg_resources.iter_entry_points.return_value = [entry_point]
-        load_plugins()
-        self.assertEqual(entry_point.load.return_value.mock_calls, [call()])
+        airship = Mock()
+        load_plugins(airship)
+        self.assertEqual(entry_point.load.return_value.mock_calls,
+                         [call(airship)])
 
     @patch('airship.deployer.subprocess')
     @patch('airship.deployer.bucket_setup')

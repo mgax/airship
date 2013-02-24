@@ -34,6 +34,6 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
             raise DeployError(bucket, "Failed to install requirements.")
 
 
-def load(*args, **kwargs):
+def load(airship):
     from airship.deployer import bucket_setup
     bucket_setup.connect(set_up_virtualenv_and_requirements)

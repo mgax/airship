@@ -143,10 +143,10 @@ class Airship(object):
         return {'buckets': [{'id': id_} for id_ in self.buckets_db]}
 
 
-def load_plugins():
+def load_plugins(airship):
     for entry_point in pkg_resources.iter_entry_points('airship_plugins'):
         callback = entry_point.load()
-        callback()
+        callback(airship)
 
 
 AIRSHIP_SCRIPT = """#!/bin/bash
@@ -247,7 +247,6 @@ def set_up_logging(airship_home):
 
 
 def main(raw_arguments=None):
-    load_plugins()
     parser = build_args_parser()
     args = parser.parse_args(raw_arguments or sys.argv[1:])
     airship_home = path(args.airship_home).abspath()
@@ -260,6 +259,7 @@ def main(raw_arguments=None):
         config = {}
     config['home'] = airship_home
     airship = Airship(config)
+    load_plugins(airship)
     args.func(airship, args)
 
 
