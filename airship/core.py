@@ -92,6 +92,7 @@ class Airship(object):
         self.home_path = config['home']
         self.var_path = self.home_path / 'var'
         self.log_path = self.var_path / 'log'
+        self.deploy_path = self.var_path / 'deploy'
         self.config = config
         etc = self.home_path / 'etc'
         etc.mkdir_p()
@@ -110,6 +111,7 @@ class Airship(object):
         self.var_path.mkdir_p()
         self.log_path.mkdir_p()
         (self.var_path / 'run').mkdir_p()
+        self.deploy_path.mkdir_p()
         self.generate_supervisord_configuration()
 
     def generate_supervisord_configuration(self):
@@ -125,7 +127,7 @@ class Airship(object):
         return self._get_bucket_by_id(name)
 
     def _bucket_folder(self, id_):
-        return self.home_path / id_
+        return self.deploy_path / id_
 
     def _generate_bucket_id(self):
         with self.meta_db.lock():
