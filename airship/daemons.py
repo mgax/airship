@@ -33,7 +33,7 @@ files = %(include_files)s
 # triggered buckets when they exit
 
 SUPERVISORD_PROGRAM_TEMPLATE = """\
-[program:%(name)s]
+[program:%(bucket)s-%(procname)s]
 redirect_stderr = true
 stdout_logfile = %(log)s
 startsecs = %(startsecs)s
@@ -41,6 +41,7 @@ startretries = 1
 autostart = %(autostart)s
 autorestart = false
 command = bin/airship run %(bucket_id)s %(procname)s
+
 """
 
 
@@ -73,16 +74,17 @@ class Supervisor(object):
 
     def _configure_bucket(self, bucket, autostart):
         with self._bucket_cfg(bucket.id_).open('wb') as f:
-            f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
-                'name': bucket.id_,
-                'directory': bucket.folder,
-                'run': bucket.run_folder,
-                'log': bucket.log_path,
-                'bucket_id': bucket.id_,
-                'autostart': 'true' if autostart else 'false',
-                'startsecs': 2 if autostart else 0,
-                'procname': 'web',
-            })
+            for procname in bucket.process_types:
+                f.write(SUPERVISORD_PROGRAM_TEMPLATE % {
+                    'bucket': bucket.id_,
+                    'directory': bucket.folder,
+                    'run': bucket.run_folder,
+                    'log': bucket.log_path,
+                    'bucket_id': bucket.id_,
+                    'autostart': 'true' if autostart else 'false',
+                    'startsecs': 2 if autostart else 0,
+                    'procname': procname,
+                })
 
     def remove_bucket(self, bucket_id):
         self._bucket_cfg(bucket_id).unlink_p()

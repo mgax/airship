@@ -58,13 +58,18 @@ class SupervisorConfigurationTest(AirshipTestCase):
 
     def test_generate_supervisord_cfg_with_run_command(self):
         bucket = self.create_airship().new_bucket()
+        (bucket.folder / 'Procfile').write_text(
+            'one: run this command on $PORT\n'
+            'two: and $THIS other one\n'
+        )
+        bucket._read_procfile()
         bucket.start()
 
         eq_config = config_file_checker(self.bucket_cfg(bucket))
-        section = 'program:%s' % bucket.id_
+        section = 'program:%s-one' % bucket.id_
 
         eq_config(section, 'command',
-                  'bin/airship run {0} web'.format(bucket.id_))
+                  'bin/airship run {0} one'.format(bucket.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / (bucket.id_ + '.log'))
@@ -72,9 +77,11 @@ class SupervisorConfigurationTest(AirshipTestCase):
 
     def test_bucket_start_changes_autostart_to_true(self):
         bucket = self.create_airship().new_bucket()
+        (bucket.folder / 'Procfile').write_text('web: ./runweb $PORT\n')
+        bucket._read_procfile()
         bucket.start()
 
-        section = 'program:%s' % bucket.id_
+        section = 'program:%s-web' % bucket.id_
         eq_config = config_file_checker(self.bucket_cfg(bucket))
         eq_config(section, 'autostart', 'true')
         eq_config(section, 'startsecs', '2')
@@ -82,9 +89,11 @@ class SupervisorConfigurationTest(AirshipTestCase):
     def test_bucket_stop_changes_autostart_to_false(self):
         bucket = self.create_airship().new_bucket()
         bucket.start()
+        (bucket.folder / 'Procfile').write_text('web: ./runweb $PORT\n')
+        bucket._read_procfile()
         bucket.stop()
 
-        section = 'program:%s' % bucket.id_
+        section = 'program:%s-web' % bucket.id_
         eq_config = config_file_checker(self.bucket_cfg(bucket))
         eq_config(section, 'autostart', 'false')
         eq_config(section, 'autorestart', 'false')

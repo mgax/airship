@@ -63,6 +63,7 @@ def remove_old_buckets(bucket):
 def deploy(airship, tarfile):
     bucket = airship.new_bucket()
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
+    bucket._read_procfile()
     bucket_setup.send(bucket)
     remove_old_buckets(bucket)
     try:
