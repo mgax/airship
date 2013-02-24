@@ -46,3 +46,16 @@ class DeployErrorTest(AirshipTestCase):
         err = self.call_and_expect_failure()
         self.assertEqual(err.message, "Failed to install requirements.")
         self.assertIs(err.bucket, self.bucket)
+
+
+class RunTest(AirshipTestCase):
+
+    def test_run_activates_virtualenv(self):
+        from run_test import mock_exec
+        bucket = self.create_airship().new_bucket()
+        venv = bucket.folder / '_virtualenv'
+        venv.mkdir()
+        with mock_exec() as calls:
+            bucket.run('hello world')
+        path_0 = calls[0].environ['PATH'].split(':')[0]
+        self.assertEqual(path_0, venv / 'bin')
