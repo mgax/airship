@@ -107,6 +107,9 @@ class Airship(object):
         return folder
 
     def initialize(self):
+        self.var_path.mkdir_p()
+        self.log_path.mkdir_p()
+        (self.var_path / 'run').mkdir_p()
         self.generate_supervisord_configuration()
 
     def generate_supervisord_configuration(self):
@@ -165,11 +168,7 @@ def init_cmd(airship, args):
     log.info("Initializing airship folder at %r.", airship.home_path)
     airship_yaml_path = airship.home_path / 'etc' / 'airship.yaml'
     if not airship_yaml_path.isfile():
-        with airship_yaml_path.open('wb') as f:
-            f.write('{}\n')
-    airship.var_path.mkdir_p()
-    airship.log_path.mkdir_p()
-    (airship.var_path / 'run').mkdir_p()
+        airship_yaml_path.write_text('\n')
     airship.initialize()
 
     airship_bin = airship.home_path / 'bin'

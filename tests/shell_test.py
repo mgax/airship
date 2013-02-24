@@ -45,4 +45,3 @@ class ShellTest(AirshipTestCase):
                               ['airship', 'supervisord', 'supervisorctl'])
         airship_yaml_path = other_tmp / 'etc' / 'airship.yaml'
         self.assertTrue(airship_yaml_path.isfile())
-        self.assertIsNotNone(json.loads(airship_yaml_path.text()))
