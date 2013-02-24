@@ -1,6 +1,8 @@
 import os
 import sys
 import subprocess
+from contextlib import contextmanager
+from collections import namedtuple
 from path import path
 from mock import patch, call
 from common import AirshipTestCase
@@ -54,21 +56,31 @@ class RealProcessTest(AirshipTestCase):
         self.assertEqual(out, "asdf")
 
 
-class MockProcessTest(AirshipTestCase):
+@contextmanager
+def mock_exec():
+    MockCall = namedtuple('MockCall', ['procname', 'args', 'environ'])
+    calls = []
 
-    def setUp(self):
-        self.os = self.patch('airship.core.os')
-        self.os.environ = {}
-        self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
+    def mock_execve(procname, args, environ):
+        calls.append(MockCall(procname, args, environ))
+
+    with patch('airship.core.os') as mock_os:
+        mock_os.execve.side_effect = mock_execve
+        yield calls
+
+
+class MockProcessTest(AirshipTestCase):
 
     def test_run_prepares_environ_from_etc_app_config(self):
         env = {'SOME_CONFIG_VALUE': "hello there!"}
-        self.create_airship({'env': env}).new_bucket().run(None)
-        environ = self.get_environ()
+        bucket = self.create_airship({'env': env}).new_bucket()
+        with mock_exec() as calls:
+            bucket.run(None)
+        environ = calls[0].environ
         self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
 
     def test_run_inserts_port_in_environ(self):
         bucket = self.create_airship({'port_map': {'web': 13}}).new_bucket()
-        bucket.run(None)
-        environ = self.get_environ()
-        self.assertEqual(environ['PORT'], '13')
+        with mock_exec() as calls:
+            bucket.run(None)
+        self.assertEqual(calls[0].environ['PORT'], '13')
