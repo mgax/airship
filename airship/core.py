@@ -69,24 +69,23 @@ class Bucket(object):
             self.folder.rmtree()
         self.airship.buckets_db.pop(self.id_, None)
 
-    def run(self, command, environ={}):
+    def run(self, command):
         os.chdir(self.folder)
-        environ = dict(os.environ, **environ)
+        environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
         venv = self.folder / '_virtualenv'
         if venv.isdir():
             environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
         if command:
+            if command in self.process_types:
+                procname = command
+                port_map = self.airship.config.get('port_map', {})
+                if procname in port_map:
+                    environ['PORT'] = str(port_map[procname])
+                command = self.process_types[procname]
             shell_args += ['-c', command]
         os.execve(shell_args[0], shell_args, environ)
-
-    def run_process(self, procname):
-        port_map = self.airship.config.get('port_map', {})
-        environ = {}
-        if procname in port_map:
-            environ['PORT'] = str(port_map[procname])
-        self.run(self.process_types[procname], environ)
 
 
 _newest = object()
