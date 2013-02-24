@@ -114,7 +114,7 @@ def tar_maker():
 def cleanup_all_buckets():
     json_list = run('{airship-home}/bin/airship list'.format(**env))
     for bucket in json.loads(json_list)['buckets']:
-        run('{airship-home}/bin/airship destroy {bucket_id}'
+        run('{airship-home}/bin/airship destroy -d {bucket_id}'
             .format(bucket_id=bucket['id'], **env))
 
 

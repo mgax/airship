@@ -69,7 +69,7 @@ class SupervisorConfigurationTest(AirshipTestCase):
         section = 'program:%s-one' % bucket.id_
 
         eq_config(section, 'command',
-                  'bin/airship run {0} one'.format(bucket.id_))
+                  'bin/airship run -d {0} one'.format(bucket.id_))
         eq_config(section, 'redirect_stderr', 'true')
         eq_config(section, 'stdout_logfile',
                   self.tmp / 'var' / 'log' / 'one.log')

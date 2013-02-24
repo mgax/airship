@@ -14,13 +14,13 @@ class ShellTest(AirshipTestCase):
     @patch('airship.core.Bucket.destroy')
     def test_destroy_bucket_calls_api_method(self, destroy):
         bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'destroy', bucket.id_])
+        imp('airship.core').main([str(self.tmp), 'destroy', '-d', bucket.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
     @patch('airship.core.Bucket.run')
     def test_run_bucket_calls_api_method_with_args(self, run):
         bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'run', bucket.id_, 'a'])
+        imp('airship.core').main([str(self.tmp), 'run', '-d', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
 
     @patch('airship.core.Airship.list_buckets')

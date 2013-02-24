@@ -196,11 +196,11 @@ def list_cmd(airship, args):
 
 
 def destroy_cmd(airship, args):
-    airship.get_bucket(args.id).destroy()
+    airship.get_bucket(args.bucket_id or _newest).destroy()
 
 
 def run_cmd(airship, args):
-    airship.get_bucket(args.id).run(args.command)
+    airship.get_bucket(args.bucket_id or _newest).run(args.command)
 
 
 def deploy_cmd(airship, args):
@@ -228,10 +228,10 @@ def build_args_parser():
     list_parser.set_defaults(func=list_cmd)
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
-    destroy_parser.add_argument('id')
+    destroy_parser.add_argument('-d', '--bucket_id')
     run_parser = subparsers.add_parser('run')
     run_parser.set_defaults(func=run_cmd)
-    run_parser.add_argument('id')
+    run_parser.add_argument('-d', '--bucket_id')
     run_parser.add_argument('command', nargs='?')
     deploy_parser = subparsers.add_parser('deploy')
     deploy_parser.set_defaults(func=deploy_cmd)

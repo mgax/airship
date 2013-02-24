@@ -36,7 +36,7 @@ stdout_logfile = %(var)s/log/%(procname)s.log
 startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
-command = bin/airship run %(bucket_id)s %(procname)s
+command = bin/airship run -d %(bucket_id)s %(procname)s
 
 """
 
