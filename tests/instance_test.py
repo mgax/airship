@@ -90,11 +90,6 @@ class BucketTest(AirshipTestCase):
         bucket = airship.new_bucket()
         self.assertEqual(bucket.meta['APPLICATION_NAME'], 'web')
 
-    def test_bucket_id_starts_with_app_name(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket()
-        self.assertTrue(bucket.id_.startswith('web-'))
-
 
 class PortConfigurationTest(AirshipTestCase):
 
@@ -123,13 +118,6 @@ class BucketListingTest(AirshipTestCase):
         report = airship.list_buckets()
         self.assertItemsEqual([i['id'] for i in report['buckets']],
                               [bucket_1.id_, bucket_2.id_])
-
-    def test_listing_contains_metadata(self):
-        airship = self.create_airship()
-        airship.new_bucket()
-        report = airship.list_buckets()
-        [bucket_data] = report['buckets']
-        self.assertEqual(bucket_data['meta']['APPLICATION_NAME'], 'web')
 
     def test_listing_contains_port(self):
         airship = self.create_airship()
