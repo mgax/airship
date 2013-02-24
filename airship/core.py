@@ -5,7 +5,6 @@ import json
 import random
 import string
 from pipes import quote as shellquote
-from importlib import import_module
 from path import path
 import yaml
 from kv import KV
@@ -19,12 +18,6 @@ log = logging.getLogger(__name__)
 
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
-
-
-def _get_named_object(name):
-    module_name, attr_name = name.split(':')
-    module = import_module(module_name)
-    return getattr(module, attr_name)
 
 
 def random_id(size=6, vocabulary=string.ascii_lowercase + string.digits):
