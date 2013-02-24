@@ -144,8 +144,6 @@ class Airship(object):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         bucket_id = self._generate_bucket_id()
         self.buckets_db[bucket_id] = {
-            'require-services': config.get('services', {}),
-            'urlmap': config.get('urlmap', []),
             'meta': meta,
         }
         bucket = self._get_bucket_by_id(bucket_id)

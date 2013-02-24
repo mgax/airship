@@ -53,15 +53,6 @@ class BucketTest(AirshipTestCase):
         self.assertEqual(airship.daemons.trigger_bucket.mock_calls,
                          [call(bucket)])
 
-    def test_service_is_configured_at_bucket_creation(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket({'services': {
-            'something': {'foo': 'bar'},
-        }})
-
-        services = bucket.config['require-services']
-        self.assertEqual(services['something'], {'foo': 'bar'})
-
     def test_two_buckets_have_different_paths_and_ids(self):
         airship = self.create_airship()
         bucket_1 = airship.new_bucket()
