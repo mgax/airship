@@ -22,9 +22,8 @@ WHEEL_URL = ('http://pypi.python.org/packages/source/'
 AIRSHIP_CFG_TEMPLATE = """\
 python_dist: {python_dist}
 python_interpreter: {python_interpreter}
-port_range: {port_range}
 port_map:
-    web: 127.0.0.1:{web_port}
+    web: {web_port}
 env:
 """
 
@@ -64,7 +63,6 @@ def install(airship_home, python_bin, devel):
         base = random.randint(20, 600) * 100
         airship_cfg.write_bytes(AIRSHIP_CFG_TEMPLATE.format(
             python_dist=json.dumps(airship_home / dist),
-            port_range=json.dumps([base + 10, base + 99]),
             web_port=json.dumps(base),
             python_interpreter=json.dumps(sys.executable),
         ))

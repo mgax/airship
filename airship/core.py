@@ -11,7 +11,6 @@ import yaml
 from kv import KV
 import pkg_resources
 from .daemons import Supervisor
-from .routing import Haproxy
 from . import deployer
 
 
@@ -59,10 +58,8 @@ class Bucket(object):
         log.info("Activating bucket %r", self.id_)
         self.configure()
         self.airship.daemons.configure_bucket_running(self)
-        self.airship.haproxy.configure_bucket(self)
 
     def stop(self):
-        self.airship.haproxy.remove_bucket(self)
         self.airship.daemons.configure_bucket_stopped(self)
 
     def trigger(self):
@@ -75,7 +72,6 @@ class Bucket(object):
         if self.folder.isdir():
             self.folder.rmtree()
         self.airship.buckets_db.pop(self.id_, None)
-        self.airship._free_port(self)
 
     def run(self, command):
         os.chdir(self.folder)
@@ -106,9 +102,6 @@ class Airship(object):
         etc.mkdir_p()
         self.buckets_db = KV(etc / 'buckets.db', table='bucket')
         self.daemons = Supervisor(etc)
-        self.haproxy = Haproxy(self.home_path, config.get('port_map') or {})
-        from routing import configuration_update
-        configuration_update.connect(self._haproxy_update, self.haproxy)
 
     @property
     def cfg_links_folder(self):
@@ -117,18 +110,8 @@ class Airship(object):
             folder.makedirs()
         return folder
 
-    def _haproxy_configure_supervisor(self):
-        haproxy_program = self.home_path / 'etc' / 'supervisor.d' / 'haproxy'
-        haproxy_program.write_text(self.haproxy.supervisord_config(self))
-
     def initialize(self):
         self.generate_supervisord_configuration()
-        self._haproxy_configure_supervisor()
-
-    def _haproxy_update(self, sender, **extra):
-        self._haproxy_configure_supervisor()
-        self.daemons.ctl(['update'])
-        self.daemons.ctl(['restart', 'haproxy'])
 
     def generate_supervisord_configuration(self):
         self.daemons.configure(self.home_path)
@@ -165,38 +148,6 @@ class Airship(object):
         else:
             raise RuntimeError("Failed to generate unique bucket ID")
 
-    def _open_ports_db(self):
-        return KV(self.home_path / 'etc' / 'buckets.db', table='port')
-
-    def _allocate_port(self, bucket_id):
-        from itertools import chain
-        port_range = self.config.get('port_range', [5000, 5099])
-        start_port = port_range[0]
-        end_port = port_range[1] + 1
-
-        ports_db = self._open_ports_db()
-        with ports_db.lock():
-            next_port = ports_db.get('next', start_port)
-            if start_port <= next_port <= end_port:
-                queue = chain(xrange(next_port, end_port),
-                              xrange(start_port, next_port - 1))
-            else:
-                queue = xrange(start_port, end_port)
-            for port in queue:
-                assert start_port <= port <= end_port
-                if port not in ports_db:
-                    ports_db[port] = bucket_id
-                    ports_db['next'] = port + 1
-                    return port
-            else:
-                raise RuntimeError("No ports free to allocate")
-
-    def _free_port(self, bucket):
-        ports_db = self._open_ports_db()
-        port = ports_db.pop(bucket.port, None)
-        if port is not None:
-            assert port == bucket.id_
-
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = config.get('application_name')
@@ -210,7 +161,7 @@ class Airship(object):
             'require-services': config.get('services', {}),
             'urlmap': config.get('urlmap', []),
             'meta': meta,
-            'port': self._allocate_port(bucket_id),
+            'port': self.config.get('port_map', {}).get(app_name),
         }
         bucket = self._get_bucket_by_id(bucket_id)
         return bucket
@@ -251,7 +202,7 @@ def init_cmd(airship, args):
     airship_yaml_path = airship.home_path / 'etc' / 'airship.yaml'
     if not airship_yaml_path.isfile():
         with airship_yaml_path.open('wb') as f:
-            f.write('{"port_range": [5000, 5100]}\n')
+            f.write('{}\n')
     (airship.home_path / 'var').mkdir_p()
     (airship.home_path / 'var' / 'log').mkdir_p()
     (airship.home_path / 'var' / 'run').mkdir_p()
