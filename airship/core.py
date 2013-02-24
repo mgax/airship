@@ -131,9 +131,9 @@ class Airship(object):
     def _bucket_folder(self, id_):
         return self.home_path / id_
 
-    def _generate_bucket_id(self, id_prefix):
+    def _generate_bucket_id(self):
         for c in range(10):
-            id_ = id_prefix + random_id()
+            id_ = random_id()
             try:
                 self._bucket_folder(id_).mkdir()
             except OSError:
@@ -147,7 +147,7 @@ class Airship(object):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         app_name = 'web'
         meta['APPLICATION_NAME'] = app_name
-        bucket_id = self._generate_bucket_id(app_name + '-')
+        bucket_id = self._generate_bucket_id()
         self.buckets_db[bucket_id] = {
             'require-services': config.get('services', {}),
             'urlmap': config.get('urlmap', []),
