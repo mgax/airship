@@ -4,7 +4,7 @@ import logging
 import json
 import random
 import string
-from datetime import datetime
+from pipes import quote as shellquote
 from importlib import import_module
 from path import path
 import yaml
@@ -49,19 +49,12 @@ class Bucket(object):
                     (procname, cmd) = line.split(':', 1)
                     self.process_types[procname.strip()] = cmd.strip()
 
-    @property
-    def meta(self):
-        return self.config['meta']
-
     def start(self):
         log.info("Activating bucket %r", self.id_)
         self.airship.daemons.configure_bucket_running(self)
 
     def stop(self):
         self.airship.daemons.configure_bucket_stopped(self)
-
-    def trigger(self):
-        self.airship.daemons.trigger_bucket(self)
 
     def destroy(self):
         self.airship.daemons.remove_bucket(self.id_)
@@ -100,10 +93,12 @@ class Airship(object):
         self.home_path = config['home']
         self.var_path = self.home_path / 'var'
         self.log_path = self.var_path / 'log'
+        self.deploy_path = self.var_path / 'deploy'
         self.config = config
         etc = self.home_path / 'etc'
         etc.mkdir_p()
         self.buckets_db = KV(etc / 'buckets.db', table='bucket')
+        self.meta_db = KV(etc / 'buckets.db', table='meta')
         self.daemons = Supervisor(etc)
 
     @property
@@ -114,6 +109,10 @@ class Airship(object):
         return folder
 
     def initialize(self):
+        self.var_path.mkdir_p()
+        self.log_path.mkdir_p()
+        (self.var_path / 'run').mkdir_p()
+        self.deploy_path.mkdir_p()
         self.generate_supervisord_configuration()
 
     def generate_supervisord_configuration(self):
@@ -129,26 +128,19 @@ class Airship(object):
         return self._get_bucket_by_id(name)
 
     def _bucket_folder(self, id_):
-        return self.home_path / id_
+        return self.deploy_path / id_
 
     def _generate_bucket_id(self):
-        for c in range(10):
-            id_ = random_id()
-            try:
-                self._bucket_folder(id_).mkdir()
-            except OSError:
-                continue
-            else:
-                return id_
-        else:
-            raise RuntimeError("Failed to generate unique bucket ID")
+        with self.meta_db.lock():
+            next_id = self.meta_db.get('next_bucket_id', 1)
+            self.meta_db['next_bucket_id'] = next_id + 1
+        id_ = 'd%d' % (next_id,)
+        self._bucket_folder(id_).mkdir()
+        return id_
 
     def new_bucket(self, config={}):
-        meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
         bucket_id = self._generate_bucket_id()
-        self.buckets_db[bucket_id] = {
-            'meta': meta,
-        }
+        self.buckets_db[bucket_id] = {}
         bucket = self._get_bucket_by_id(bucket_id)
         return bucket
 
@@ -179,11 +171,7 @@ def init_cmd(airship, args):
     log.info("Initializing airship folder at %r.", airship.home_path)
     airship_yaml_path = airship.home_path / 'etc' / 'airship.yaml'
     if not airship_yaml_path.isfile():
-        with airship_yaml_path.open('wb') as f:
-            f.write('{}\n')
-    airship.var_path.mkdir_p()
-    airship.log_path.mkdir_p()
-    (airship.var_path / 'run').mkdir_p()
+        airship_yaml_path.write_text('\n')
     airship.initialize()
 
     airship_bin = airship.home_path / 'bin'
@@ -204,32 +192,17 @@ def init_cmd(airship, args):
         path(f.name).chmod(0755)
 
 
-def new_cmd(airship, args):
-    print airship.new_bucket(json.loads(args.config)).id_
-
-
 def list_cmd(airship, args):
     print json.dumps(airship.list_buckets(), indent=2)
 
 
-def start_cmd(airship, args):
-    airship.get_bucket(args.id).start()
-
-
-def stop_cmd(airship, args):
-    airship.get_bucket(args.id).stop()
-
-
-def trigger_cmd(airship, args):
-    airship.get_bucket(args.id).trigger()
-
-
 def destroy_cmd(airship, args):
-    airship.get_bucket(args.id).destroy()
+    airship.get_bucket(args.bucket_id or _newest).destroy()
 
 
 def run_cmd(airship, args):
-    airship.get_bucket(args.id).run(args.command)
+    command = ' '.join(shellquote(a) for a in args.command)
+    airship.get_bucket(args.bucket_id or _newest).run(command)
 
 
 def deploy_cmd(airship, args):
@@ -253,27 +226,15 @@ def build_args_parser():
     subparsers = parser.add_subparsers()
     init_parser = subparsers.add_parser('init')
     init_parser.set_defaults(func=init_cmd)
-    new_parser = subparsers.add_parser('new')
-    new_parser.set_defaults(func=new_cmd)
-    new_parser.add_argument('config')
     list_parser = subparsers.add_parser('list')
     list_parser.set_defaults(func=list_cmd)
-    start_parser = subparsers.add_parser('start')
-    start_parser.set_defaults(func=start_cmd)
-    start_parser.add_argument('id')
-    stop_parser = subparsers.add_parser('stop')
-    stop_parser.set_defaults(func=stop_cmd)
-    stop_parser.add_argument('id')
-    trigger_parser = subparsers.add_parser('trigger')
-    trigger_parser.set_defaults(func=trigger_cmd)
-    trigger_parser.add_argument('id')
     destroy_parser = subparsers.add_parser('destroy')
     destroy_parser.set_defaults(func=destroy_cmd)
-    destroy_parser.add_argument('id')
+    destroy_parser.add_argument('-d', '--bucket_id')
     run_parser = subparsers.add_parser('run')
     run_parser.set_defaults(func=run_cmd)
-    run_parser.add_argument('id')
-    run_parser.add_argument('command', nargs='?')
+    run_parser.add_argument('-d', '--bucket_id')
+    run_parser.add_argument('command', nargs=argparse.REMAINDER)
     deploy_parser = subparsers.add_parser('deploy')
     deploy_parser.set_defaults(func=deploy_cmd)
     deploy_parser.add_argument('tarfile')

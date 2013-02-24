@@ -44,4 +44,5 @@ class AirshipTestCase(HandyTestCase):
     def _pre_setup(self):
         super(AirshipTestCase, self)._pre_setup()
         (self.tmp / 'etc').mkdir()
+        (self.tmp / 'var' / 'deploy').makedirs_p()
         self.mock_subprocess = self.patch('airship.daemons.subprocess')

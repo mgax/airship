@@ -45,14 +45,6 @@ class BucketTest(AirshipTestCase):
         self.assertEqual(airship.daemons.configure_bucket_running.mock_calls,
                          [call(bucket)])
 
-    def test_trigger_bucket_calls_daemon_start(self):
-        airship = self.create_airship()
-        airship.daemons = Mock()
-        bucket = airship.new_bucket()
-        bucket.trigger()
-        self.assertEqual(airship.daemons.trigger_bucket.mock_calls,
-                         [call(bucket)])
-
     def test_two_buckets_have_different_paths_and_ids(self):
         airship = self.create_airship()
         bucket_1 = airship.new_bucket()
@@ -60,21 +52,12 @@ class BucketTest(AirshipTestCase):
         self.assertNotEqual(bucket_1.folder, bucket_2.folder)
         self.assertNotEqual(bucket_1.id_, bucket_2.id_)
 
-    def test_unlucky_bucket_id_generator_gives_up(self):
+    def test_buckets_get_consecutive_ids(self):
         airship = self.create_airship()
-        with patch('airship.core.random') as random:
-            random.choice.return_value = 'z'
-            airship.new_bucket()
-            with self.assertRaises(RuntimeError):
-                airship.new_bucket()
-
-    def test_bucket_metadata_contains_creation_time(self):
-        airship = self.create_airship()
-        t0 = datetime.utcnow().isoformat()
-        bucket = airship.new_bucket()
-        t1 = datetime.utcnow().isoformat()
-        creation = bucket.meta['CREATION_TIME']
-        self.assertTrue(t0 <= creation <= t1)
+        bucket_1 = airship.new_bucket()
+        bucket_2 = airship.new_bucket()
+        self.assertEqual(bucket_1.id_, 'd1')
+        self.assertEqual(bucket_2.id_, 'd2')
 
     def test_bucket_reads_procfile(self):
         airship = self.create_airship()

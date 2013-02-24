@@ -29,9 +29,6 @@ files = %(include_files)s
 """
 
 
-# autorestart is disabled because otherwise it would keep restarting
-# triggered buckets when they exit
-
 SUPERVISORD_PROGRAM_TEMPLATE = """\
 [program:%(bucket)s-%(procname)s]
 redirect_stderr = true
@@ -39,8 +36,7 @@ stdout_logfile = %(var)s/log/%(procname)s.log
 startsecs = %(startsecs)s
 startretries = 1
 autostart = %(autostart)s
-autorestart = false
-command = bin/airship run %(bucket_id)s %(procname)s
+command = bin/airship run -d %(bucket_id)s %(procname)s
 
 """
 
@@ -109,6 +105,3 @@ class Supervisor(object):
     def configure_bucket_stopped(self, bucket):
         self._configure_bucket(bucket, False)
         self.ctl(['update'])
-
-    def trigger_bucket(self, bucket):
-        self.ctl(['start', bucket.id_])

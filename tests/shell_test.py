@@ -11,44 +11,29 @@ class ShellTest(AirshipTestCase):
     def setUp(self):
         (self.tmp / 'etc' / 'airship.yaml').write_text('{}')
 
-    @patch('airship.core.Airship.new_bucket')
-    def test_new_bucket_calls_api_and_returns_path(self, new_bucket):
-        new_bucket.return_value = Mock(id_="bucket-id")
-        with patch('sys.stdout', StringIO()) as stdout:
-            config = json.dumps({'hello': "world"})
-            imp('airship.core').main([str(self.tmp), 'new', config])
-        self.assertEqual(new_bucket.mock_calls, [call({'hello': "world"})])
-        self.assertEqual(stdout.getvalue().strip(), "bucket-id")
-
-    @patch('airship.core.Bucket.start')
-    def test_start_bucket_calls_api_method(self, start):
-        bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'start', bucket.id_])
-        self.assertEqual(start.mock_calls, [call()])
-
-    @patch('airship.core.Bucket.stop')
-    def test_stop_bucket_calls_api_method(self, stop):
-        bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'stop', bucket.id_])
-        self.assertEqual(stop.mock_calls, [call()])
-
-    @patch('airship.core.Bucket.trigger')
-    def test_trigger_bucket_calls_api_method(self, trigger):
-        bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'trigger', bucket.id_])
-        self.assertEqual(trigger.mock_calls, [call()])
-
     @patch('airship.core.Bucket.destroy')
     def test_destroy_bucket_calls_api_method(self, destroy):
         bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'destroy', bucket.id_])
+        imp('airship.core').main([str(self.tmp), 'destroy', '-d', bucket.id_])
         self.assertEqual(destroy.mock_calls, [call()])
 
     @patch('airship.core.Bucket.run')
     def test_run_bucket_calls_api_method_with_args(self, run):
         bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'run', bucket.id_, 'a'])
+        imp('airship.core').main([str(self.tmp), 'run', '-d', bucket.id_, 'a'])
         self.assertEqual(run.mock_calls, [call('a')])
+
+    @patch('airship.core.Bucket.run')
+    def test_run_bucket_does_not_require_bucket_id(self, run):
+        bucket = self.create_airship().new_bucket()
+        imp('airship.core').main([str(self.tmp), 'run', 'a'])
+        self.assertEqual(run.mock_calls, [call('a')])
+
+    @patch('airship.core.Bucket.run')
+    def test_run_bucket_quotes_its_arguments(self, run):
+        bucket = self.create_airship().new_bucket()
+        imp('airship.core').main([str(self.tmp), 'run', 'some', 'other thing'])
+        self.assertEqual(run.mock_calls, [call("some 'other thing'")])
 
     @patch('airship.core.Airship.list_buckets')
     def test_destroy_bucket_calls_api_method(self, list_buckets):
@@ -72,4 +57,3 @@ class ShellTest(AirshipTestCase):
                               ['airship', 'supervisord', 'supervisorctl'])
         airship_yaml_path = other_tmp / 'etc' / 'airship.yaml'
         self.assertTrue(airship_yaml_path.isfile())
-        self.assertIsNotNone(json.loads(airship_yaml_path.text()))
