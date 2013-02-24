@@ -27,10 +27,10 @@ class BucketTest(AirshipTestCase):
         same_bucket = airship.get_bucket(bucket.id_)
         self.assertEqual(bucket.folder, same_bucket.folder)
 
-    def test_get_bucket_with_app_name_returns_bucket(self):
+    def test_get_bucket_with_no_args_returns_bucket(self):
         airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'jack'})
-        same_bucket = airship.get_bucket('jack')
+        bucket = airship.new_bucket()
+        same_bucket = airship.get_bucket()
         self.assertEqual(bucket.folder, same_bucket.folder)
 
     def test_get_bucket_with_invalid_name_raises_keyerror(self):
@@ -52,15 +52,6 @@ class BucketTest(AirshipTestCase):
         bucket.trigger()
         self.assertEqual(airship.daemons.trigger_bucket.mock_calls,
                          [call(bucket)])
-
-    def test_service_is_configured_at_bucket_creation(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket({'services': {
-            'something': {'foo': 'bar'},
-        }})
-
-        services = bucket.config['require-services']
-        self.assertEqual(services['something'], {'foo': 'bar'})
 
     def test_two_buckets_have_different_paths_and_ids(self):
         airship = self.create_airship()
@@ -85,28 +76,19 @@ class BucketTest(AirshipTestCase):
         creation = bucket.meta['CREATION_TIME']
         self.assertTrue(t0 <= creation <= t1)
 
-    def test_bucket_metadata_contains_app_name(self):
+    def test_bucket_reads_procfile(self):
         airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'testy'})
-        self.assertEqual(bucket.meta['APPLICATION_NAME'], 'testy')
-
-    def test_bucket_id_starts_with_app_name(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket({'application_name': 'testy'})
-        self.assertTrue(bucket.id_.startswith('testy-'))
-
-
-class PortConfigurationTest(AirshipTestCase):
-
-    def test_new_bucket_allocates_no_port(self):
-        airship = self.create_airship()
+        t0 = datetime.utcnow().isoformat()
         bucket = airship.new_bucket()
-        self.assertIsNone(bucket.port)
-
-    def test_bucket_allocates_port_from_config_file(self):
-        airship = self.create_airship({'port_map': {'testy': 3516}})
-        bucket = airship.new_bucket({'application_name': 'testy'})
-        self.assertEqual(bucket.port, 3516)
+        (bucket.folder / 'Procfile').write_text(
+            'one: run this command on $PORT\n'
+            'two: and $THIS other one\n'
+        )
+        bucket = airship.get_bucket()
+        self.assertEqual(bucket.process_types, {
+            'one': 'run this command on $PORT',
+            'two': 'and $THIS other one',
+        })
 
 
 class BucketListingTest(AirshipTestCase):
@@ -123,37 +105,3 @@ class BucketListingTest(AirshipTestCase):
         report = airship.list_buckets()
         self.assertItemsEqual([i['id'] for i in report['buckets']],
                               [bucket_1.id_, bucket_2.id_])
-
-    def test_listing_contains_metadata(self):
-        airship = self.create_airship()
-        airship.new_bucket({'application_name': 'testy'})
-        report = airship.list_buckets()
-        [bucket_data] = report['buckets']
-        self.assertEqual(bucket_data['meta']['APPLICATION_NAME'], 'testy')
-
-    def test_listing_contains_port(self):
-        airship = self.create_airship()
-        bucket = airship.new_bucket()
-        report = airship.list_buckets()
-        [bucket_data] = report['buckets']
-        self.assertEqual(bucket_data['port'], bucket.port)
-
-
-class BucketRunTest(AirshipTestCase):
-
-    def setUp(self):
-        self.os = self.patch('airship.core.os')
-        self.os.environ = {}
-        self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
-
-    def test_run_prepares_environ_from_etc_app_config(self):
-        env = {'SOME_CONFIG_VALUE': "hello there!"}
-        self.create_airship({'env': env}).new_bucket().run(None)
-        environ = self.get_environ()
-        self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
-
-    def test_run_inserts_port_in_environ(self):
-        bucket = self.create_airship().new_bucket()
-        bucket.run(None)
-        environ = self.get_environ()
-        self.assertEqual(environ['PORT'], str(bucket.port))

@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 CFG_LINKS_FOLDER = 'active'
 YAML_EXT = '.yaml'
-RUN_RC_NAME = '.runrc'
 
 
 def _get_named_object(name):
@@ -39,24 +38,23 @@ class Bucket(object):
         self.airship = airship
         self.config = config
         self.folder = self.airship._bucket_folder(id_)
-        var = self.airship.home_path / 'var'
-        self.run_folder = var / 'run' / id_
-        self.log_path = var / 'log' / (self.id_ + '.log')
+        self.process_types = {}
+        self._read_procfile()
+
+    def _read_procfile(self):
+        procfile_path = self.folder / 'Procfile'
+        if procfile_path.isfile():
+            with procfile_path.open('rb') as f:
+                for line in f:
+                    (procname, cmd) = line.split(':', 1)
+                    self.process_types[procname.strip()] = cmd.strip()
 
     @property
     def meta(self):
         return self.config['meta']
 
-    @property
-    def port(self):
-        return self.config['port']
-
-    def configure(self):
-        self.run_folder.makedirs_p()
-
     def start(self):
         log.info("Activating bucket %r", self.id_)
-        self.configure()
         self.airship.daemons.configure_bucket_running(self)
 
     def stop(self):
@@ -67,8 +65,6 @@ class Bucket(object):
 
     def destroy(self):
         self.airship.daemons.remove_bucket(self.id_)
-        if self.run_folder.isdir():
-            self.run_folder.rmtree()
         if self.folder.isdir():
             self.folder.rmtree()
         self.airship.buckets_db.pop(self.id_, None)
@@ -77,17 +73,22 @@ class Bucket(object):
         os.chdir(self.folder)
         environ = dict(os.environ)
         environ.update(self.airship.config.get('env') or {})
-        environ['PORT'] = str(self.port)
         venv = self.folder / '_virtualenv'
         if venv.isdir():
             environ['PATH'] = ((venv / 'bin') + ':' + environ['PATH'])
         shell_args = ['/bin/bash']
         if command:
-            environ['BASH_ENV'] = RUN_RC_NAME
+            if command in self.process_types:
+                procname = command
+                port_map = self.airship.config.get('port_map', {})
+                if procname in port_map:
+                    environ['PORT'] = str(port_map[procname])
+                command = self.process_types[procname]
             shell_args += ['-c', command]
-        else:
-            shell_args += ['--rcfile', RUN_RC_NAME]
         os.execve(shell_args[0], shell_args, environ)
+
+
+_newest = object()
 
 
 class Airship(object):
@@ -97,6 +98,8 @@ class Airship(object):
 
     def __init__(self, config):
         self.home_path = config['home']
+        self.var_path = self.home_path / 'var'
+        self.log_path = self.var_path / 'log'
         self.config = config
         etc = self.home_path / 'etc'
         etc.mkdir_p()
@@ -120,25 +123,17 @@ class Airship(object):
         config = self.buckets_db[bucket_id]
         return Bucket(bucket_id, self, config)
 
-    def get_bucket(self, name):
-        try:
-            return self._get_bucket_by_id(name)
-
-        except KeyError:
-            for bucket_id in self.buckets_db:
-                bucket = self._get_bucket_by_id(bucket_id)
-                if name == bucket.meta.get('APPLICATION_NAME'):
-                    return bucket
-
-            else:
-                raise KeyError
+    def get_bucket(self, name=_newest):
+        if name is _newest:
+            name = max(self.buckets_db)
+        return self._get_bucket_by_id(name)
 
     def _bucket_folder(self, id_):
         return self.home_path / id_
 
-    def _generate_bucket_id(self, id_prefix):
+    def _generate_bucket_id(self):
         for c in range(10):
-            id_ = id_prefix + random_id()
+            id_ = random_id()
             try:
                 self._bucket_folder(id_).mkdir()
             except OSError:
@@ -150,32 +145,15 @@ class Airship(object):
 
     def new_bucket(self, config={}):
         meta = {'CREATION_TIME': datetime.utcnow().isoformat()}
-        app_name = config.get('application_name')
-        if app_name:
-            meta['APPLICATION_NAME'] = app_name
-            id_prefix = app_name + '-'
-        else:
-            id_prefix = ''
-        bucket_id = self._generate_bucket_id(id_prefix)
+        bucket_id = self._generate_bucket_id()
         self.buckets_db[bucket_id] = {
-            'require-services': config.get('services', {}),
-            'urlmap': config.get('urlmap', []),
             'meta': meta,
-            'port': self.config.get('port_map', {}).get(app_name),
         }
         bucket = self._get_bucket_by_id(bucket_id)
         return bucket
 
     def list_buckets(self):
-        buckets = []
-        for bucket_id in self.buckets_db:
-            bucket = self._get_bucket_by_id(bucket_id)
-            buckets.append({
-                'id': bucket.id_,
-                'meta': bucket.meta,
-                'port': bucket.port,
-            })
-        return {'buckets': buckets}
+        return {'buckets': [{'id': id_} for id_ in self.buckets_db]}
 
 
 def load_plugins():
@@ -203,9 +181,9 @@ def init_cmd(airship, args):
     if not airship_yaml_path.isfile():
         with airship_yaml_path.open('wb') as f:
             f.write('{}\n')
-    (airship.home_path / 'var').mkdir_p()
-    (airship.home_path / 'var' / 'log').mkdir_p()
-    (airship.home_path / 'var' / 'run').mkdir_p()
+    airship.var_path.mkdir_p()
+    airship.log_path.mkdir_p()
+    (airship.var_path / 'run').mkdir_p()
     airship.initialize()
 
     airship_bin = airship.home_path / 'bin'
@@ -234,10 +212,6 @@ def list_cmd(airship, args):
     print json.dumps(airship.list_buckets(), indent=2)
 
 
-def configure_cmd(airship, args):
-    airship.get_bucket(args.id).configure()
-
-
 def start_cmd(airship, args):
     airship.get_bucket(args.id).start()
 
@@ -260,7 +234,7 @@ def run_cmd(airship, args):
 
 def deploy_cmd(airship, args):
     try:
-        deployer.deploy(airship, args.tarfile, args.procname)
+        deployer.deploy(airship, args.tarfile)
     except deployer.DeployError, e:
         print "Deployment failed:", e.message
         try:
@@ -284,9 +258,6 @@ def build_args_parser():
     new_parser.add_argument('config')
     list_parser = subparsers.add_parser('list')
     list_parser.set_defaults(func=list_cmd)
-    configure_parser = subparsers.add_parser('configure')
-    configure_parser.set_defaults(func=configure_cmd)
-    configure_parser.add_argument('id')
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('id')
@@ -306,7 +277,6 @@ def build_args_parser():
     deploy_parser = subparsers.add_parser('deploy')
     deploy_parser.set_defaults(func=deploy_cmd)
     deploy_parser.add_argument('tarfile')
-    deploy_parser.add_argument('procname')
     return parser
 
 

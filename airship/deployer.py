@@ -52,28 +52,18 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
             raise DeployError(bucket, "Failed to install requirements.")
 
 
-@bucket_setup.connect
-def set_up_script(bucket):
-    procname = bucket.meta['APPLICATION_NAME']
-    procs = get_procs(bucket)
-    server_script = bucket.folder / '_run_process'
-    server_script.write_text('exec %s\n' % procs[procname])
-    server_script.chmod(0755)
-
-
 def remove_old_buckets(bucket):
     airship = bucket.airship
-    procname = bucket.meta['APPLICATION_NAME']
     for bucket_info in airship.list_buckets()['buckets']:
-        if bucket_info['meta']['APPLICATION_NAME'] == procname:
-            if bucket_info['id'] == bucket.id_:
-                continue
-            airship.get_bucket(bucket_info['id']).destroy()
+        if bucket_info['id'] == bucket.id_:
+            continue
+        airship.get_bucket(bucket_info['id']).destroy()
 
 
-def deploy(airship, tarfile, procname):
-    bucket = airship.new_bucket({'application_name': procname})
+def deploy(airship, tarfile):
+    bucket = airship.new_bucket()
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
+    bucket._read_procfile()
     bucket_setup.send(bucket)
     remove_old_buckets(bucket)
     try:

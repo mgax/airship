@@ -21,5 +21,5 @@ class PluginTest(AirshipTestCase):
         from airship.deployer import deploy
         airship = Mock()
         bucket = airship.new_bucket.return_value
-        deploy(airship, Mock(), 'web')
+        deploy(airship, Mock())
         self.assertEqual(bucket_setup.send.mock_calls, [call(bucket)])
