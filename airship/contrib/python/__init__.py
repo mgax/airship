@@ -1,9 +1,8 @@
 import subprocess
 
 
-def set_up_virtualenv_and_requirements(bucket, **extra):
+def set_up_virtualenv_and_requirements(airship, bucket, **extra):
     from airship.deployer import DeployError
-    airship = bucket.airship
     requirements_file = bucket.folder / 'requirements.txt'
     if requirements_file.isfile():
         config = airship.config.get('python', {})
@@ -36,4 +35,4 @@ def set_up_virtualenv_and_requirements(bucket, **extra):
 
 def load(airship):
     from airship.deployer import bucket_setup
-    bucket_setup.connect(set_up_virtualenv_and_requirements)
+    bucket_setup.connect(set_up_virtualenv_and_requirements, airship)

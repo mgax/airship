@@ -17,7 +17,8 @@ class DeployErrorTest(AirshipTestCase):
         from airship.deployer import DeployError
         from airship.contrib.python import set_up_virtualenv_and_requirements
         with self.assertRaises(DeployError) as e:
-            set_up_virtualenv_and_requirements(self.bucket)
+            airship = self.bucket.airship
+            set_up_virtualenv_and_requirements(airship, self.bucket)
         return e.exception
 
     def test_virtualenv_failure_raises_deploy_error(self):

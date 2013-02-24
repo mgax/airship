@@ -32,7 +32,7 @@ def deploy(airship, tarfile):
     bucket = airship.new_bucket()
     subprocess.check_call(['tar', 'xf', tarfile, '-C', bucket.folder])
     bucket._read_procfile()
-    bucket_setup.send(bucket)
+    bucket_setup.send(airship, bucket=bucket)
     remove_old_buckets(bucket)
     try:
         bucket.start()

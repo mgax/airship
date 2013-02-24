@@ -25,7 +25,8 @@ class PluginTest(AirshipTestCase):
         airship = Mock()
         bucket = airship.new_bucket.return_value
         deploy(airship, Mock())
-        self.assertEqual(bucket_setup.send.mock_calls, [call(bucket)])
+        self.assertEqual(bucket_setup.send.mock_calls,
+                         [call(airship, bucket=bucket)])
 
     @patch('airship.core.os')
     def test_run_sends_bucket_run_signal(self, mock_os):
