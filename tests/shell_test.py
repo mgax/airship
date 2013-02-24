@@ -20,12 +20,6 @@ class ShellTest(AirshipTestCase):
         self.assertEqual(new_bucket.mock_calls, [call({'hello': "world"})])
         self.assertEqual(stdout.getvalue().strip(), "bucket-id")
 
-    @patch('airship.core.Bucket.configure')
-    def test_configure_bucket_calls_api_method(self, configure):
-        bucket = self.create_airship().new_bucket()
-        imp('airship.core').main([str(self.tmp), 'configure', bucket.id_])
-        self.assertEqual(configure.mock_calls, [call()])
-
     @patch('airship.core.Bucket.start')
     def test_start_bucket_calls_api_method(self, start):
         bucket = self.create_airship().new_bucket()

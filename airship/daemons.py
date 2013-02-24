@@ -79,7 +79,6 @@ class Supervisor(object):
                     'var': bucket.airship.var_path,
                     'bucket': bucket.id_,
                     'directory': bucket.folder,
-                    'run': bucket.run_folder,
                     'bucket_id': bucket.id_,
                     'autostart': 'true' if autostart else 'false',
                     'startsecs': 2 if autostart else 0,

@@ -38,8 +38,6 @@ class Bucket(object):
         self.airship = airship
         self.config = config
         self.folder = self.airship._bucket_folder(id_)
-        var = self.airship.home_path / 'var'
-        self.run_folder = var / 'run' / id_
         self.process_types = {}
         self._read_procfile()
 
@@ -55,12 +53,8 @@ class Bucket(object):
     def meta(self):
         return self.config['meta']
 
-    def configure(self):
-        self.run_folder.makedirs_p()
-
     def start(self):
         log.info("Activating bucket %r", self.id_)
-        self.configure()
         self.airship.daemons.configure_bucket_running(self)
 
     def stop(self):
@@ -71,8 +65,6 @@ class Bucket(object):
 
     def destroy(self):
         self.airship.daemons.remove_bucket(self.id_)
-        if self.run_folder.isdir():
-            self.run_folder.rmtree()
         if self.folder.isdir():
             self.folder.rmtree()
         self.airship.buckets_db.pop(self.id_, None)
@@ -220,10 +212,6 @@ def list_cmd(airship, args):
     print json.dumps(airship.list_buckets(), indent=2)
 
 
-def configure_cmd(airship, args):
-    airship.get_bucket(args.id).configure()
-
-
 def start_cmd(airship, args):
     airship.get_bucket(args.id).start()
 
@@ -270,9 +258,6 @@ def build_args_parser():
     new_parser.add_argument('config')
     list_parser = subparsers.add_parser('list')
     list_parser.set_defaults(func=list_cmd)
-    configure_parser = subparsers.add_parser('configure')
-    configure_parser.set_defaults(func=configure_cmd)
-    configure_parser.add_argument('id')
     start_parser = subparsers.add_parser('start')
     start_parser.set_defaults(func=start_cmd)
     start_parser.add_argument('id')
