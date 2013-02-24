@@ -90,6 +90,9 @@ class Bucket(object):
         os.execve(shell_args[0], shell_args, environ)
 
 
+_newest = object()
+
+
 class Airship(object):
     """ The airship object implements most operations performed by airship. It
     acts as container for deployments.
@@ -120,18 +123,10 @@ class Airship(object):
         config = self.buckets_db[bucket_id]
         return Bucket(bucket_id, self, config)
 
-    def get_bucket(self, name):
-        try:
-            return self._get_bucket_by_id(name)
-
-        except KeyError:
-            for bucket_id in self.buckets_db:
-                bucket = self._get_bucket_by_id(bucket_id)
-                if name == bucket.meta.get('APPLICATION_NAME'):
-                    return bucket
-
-            else:
-                raise KeyError
+    def get_bucket(self, name=_newest):
+        if name is _newest:
+            name = max(self.buckets_db)
+        return self._get_bucket_by_id(name)
 
     def _bucket_folder(self, id_):
         return self.home_path / id_

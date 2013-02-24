@@ -27,10 +27,10 @@ class BucketTest(AirshipTestCase):
         same_bucket = airship.get_bucket(bucket.id_)
         self.assertEqual(bucket.folder, same_bucket.folder)
 
-    def test_get_bucket_with_app_name_returns_bucket(self):
+    def test_get_bucket_with_no_args_returns_bucket(self):
         airship = self.create_airship()
         bucket = airship.new_bucket()
-        same_bucket = airship.get_bucket('web')
+        same_bucket = airship.get_bucket()
         self.assertEqual(bucket.folder, same_bucket.folder)
 
     def test_get_bucket_with_invalid_name_raises_keyerror(self):
