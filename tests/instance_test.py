@@ -100,23 +100,3 @@ class BucketListingTest(AirshipTestCase):
         report = airship.list_buckets()
         self.assertItemsEqual([i['id'] for i in report['buckets']],
                               [bucket_1.id_, bucket_2.id_])
-
-
-class BucketRunTest(AirshipTestCase):
-
-    def setUp(self):
-        self.os = self.patch('airship.core.os')
-        self.os.environ = {}
-        self.get_environ = lambda: self.os.execve.mock_calls[-1][1][2]
-
-    def test_run_prepares_environ_from_etc_app_config(self):
-        env = {'SOME_CONFIG_VALUE': "hello there!"}
-        self.create_airship({'env': env}).new_bucket().run(None)
-        environ = self.get_environ()
-        self.assertEqual(environ['SOME_CONFIG_VALUE'], "hello there!")
-
-    def test_run_inserts_port_in_environ(self):
-        bucket = self.create_airship({'port_map': {'web': 13}}).new_bucket()
-        bucket.run(None)
-        environ = self.get_environ()
-        self.assertEqual(environ['PORT'], '13')
