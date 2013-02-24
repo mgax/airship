@@ -9,15 +9,12 @@ from common import AirshipTestCase
 src_dir = path(__file__).parent.parent
 
 
-def setUpModule():
-    if os.environ.get('SKIPSLOW'):
-        from nose import SkipTest
-        raise SkipTest
-
-
 class RealProcessTest(AirshipTestCase):
 
     def setUp(self):
+        if os.environ.get('SKIPSLOW'):
+            from nose import SkipTest
+            raise SkipTest
         cfg_path = self.tmp / 'etc' / 'airship.yaml'
         cfg_path.write_text('{}')
         bin_path = self.tmp / 'airshipbin'
